@@ -13,6 +13,8 @@ COPY orchestratai_client/postcss.config.mjs ./orchestratai_client/postcss.config
 COPY orchestratai_client/vitest.config.ts ./orchestratai_client/vitest.config.ts
 COPY orchestratai_client/eslint.config.mjs ./orchestratai_client/eslint.config.mjs
 COPY orchestratai_client/eslint-local-rules.mjs ./orchestratai_client/eslint-local-rules.mjs
+
+# Copy packages directory if it exists (for shared workspace packages)
 COPY packages/ ./packages/
 
 # Install dependencies for the workspace
