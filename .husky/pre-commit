@@ -14,7 +14,7 @@ if echo "$STAGED_FILES" | grep "^my_flow_client/" >/dev/null 2>&1; then
   FRONTEND_STAGED="true"
 fi
 
-if echo "$STAGED_FILES" | grep "^my_flow_api/" >/dev/null 2>&1; then
+if echo "$STAGED_FILES" | grep "^orchestratai_api/" >/dev/null 2>&1; then
   BACKEND_STAGED="true"
 fi
 
@@ -31,14 +31,14 @@ elif [ "$FRONTEND_STAGED" = "true" ]; then
 fi
 
 # Backend checks (only if backend files staged AND directory exists)
-if [ "$BACKEND_STAGED" = "true" ] && [ -d "my_flow_api" ]; then
+if [ "$BACKEND_STAGED" = "true" ] && [ -d "orchestratai_api" ]; then
   echo "🧹 Linting backend..."
-  uv run --project my_flow_api ruff check my_flow_api/src/ my_flow_api/tests/ || { echo "❌ Backend lint failed"; exit 1; }
+  uv run --project orchestratai_api ruff check orchestratai_api/src/ orchestratai_api/tests/ || { echo "❌ Backend lint failed"; exit 1; }
 
   echo "🐍 Type checking backend..."
-  PYTHONPATH=./my_flow_api uv run --project my_flow_api mypy my_flow_api/src/ || { echo "❌ Backend type check failed"; exit 1; }
+  PYTHONPATH=./orchestratai_api uv run --project orchestratai_api mypy orchestratai_api/src/ || { echo "❌ Backend type check failed"; exit 1; }
 elif [ "$BACKEND_STAGED" = "true" ]; then
-  echo "⚠️ Backend files staged but my_flow_api directory not found (worktree?)."
+  echo "⚠️ Backend files staged but orchestratai_api directory not found (worktree?)."
   echo "   Skipping backend checks - ensure they pass in main repo."
 fi
 

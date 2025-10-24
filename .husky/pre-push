@@ -38,7 +38,7 @@ if echo "$CHANGED_FILES" | grep "^my_flow_client/" >/dev/null 2>&1; then
   FRONTEND_CHANGED="true"
 fi
 
-if echo "$CHANGED_FILES" | grep "^my_flow_api/" >/dev/null 2>&1; then
+if echo "$CHANGED_FILES" | grep "^orchestratai_api/" >/dev/null 2>&1; then
   BACKEND_CHANGED="true"
 fi
 
@@ -69,18 +69,18 @@ elif [ "$FRONTEND_CHANGED" = "true" ]; then
   echo "   Skipping frontend checks - ensure they pass in main repo or CI/CD."
 fi
 
-# Backend checks (only if backend files changed AND my_flow_api exists)
-if [ "$BACKEND_CHANGED" = "true" ] && [ -d "my_flow_api" ]; then
+# Backend checks (only if backend files changed AND orchestratai_api exists)
+if [ "$BACKEND_CHANGED" = "true" ] && [ -d "orchestratai_api" ]; then
   echo "🐍 Linting backend..."
-  (cd my_flow_api && uv run ruff check .) || { echo "❌ Backend linting failed"; exit 1; }
+  (cd orchestratai_api && uv run ruff check .) || { echo "❌ Backend linting failed"; exit 1; }
 
   echo "🐍 Type checking backend..."
-  (cd my_flow_api && uv run mypy src/) || { echo "❌ Backend type check failed"; exit 1; }
+  (cd orchestratai_api && uv run mypy src/) || { echo "❌ Backend type check failed"; exit 1; }
 
   echo "🐍 Running backend tests..."
-  PYTHONPATH=./my_flow_api uv run --project my_flow_api pytest || { echo "❌ Backend tests failed"; exit 1; }
+  PYTHONPATH=./orchestratai_api uv run --project orchestratai_api pytest || { echo "❌ Backend tests failed"; exit 1; }
 elif [ "$BACKEND_CHANGED" = "true" ]; then
-  echo "⚠️ Backend files changed but my_flow_api directory not found (worktree?)."
+  echo "⚠️ Backend files changed but orchestratai_api directory not found (worktree?)."
   echo "   Skipping backend checks - ensure they pass in main repo or CI/CD."
 fi
 
