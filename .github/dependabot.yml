@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Frontend dependencies (Bun)
+  - package-ecosystem: "npm"
+    directory: "/my_flow_client"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # Backend dependencies (Python/uv)
+  - package-ecosystem: "pip"
+    directory: "/my_flow_api"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci-cd"
