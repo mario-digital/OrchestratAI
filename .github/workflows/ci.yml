@@ -78,40 +78,40 @@ jobs:
         with:
           path: |
             ~/.bun/install/cache
-            my_flow_client/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('my_flow_client/bun.lockb') }}
+            orchestratai_client/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('orchestratai_client/bun.lockb') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
         run: |
-          cd my_flow_client
+          cd orchestratai_client
           bun install
 
       - name: Run linting (ESLint)
         run: |
-          cd my_flow_client
+          cd orchestratai_client
           bun run lint
 
       - name: Run type checking (TypeScript)
         run: |
-          cd my_flow_client
+          cd orchestratai_client
           bun run typecheck
 
       - name: Run tests (Vitest)
         run: |
-          cd my_flow_client
+          cd orchestratai_client
           bun run test -- --coverage
 
       - name: Build verification
         run: |
-          cd my_flow_client
+          cd orchestratai_client
           bun run build
 
       - name: Upload frontend coverage
         uses: codecov/codecov-action@v4
         with:
-          files: ./my_flow_client/coverage/coverage-final.json
+          files: ./orchestratai_client/coverage/coverage-final.json
           flags: frontend
           fail_ci_if_error: false
 

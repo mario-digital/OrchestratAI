@@ -10,7 +10,7 @@ STAGED_FILES=$(git diff --cached --name-only)
 FRONTEND_STAGED="false"
 BACKEND_STAGED="false"
 
-if echo "$STAGED_FILES" | grep "^my_flow_client/" >/dev/null 2>&1; then
+if echo "$STAGED_FILES" | grep "^orchestratai_client/" >/dev/null 2>&1; then
   FRONTEND_STAGED="true"
 fi
 
@@ -19,14 +19,14 @@ if echo "$STAGED_FILES" | grep "^orchestratai_api/" >/dev/null 2>&1; then
 fi
 
 # Frontend checks (only if frontend files staged AND directory exists)
-if [ "$FRONTEND_STAGED" = "true" ] && [ -d "my_flow_client" ]; then
+if [ "$FRONTEND_STAGED" = "true" ] && [ -d "orchestratai_client" ]; then
   echo "🧹 Linting frontend..."
-  (cd my_flow_client && bun run lint) || { echo "❌ Frontend lint failed"; exit 1; }
+  (cd orchestratai_client && bun run lint) || { echo "❌ Frontend lint failed"; exit 1; }
 
   echo "📝 Type checking frontend..."
-  (cd my_flow_client && bun run typecheck) || { echo "❌ Frontend type check failed"; exit 1; }
+  (cd orchestratai_client && bun run typecheck) || { echo "❌ Frontend type check failed"; exit 1; }
 elif [ "$FRONTEND_STAGED" = "true" ]; then
-  echo "⚠️ Frontend files staged but my_flow_client directory not found (worktree?)."
+  echo "⚠️ Frontend files staged but orchestratai_client directory not found (worktree?)."
   echo "   Skipping frontend checks - ensure they pass in main repo."
 fi
 
