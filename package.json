@@ -3,27 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "my_flow_client",
+    "orchestratai_client",
     "packages/*"
   ],
   "scripts": {
-    "dev": "op run --env-file=.env.template -- bun run dev:backend & op run --env-file=.env.template -- bun run dev:frontend",
-    "dev:frontend": "cd my_flow_client && bun run dev",
+    "dev": "bun run dev:backend & bun run dev:frontend",
+    "dev:frontend": "cd orchestratai_client && bun run dev",
     "dev:backend": "cd orchestratai_api && ./dev.sh",
     "build": "bun run build:frontend && bun run build:backend",
-    "build:frontend": "cd my_flow_client && bun run build",
+    "build:frontend": "cd orchestratai_client && bun run build",
     "build:backend": "echo 'Backend build will use Docker'",
     "test": "bun run test:frontend && bun run test:backend",
-    "test:frontend": "cd my_flow_client && bun run test",
+    "test:frontend": "cd orchestratai_client && bun run test",
     "test:backend": "PYTHONPATH=./orchestratai_api uv run --project orchestratai_api pytest",
     "lint": "bun run lint:frontend && bun run lint:backend",
-    "lint:frontend": "cd my_flow_client && bun run lint",
+    "lint:frontend": "cd orchestratai_client && bun run lint",
     "lint:backend": "uv run --project orchestratai_api ruff check orchestratai_api/src/",
     "format": "bun run format:frontend && bun run format:backend",
-    "format:frontend": "cd my_flow_client && bun run format",
+    "format:frontend": "cd orchestratai_client && bun run format",
     "format:backend": "uv run --project orchestratai_api ruff format orchestratai_api/src/",
     "typecheck": "bun run typecheck:frontend && bun run typecheck:backend",
-    "typecheck:frontend": "cd my_flow_client && bun run typecheck",
+    "typecheck:frontend": "cd orchestratai_client && bun run typecheck",
     "typecheck:backend": "uv run --project orchestratai_api mypy orchestratai_api/src/",
     "prepare": "husky"
   },
@@ -46,9 +46,9 @@
     "unrs-resolver"
   ],
   "lint-staged": {
-    "my_flow_client/**/*.{ts,tsx,mjs}": [
-      "sh -c 'cd my_flow_client && bun run format'",
-      "sh -c 'cd my_flow_client && bun run lint:fix'"
+    "orchestratai_client/**/*.{ts,tsx,mjs}": [
+      "sh -c 'cd orchestratai_client && bun run format'",
+      "sh -c 'cd orchestratai_client && bun run lint:fix'"
     ],
     "orchestratai_api/src/**/*.py": [
       "uv run --project orchestratai_api ruff format",
