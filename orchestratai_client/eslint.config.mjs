@@ -90,6 +90,16 @@ const eslintConfig = [
       // Disable the old React-in-JSX-scope rule (not needed in React 17+)
       "react/react-in-jsx-scope": "off",
 
+      // Tailwind CSS design system enforcement
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXAttribute[name.name='className'] Literal[value=/\\[.*\\]/]",
+          message: "Arbitrary values are not allowed. Use design tokens only.",
+        },
+      ],
+
       // Custom local rules
       // Enforce 'use client' directive position
       "local/use-client-directive-position": "error",
