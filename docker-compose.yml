@@ -1,0 +1,66 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./orchestratai_api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./orchestratai_api/src:/app/src
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - orchestratai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: orchestratai_client/Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      # CRITICAL: Use service name 'backend' for container-to-container communication
+      # NOT 'localhost' - that's the container's own network namespace!
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+    volumes:
+      - ./orchestratai_client/src:/app/orchestratai_client/src
+      - ./orchestratai_client/public:/app/orchestratai_client/public
+    depends_on:
+      - backend
+    networks:
+      - orchestratai-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - orchestratai-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  orchestratai-network:
+    driver: bridge
