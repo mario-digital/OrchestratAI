@@ -1,0 +1,51 @@
+# Auto-labeling configuration for pull requests
+
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'orchestratai_client/**/*'
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'orchestratai_api/**/*'
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**/*'
+      - '**/*.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+
+tests:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'orchestratai_client/**/*.test.{ts,tsx}'
+      - 'orchestratai_client/**/*.spec.{ts,tsx}'
+      - 'orchestratai_client/e2e/**/*'
+      - 'orchestratai_api/tests/**/*'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/**/*'
+      - '.github/dependabot.yml'
+      - '.husky/**/*'
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'orchestratai_client/package.json'
+      - 'orchestratai_client/bun.lockb'
+      - 'orchestratai_api/pyproject.toml'
+      - 'orchestratai_api/uv.lock'
+      - 'package.json'
+
+configuration:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.config.{js,ts,mjs,cjs}'
+      - '**/tsconfig.json'
+      - '**/.eslintrc*'
+      - '**/.prettierrc*'
+      - '**/pytest.ini'
+      - '**/mypy.ini'
