@@ -53,17 +53,12 @@ if [ "$FRONTEND_CHANGED" = "true" ] && [ -d "orchestratai_client" ]; then
   echo "🔬 Running frontend tests with coverage..."
   bun --cwd orchestratai_client test -- --coverage || { echo "❌ Frontend tests (with coverage) failed"; exit 1; }
 
-  # Production build check with secrets (if 1Password CLI is available)
-  if command -v op >/dev/null 2>&1; then
-    echo "🏗️ Building frontend with injected secrets..."
-    (cd orchestratai_client && op run --env-file=../.env.template -- bun run build) || {
-      echo "❌ Frontend build failed";
-      exit 1;
-    }
-  else
-    echo "⚠️ Skipping secret-injected frontend build (1Password CLI not detected)."
-    echo "   Install 1Password CLI and sign in to run the production build before pushing."
-  fi
+  # Production build check
+  echo "🏗️ Building frontend..."
+  (cd orchestratai_client && bun run build) || {
+    echo "❌ Frontend build failed";
+    exit 1;
+  }
 elif [ "$FRONTEND_CHANGED" = "true" ]; then
   echo "⚠️ Frontend files changed but orchestratai_client directory not found (worktree?)."
   echo "   Skipping frontend checks - ensure they pass in main repo or CI/CD."
