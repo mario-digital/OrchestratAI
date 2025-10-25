@@ -15,12 +15,12 @@
        ============================================ */
 
     --token-radius-none: 0;
-    --token-radius-sm: 0.25rem;    /* 4px */
+    --token-radius-sm: 0.25rem; /* 4px */
     --token-radius-default: 0.375rem; /* 6px */
-    --token-radius-md: 0.5rem;     /* 8px */
-    --token-radius-lg: 0.75rem;    /* 12px */
-    --token-radius-xl: 1rem;       /* 16px */
-    --token-radius-full: 9999px;   /* Fully rounded */
+    --token-radius-md: 0.5rem; /* 8px */
+    --token-radius-lg: 0.75rem; /* 12px */
+    --token-radius-xl: 1rem; /* 16px */
+    --token-radius-full: 9999px; /* Fully rounded */
     --token-radius-inherit: inherit; /* Inherit parent radius */
 
     /* ============================================
@@ -30,8 +30,8 @@
     --token-border-width-0: 0;
     --token-border-width-1: 1px;
     --token-border-width-2: 2px;
-    --token-border-width-3: 3px;  /* Flow card left border */
-    --token-border-width-4: 4px;  /* Urgent indicator */
+    --token-border-width-3: 3px; /* Flow card left border */
+    --token-border-width-4: 4px; /* Urgent indicator */
 
     /* ============================================
        RING WIDTHS (Focus Rings)
@@ -47,14 +47,18 @@
 
     /* Subtle Shadows */
     --token-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --token-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --token-shadow-sm:
+      0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 
     /* Default Shadows */
-    --token-shadow-default: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --token-shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --token-shadow-default:
+      0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --token-shadow-md:
+      0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
     /* Large Shadows */
-    --token-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --token-shadow-lg:
+      0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     --token-shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 
     /* Glow Effects (Agent Colors) */

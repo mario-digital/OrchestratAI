@@ -14,17 +14,17 @@
        OPACITY VALUES
        ============================================ */
 
-    --token-opacity-0: 0;        /* Fully transparent */
-    --token-opacity-5: 0.05;     /* Nearly transparent */
-    --token-opacity-10: 0.1;     /* Very subtle */
-    --token-opacity-20: 0.2;     /* Subtle */
-    --token-opacity-30: 0.3;     /* Light overlay */
-    --token-opacity-40: 0.4;     /* Medium-light overlay */
-    --token-opacity-50: 0.5;     /* Half transparent */
-    --token-opacity-60: 0.6;     /* Medium-dark overlay */
-    --token-opacity-70: 0.7;     /* Dark overlay */
-    --token-opacity-80: 0.8;     /* Very dark overlay */
-    --token-opacity-90: 0.9;     /* Nearly opaque */
-    --token-opacity-100: 1;      /* Fully opaque */
+    --token-opacity-0: 0; /* Fully transparent */
+    --token-opacity-5: 0.05; /* Nearly transparent */
+    --token-opacity-10: 0.1; /* Very subtle */
+    --token-opacity-20: 0.2; /* Subtle */
+    --token-opacity-30: 0.3; /* Light overlay */
+    --token-opacity-40: 0.4; /* Medium-light overlay */
+    --token-opacity-50: 0.5; /* Half transparent */
+    --token-opacity-60: 0.6; /* Medium-dark overlay */
+    --token-opacity-70: 0.7; /* Dark overlay */
+    --token-opacity-80: 0.8; /* Very dark overlay */
+    --token-opacity-90: 0.9; /* Nearly opaque */
+    --token-opacity-100: 1; /* Fully opaque */
   }
 }

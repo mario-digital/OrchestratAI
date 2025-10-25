@@ -54,5 +54,8 @@
       "uv run --project orchestratai_api ruff format",
       "uv run --project orchestratai_api ruff check --fix"
     ]
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
   }
 }

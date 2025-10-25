@@ -39,7 +39,8 @@
        ============================================ */
 
     --token-transition-property-all: all;
-    --token-transition-property-colors: color, background-color, border-color, text-decoration-color, fill, stroke;
+    --token-transition-property-colors:
+      color, background-color, border-color, text-decoration-color, fill, stroke;
     --token-transition-property-colors-shadow: color, box-shadow;
     --token-transition-property-shadow: box-shadow;
     --token-transition-property-transform: transform;
@@ -49,9 +50,13 @@
        COMMON TRANSITIONS
        ============================================ */
 
-    --token-transition-default: all var(--token-duration-normal) var(--token-ease-out);
-    --token-transition-fast: all var(--token-duration-fast) var(--token-ease-out);
-    --token-transition-slow: all var(--token-duration-moderate) var(--token-ease-in-out);
-    --token-transition-bounce: all var(--token-duration-moderate) var(--token-ease-bounce);
+    --token-transition-default: all var(--token-duration-normal)
+      var(--token-ease-out);
+    --token-transition-fast: all var(--token-duration-fast)
+      var(--token-ease-out);
+    --token-transition-slow: all var(--token-duration-moderate)
+      var(--token-ease-in-out);
+    --token-transition-bounce: all var(--token-duration-moderate)
+      var(--token-ease-bounce);
   }
 }
