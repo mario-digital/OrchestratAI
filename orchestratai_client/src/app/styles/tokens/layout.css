@@ -1,0 +1,39 @@
+/**
+ * LAYER 1: PRIMITIVE LAYOUT TOKENS
+ *
+ * Grid templates, flex configurations, and layout patterns
+ * Referenced by semantic tokens in globals.css @theme block
+ *
+ * CRITICAL RULE: All tokens approved per PRD v2.0
+ * DO NOT add new tokens without explicit approval
+ */
+
+@layer tokens.layout {
+  :root {
+    /* ============================================
+       GRID ROW TEMPLATES
+       ============================================ */
+
+    --token-grid-rows-auto-1: auto;
+    --token-grid-rows-auto-2: auto auto;
+    --token-grid-rows-auto-3: auto auto auto;
+    --token-grid-rows-auto-4: auto auto auto auto;
+
+    /* ============================================
+       GRID COLUMN TEMPLATES
+       ============================================ */
+
+    /* Flexible + Auto Patterns */
+    --token-grid-cols-flex-auto: 1fr auto;     /* Flexible first, auto-sized second */
+    --token-grid-cols-auto-flex: auto 1fr;     /* Auto-sized first, flexible second */
+
+    /* Even Distribution */
+    --token-grid-cols-even-2: 1fr 1fr;
+    --token-grid-cols-even-3: 1fr 1fr 1fr;
+    --token-grid-cols-even-4: 1fr 1fr 1fr 1fr;
+
+    /* Common App Layouts */
+    --token-grid-cols-sidebar-main: 280px 1fr;           /* Fixed sidebar + flexible main */
+    --token-grid-cols-sidebar-main-panel: 280px 1fr 320px; /* 3-panel layout */
+  }
+}

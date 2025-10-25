@@ -35,6 +35,17 @@
     --token-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
     /* ============================================
+       TRANSITION PROPERTIES
+       ============================================ */
+
+    --token-transition-property-all: all;
+    --token-transition-property-colors: color, background-color, border-color, text-decoration-color, fill, stroke;
+    --token-transition-property-colors-shadow: color, box-shadow;
+    --token-transition-property-shadow: box-shadow;
+    --token-transition-property-transform: transform;
+    --token-transition-property-opacity: opacity;
+
+    /* ============================================
        COMMON TRANSITIONS
        ============================================ */
 

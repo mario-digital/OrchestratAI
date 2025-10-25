@@ -25,6 +25,7 @@
 @import './styles/tokens/spacing.css' layer(tokens.spacing);
 @import './styles/tokens/effects.css' layer(tokens.effects);
 @import './styles/tokens/animation.css' layer(tokens.animation);
+@import './styles/tokens/layout.css' layer(tokens.layout);
 
 /* ============================================
    LAYERS 2 & 3: SEMANTIC + COMPONENT TOKENS
@@ -106,6 +107,24 @@
 
   --ease-out: var(--token-ease-out);
   --ease-in-out: var(--token-ease-in-out);
+
+  /* === Transition Properties === */
+  --transition-property-interactive: var(--token-transition-property-colors-shadow);
+  --transition-property-colors: var(--token-transition-property-colors);
+  --transition-property-shadow: var(--token-transition-property-shadow);
+  --transition-property-transform: var(--token-transition-property-transform);
+
+  /* Combined Transitions (property + duration + easing) */
+  --transition-interactive: var(--transition-property-interactive) var(--duration-normal) var(--ease-out);
+  --transition-colors: var(--transition-property-colors) var(--duration-normal) var(--ease-out);
+
+  /* === Ring Widths (Focus Rings) === */
+  --ring-width-focus: var(--token-ring-width-focus);
+  --ring-width-default: var(--token-ring-width-default);
+  --ring-width-none: var(--token-ring-width-none);
+
+  /* === Border Radius === */
+  --radius-inherit: var(--token-radius-inherit);
 
   /* ============================================
      LAYER 3: COMPONENT TOKENS
@@ -207,6 +226,23 @@
   --color-scrollbar-track: var(--color-bg-primary);                /* #0a0f1e */
   --color-scrollbar-thumb: var(--color-bg-elevated);               /* #334155 */
   --color-scrollbar-thumb-hover: var(--token-color-gray-600);      /* #4b5563 */
+
+  /* === shadcn/ui Component Tokens === */
+
+  /* Separator Component */
+  --size-separator: var(--token-size-px);
+  --height-separator: var(--size-separator);
+  --width-separator: var(--size-separator);
+
+  /* Card Component - Grid Templates */
+  --grid-rows-card-header: var(--token-grid-rows-auto-2);
+  --grid-cols-card-header-action: var(--token-grid-cols-flex-auto);
+
+  /* Input Component - Focus Ring */
+  --ring-input-focus: var(--ring-width-focus);
+
+  /* ScrollArea Component - Inherit Radius */
+  --radius-scroll-viewport: var(--radius-inherit);
 }
 
 /* ============================================
@@ -241,5 +277,19 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-scrollbar-thumb-hover);
+  }
+
+  /* ============================================
+     UTILITY CLASSES - shadcn/ui Card Conditional Spacing
+     ============================================ */
+
+  /* Conditional padding for card header with bottom border */
+  .border-b .card-header {
+    padding-bottom: var(--space-6);
+  }
+
+  /* Conditional padding for card footer with top border */
+  .border-t .card-footer {
+    padding-top: var(--space-6);
   }
 }

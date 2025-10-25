@@ -26,5 +26,11 @@
     --token-space-12: 3rem;      /* 48px */
     --token-space-16: 4rem;      /* 64px */
     --token-space-20: 5rem;      /* 80px */
+
+    /* ============================================
+       PIXEL SIZES (For 1px separators/borders)
+       ============================================ */
+
+    --token-size-px: 1px;        /* 1px separator lines */
   }
 }

@@ -21,6 +21,7 @@
     --token-radius-lg: 0.75rem;    /* 12px */
     --token-radius-xl: 1rem;       /* 16px */
     --token-radius-full: 9999px;   /* Fully rounded */
+    --token-radius-inherit: inherit; /* Inherit parent radius */
 
     /* ============================================
        BORDER WIDTHS
@@ -31,6 +32,14 @@
     --token-border-width-2: 2px;
     --token-border-width-3: 3px;  /* Flow card left border */
     --token-border-width-4: 4px;  /* Urgent indicator */
+
+    /* ============================================
+       RING WIDTHS (Focus Rings)
+       ============================================ */
+
+    --token-ring-width-none: 0;
+    --token-ring-width-default: 2px;
+    --token-ring-width-focus: 3px;
 
     /* ============================================
        SHADOWS (Box Shadow)
