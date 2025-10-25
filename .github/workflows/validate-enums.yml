@@ -1,0 +1,48 @@
+name: Validate Enums
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'bugfix/**'
+      - '[0-9]+.*'  # Version branches (e.g., 1.5-enum-validation)
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  validate:
+    name: Enum Synchronization Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Validate enum synchronization
+        run: bun run validate:enums
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "✅ Enum validation passed!"
+          echo "Frontend and backend enums are synchronized."
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ Enum validation failed!"
+          echo "Frontend and backend enums are out of sync."
+          echo "Review the errors above and ensure enum files match exactly."
+          exit 1
