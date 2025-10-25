@@ -335,6 +335,11 @@
     var(--color-error) 20%,
     transparent
   ); /* 20% opacity */
+  --color-ring-error-medium: color-mix(
+    in srgb,
+    var(--color-error) 40%,
+    transparent
+  ); /* 40% opacity - for dark mode */
 
   /* Destructive/Error Colors with Opacity */
   --color-destructive-hover: color-mix(
@@ -347,11 +352,35 @@
     var(--color-error) 60%,
     transparent
   );
+  --color-destructive-bg-dark: color-mix(
+    in srgb,
+    var(--color-error) 60%,
+    transparent
+  ); /* 60% opacity - for dark mode button backgrounds */
 
   /* Accent Hover States */
   --color-accent-hover: var(
     --color-bg-elevated
   ); /* For hover states on secondary elements */
+  --color-accent-hover-dark: color-mix(
+    in srgb,
+    var(--color-accent) 50%,
+    transparent
+  ); /* 50% opacity - for dark mode accent hover */
+
+  /* Primary Button Hover */
+  --color-primary-hover: color-mix(
+    in srgb,
+    var(--color-primary) 90%,
+    transparent
+  ); /* 90% opacity - primary button hover state */
+
+  /* Secondary Button Hover */
+  --color-secondary-hover: color-mix(
+    in srgb,
+    var(--color-secondary) 80%,
+    transparent
+  ); /* 80% opacity - secondary button hover state */
 
   /* Input Background (dark mode compatibility) */
   --color-input-bg-overlay: color-mix(
@@ -359,6 +388,11 @@
     var(--color-input-bg) 30%,
     transparent
   );
+  --color-input-hover-dark: color-mix(
+    in srgb,
+    var(--color-input) 50%,
+    transparent
+  ); /* 50% opacity - for dark mode input hover */
 
   /* === shadcn Component-Specific Tokens === */
 
