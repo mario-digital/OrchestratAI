@@ -288,6 +288,10 @@
   --color-primary: var(--color-button-primary-bg); /* #0891b2 */
   --color-primary-foreground: var(--color-button-primary-text); /* #f9fafb */
 
+  /* Secondary Button Colors */
+  --color-secondary: var(--color-button-secondary-bg); /* #1e293b */
+  --color-secondary-foreground: var(--color-button-secondary-text); /* #f9fafb */
+
   /* Destructive/Error Colors */
   --color-destructive: var(--color-error); /* #ef4444 */
   --color-destructive-foreground: var(--color-text-primary); /* #f9fafb */
