@@ -26,6 +26,7 @@
 @import './styles/tokens/effects.css' layer(tokens.effects);
 @import './styles/tokens/animation.css' layer(tokens.animation);
 @import './styles/tokens/layout.css' layer(tokens.layout);
+@import './styles/tokens/opacity.css' layer(tokens.opacity);
 
 /* ============================================
    LAYERS 2 & 3: SEMANTIC + COMPONENT TOKENS
@@ -95,6 +96,7 @@
   --radius-md: var(--token-radius-md);
   --radius-lg: var(--token-radius-lg);
 
+  --shadow-xs: var(--token-shadow-xs);
   --shadow-sm: var(--token-shadow-sm);
   --shadow-default: var(--token-shadow-default);
   --shadow-md: var(--token-shadow-md);
@@ -107,6 +109,12 @@
 
   --ease-out: var(--token-ease-out);
   --ease-in-out: var(--token-ease-in-out);
+
+  /* === Opacity === */
+  --opacity-disabled: var(--token-opacity-50);
+  --opacity-hover: var(--token-opacity-90);
+  --opacity-subtle: var(--token-opacity-60);
+  --opacity-overlay: var(--token-opacity-30);
 
   /* === Transition Properties === */
   --transition-property-interactive: var(--token-transition-property-colors-shadow);
@@ -227,7 +235,64 @@
   --color-scrollbar-thumb: var(--color-bg-elevated);               /* #334155 */
   --color-scrollbar-thumb-hover: var(--token-color-gray-600);      /* #4b5563 */
 
-  /* === shadcn/ui Component Tokens === */
+  /* ============================================
+     SHADCN/UI COMPONENT TOKENS
+     Maps shadcn expectations to OrchestratAI system
+     ============================================ */
+
+  /* === shadcn Core Color Mappings === */
+
+  /* Text Colors */
+  --color-foreground: var(--color-text-primary);              /* #f9fafb */
+  --color-muted-foreground: var(--color-text-muted);          /* #4b5563 */
+
+  /* Card Colors */
+  --color-card: var(--color-bg-secondary);                    /* #0f172a */
+  --color-card-foreground: var(--color-text-primary);         /* #f9fafb */
+
+  /* Primary Button Colors */
+  --color-primary: var(--color-button-primary-bg);            /* #0891b2 */
+  --color-primary-foreground: var(--color-button-primary-text); /* #f9fafb */
+
+  /* Destructive/Error Colors */
+  --color-destructive: var(--color-error);                    /* #ef4444 */
+  --color-destructive-foreground: var(--color-text-primary);  /* #f9fafb */
+
+  /* Accent Colors (for hover states) */
+  --color-accent: var(--color-bg-tertiary);                   /* #1e293b */
+  --color-accent-foreground: var(--color-text-primary);       /* #f9fafb */
+
+  /* Background & Borders */
+  --color-background: var(--color-bg-primary);                /* #0a0f1e */
+  --color-border: var(--color-border-default);                /* #374151 */
+  --color-input: var(--color-input-border);                   /* #374151 */
+  --color-ring: var(--color-border-focus);                    /* #06b6d4 */
+
+  /* === Component Opacity Colors (with baked-in opacity) === */
+
+  /* Disabled State Colors (50% opacity baked in) */
+  --color-disabled-bg: color-mix(in srgb, var(--color-bg-secondary) 50%, transparent);
+  --color-disabled-text: color-mix(in srgb, var(--color-text-primary) 50%, transparent);
+
+  /* Hover State Background Colors (90% opacity baked in) */
+  --color-button-primary-hover-subtle: color-mix(in srgb, var(--color-button-primary-bg) 90%, transparent);
+
+  /* Ring Colors with Opacity */
+  --color-ring-focus: var(--color-border-focus);                                      /* Solid ring color */
+  --color-ring-focus-subtle: color-mix(in srgb, var(--color-border-focus) 50%, transparent);  /* 50% opacity */
+  --color-ring-error-subtle: color-mix(in srgb, var(--color-error) 20%, transparent);         /* 20% opacity */
+
+  /* Destructive/Error Colors with Opacity */
+  --color-destructive-hover: color-mix(in srgb, var(--color-error) 90%, transparent);
+  --color-destructive-subtle: color-mix(in srgb, var(--color-error) 60%, transparent);
+
+  /* Accent Hover States */
+  --color-accent-hover: var(--color-bg-elevated);  /* For hover states on secondary elements */
+
+  /* Input Background (dark mode compatibility) */
+  --color-input-bg-overlay: color-mix(in srgb, var(--color-input-bg) 30%, transparent);
+
+  /* === shadcn Component-Specific Tokens === */
 
   /* Separator Component */
   --size-separator: var(--token-size-px);
