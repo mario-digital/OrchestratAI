@@ -1,0 +1,46 @@
+/**
+ * LAYER 1: PRIMITIVE ANIMATION TOKENS
+ *
+ * Duration, easing functions, and animation presets
+ * Referenced by semantic tokens in globals.css @theme block
+ *
+ * CRITICAL RULE: All tokens approved per PRD v2.0
+ * DO NOT add new tokens without explicit approval
+ */
+
+@layer tokens.animation {
+  :root {
+    /* ============================================
+       ANIMATION DURATIONS
+       ============================================ */
+
+    --token-duration-instant: 0ms;
+    --token-duration-fastest: 75ms;
+    --token-duration-fast: 150ms;
+    --token-duration-normal: 200ms;
+    --token-duration-moderate: 300ms;
+    --token-duration-slow: 400ms;
+    --token-duration-slower: 500ms;
+    --token-duration-slowest: 700ms;
+
+    /* ============================================
+       EASING FUNCTIONS
+       ============================================ */
+
+    --token-ease-linear: linear;
+    --token-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --token-ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --token-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --token-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --token-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    /* ============================================
+       COMMON TRANSITIONS
+       ============================================ */
+
+    --token-transition-default: all var(--token-duration-normal) var(--token-ease-out);
+    --token-transition-fast: all var(--token-duration-fast) var(--token-ease-out);
+    --token-transition-slow: all var(--token-duration-moderate) var(--token-ease-in-out);
+    --token-transition-bounce: all var(--token-duration-moderate) var(--token-ease-bounce);
+  }
+}
