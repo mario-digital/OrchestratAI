@@ -160,6 +160,9 @@
   /* === Border Radius === */
   --radius-inherit: var(--token-radius-inherit);
 
+  /* === Layout Grid Templates === */
+  --grid-cols-three-panel-chat: var(--token-grid-cols-three-panel-chat);
+
   /* ============================================
      LAYER 3: COMPONENT TOKENS
      Component-specific tokens for OrchestratAI
