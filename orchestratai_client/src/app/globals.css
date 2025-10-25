@@ -20,13 +20,17 @@
    LAYER 1: IMPORT PRIMITIVE TOKENS
    ============================================ */
 
-@import './styles/tokens/colors.css' layer(tokens.colors);
-@import './styles/tokens/typography.css' layer(tokens.typography);
-@import './styles/tokens/spacing.css' layer(tokens.spacing);
-@import './styles/tokens/effects.css' layer(tokens.effects);
-@import './styles/tokens/animation.css' layer(tokens.animation);
-@import './styles/tokens/layout.css' layer(tokens.layout);
-@import './styles/tokens/opacity.css' layer(tokens.opacity);
+@import "./styles/tokens/colors.css" layer(tokens.colors);
+@import "./styles/tokens/typography.css" layer(tokens.typography);
+@import "./styles/tokens/spacing.css" layer(tokens.spacing);
+@import "./styles/tokens/effects.css" layer(tokens.effects);
+@import "./styles/tokens/animation.css" layer(tokens.animation);
+@import "./styles/tokens/layout.css" layer(tokens.layout);
+@import "./styles/tokens/opacity.css" layer(tokens.opacity);
+@import "tw-animate-css";
+/*---break---
+ */
+@custom-variant dark (&:is(.dark *));
 
 /* ============================================
    LAYERS 2 & 3: SEMANTIC + COMPONENT TOKENS
@@ -39,31 +43,49 @@
      ============================================ */
 
   /* === Background Colors === */
-  --color-bg-primary: var(--token-color-slate-950);      /* #0a0f1e - Main app background */
-  --color-bg-secondary: var(--token-color-slate-900);    /* #0f172a - Card backgrounds */
-  --color-bg-tertiary: var(--token-color-slate-800);     /* #1e293b - Elevated surfaces */
-  --color-bg-elevated: var(--token-color-slate-700);     /* #334155 - Hover states */
+  --color-bg-primary: var(
+    --token-color-slate-950
+  ); /* #0a0f1e - Main app background */
+  --color-bg-secondary: var(
+    --token-color-slate-900
+  ); /* #0f172a - Card backgrounds */
+  --color-bg-tertiary: var(
+    --token-color-slate-800
+  ); /* #1e293b - Elevated surfaces */
+  --color-bg-elevated: var(
+    --token-color-slate-700
+  ); /* #334155 - Hover states */
 
   /* === Text Colors === */
-  --color-text-primary: var(--token-color-gray-50);      /* #f9fafb - Primary text */
-  --color-text-secondary: var(--token-color-gray-300);   /* #d1d5db - Secondary text */
-  --color-text-tertiary: var(--token-color-gray-500);    /* #6b7280 - Tertiary text */
-  --color-text-muted: var(--token-color-gray-600);       /* #4b5563 - Muted text */
-  --color-text-disabled: var(--token-color-gray-700);    /* #374151 - Disabled text */
+  --color-text-primary: var(--token-color-gray-50); /* #f9fafb - Primary text */
+  --color-text-secondary: var(
+    --token-color-gray-300
+  ); /* #d1d5db - Secondary text */
+  --color-text-tertiary: var(
+    --token-color-gray-500
+  ); /* #6b7280 - Tertiary text */
+  --color-text-muted: var(--token-color-gray-600); /* #4b5563 - Muted text */
+  --color-text-disabled: var(
+    --token-color-gray-700
+  ); /* #374151 - Disabled text */
 
   /* === Border Colors === */
-  --color-border-default: var(--token-color-gray-700);   /* #374151 - Default borders */
-  --color-border-subtle: var(--token-color-gray-800);    /* #1f2937 - Subtle borders */
-  --color-border-hover: var(--token-color-gray-600);     /* #4b5563 - Hover state */
-  --color-border-focus: var(--token-color-cyan-500);     /* #06b6d4 - Focus ring */
+  --color-border-default: var(
+    --token-color-gray-700
+  ); /* #374151 - Default borders */
+  --color-border-subtle: var(
+    --token-color-gray-800
+  ); /* #1f2937 - Subtle borders */
+  --color-border-hover: var(--token-color-gray-600); /* #4b5563 - Hover state */
+  --color-border-focus: var(--token-color-cyan-500); /* #06b6d4 - Focus ring */
 
   /* === Status Colors === */
-  --color-success: var(--token-color-green-500);         /* #22c55e */
-  --color-success-bg: var(--token-color-green-700);      /* For backgrounds */
-  --color-warning: var(--token-color-yellow-500);        /* #f59e0b */
-  --color-warning-bg: var(--token-color-yellow-600);     /* For backgrounds */
-  --color-error: var(--token-color-red-500);             /* #ef4444 */
-  --color-error-bg: var(--token-color-red-600);          /* For backgrounds */
+  --color-success: var(--token-color-green-500); /* #22c55e */
+  --color-success-bg: var(--token-color-green-700); /* For backgrounds */
+  --color-warning: var(--token-color-yellow-500); /* #f59e0b */
+  --color-warning-bg: var(--token-color-yellow-600); /* For backgrounds */
+  --color-error: var(--token-color-red-500); /* #ef4444 */
+  --color-error-bg: var(--token-color-red-600); /* For backgrounds */
 
   /* === Typography === */
   --font-primary: var(--token-font-primary);
@@ -117,14 +139,18 @@
   --opacity-overlay: var(--token-opacity-30);
 
   /* === Transition Properties === */
-  --transition-property-interactive: var(--token-transition-property-colors-shadow);
+  --transition-property-interactive: var(
+    --token-transition-property-colors-shadow
+  );
   --transition-property-colors: var(--token-transition-property-colors);
   --transition-property-shadow: var(--token-transition-property-shadow);
   --transition-property-transform: var(--token-transition-property-transform);
 
   /* Combined Transitions (property + duration + easing) */
-  --transition-interactive: var(--transition-property-interactive) var(--duration-normal) var(--ease-out);
-  --transition-colors: var(--transition-property-colors) var(--duration-normal) var(--ease-out);
+  --transition-interactive: var(--transition-property-interactive)
+    var(--duration-normal) var(--ease-out);
+  --transition-colors: var(--transition-property-colors) var(--duration-normal)
+    var(--ease-out);
 
   /* === Ring Widths (Focus Rings) === */
   --ring-width-focus: var(--token-ring-width-focus);
@@ -146,94 +172,102 @@
   --color-agent-card-border-default: var(--color-border-default);
 
   /* Cyan - Orchestrator (Router Agent) */
-  --color-agent-card-border-cyan: var(--token-color-cyan-600);     /* #0891b2 */
-  --color-agent-card-text-cyan: var(--token-color-cyan-400);       /* #22d3ee */
-  --color-agent-card-accent-cyan: var(--token-color-cyan-500);     /* #06b6d4 */
+  --color-agent-card-border-cyan: var(--token-color-cyan-600); /* #0891b2 */
+  --color-agent-card-text-cyan: var(--token-color-cyan-400); /* #22d3ee */
+  --color-agent-card-accent-cyan: var(--token-color-cyan-500); /* #06b6d4 */
 
   /* Green - Billing Agent */
-  --color-agent-card-border-green: var(--token-color-green-600);   /* #16a34a */
-  --color-agent-card-text-green: var(--token-color-green-400);     /* #4ade80 */
-  --color-agent-card-accent-green: var(--token-color-green-500);   /* #22c55e */
+  --color-agent-card-border-green: var(--token-color-green-600); /* #16a34a */
+  --color-agent-card-text-green: var(--token-color-green-400); /* #4ade80 */
+  --color-agent-card-accent-green: var(--token-color-green-500); /* #22c55e */
 
   /* Blue - Technical Agent */
-  --color-agent-card-border-blue: var(--token-color-blue-600);     /* #2563eb */
-  --color-agent-card-text-blue: var(--token-color-blue-400);       /* #60a5fa */
-  --color-agent-card-accent-blue: var(--token-color-blue-500);     /* #3b82f6 */
+  --color-agent-card-border-blue: var(--token-color-blue-600); /* #2563eb */
+  --color-agent-card-text-blue: var(--token-color-blue-400); /* #60a5fa */
+  --color-agent-card-accent-blue: var(--token-color-blue-500); /* #3b82f6 */
 
   /* Purple - Policy Agent */
   --color-agent-card-border-purple: var(--token-color-purple-600); /* #9333ea */
-  --color-agent-card-text-purple: var(--token-color-purple-400);   /* #c084fc */
+  --color-agent-card-text-purple: var(--token-color-purple-400); /* #c084fc */
   --color-agent-card-accent-purple: var(--token-color-purple-500); /* #a855f7 */
 
   /* === Status Badge Colors === */
-  --color-badge-idle-bg: var(--token-color-gray-700);              /* #374151 */
-  --color-badge-idle-text: var(--token-color-gray-400);            /* #9ca3af */
-  --color-badge-active-bg: var(--token-color-green-600);           /* #16a34a */
-  --color-badge-active-text: var(--token-color-green-300);         /* #86efac */
-  --color-badge-processing-bg: var(--token-color-cyan-600);        /* #0891b2 */
-  --color-badge-processing-text: var(--token-color-cyan-300);      /* For readability */
+  --color-badge-idle-bg: var(--token-color-gray-700); /* #374151 */
+  --color-badge-idle-text: var(--token-color-gray-400); /* #9ca3af */
+  --color-badge-active-bg: var(--token-color-green-600); /* #16a34a */
+  --color-badge-active-text: var(--token-color-green-300); /* #86efac */
+  --color-badge-processing-bg: var(--token-color-cyan-600); /* #0891b2 */
+  --color-badge-processing-text: var(
+    --token-color-cyan-300
+  ); /* For readability */
 
   /* === Chat Message Bubbles === */
-  --color-message-user-bg: var(--token-color-blue-600);            /* #2563eb */
-  --color-message-user-text: var(--token-color-gray-50);           /* #f9fafb */
-  --color-message-assistant-bg: var(--color-bg-secondary);         /* #0f172a */
-  --color-message-assistant-text: var(--token-color-gray-300);     /* #d1d5db */
-  --color-message-assistant-border: var(--color-border-default);   /* #374151 */
-  --color-message-system-bg: var(--color-bg-tertiary);             /* #1e293b */
-  --color-message-system-text: var(--token-color-gray-400);        /* #9ca3af */
+  --color-message-user-bg: var(--token-color-blue-600); /* #2563eb */
+  --color-message-user-text: var(--token-color-gray-50); /* #f9fafb */
+  --color-message-assistant-bg: var(--color-bg-secondary); /* #0f172a */
+  --color-message-assistant-text: var(--token-color-gray-300); /* #d1d5db */
+  --color-message-assistant-border: var(--color-border-default); /* #374151 */
+  --color-message-system-bg: var(--color-bg-tertiary); /* #1e293b */
+  --color-message-system-text: var(--token-color-gray-400); /* #9ca3af */
 
   /* === Execution Log Panel === */
-  --color-log-border-success: var(--token-color-green-500);        /* #22c55e */
-  --color-log-border-warning: var(--token-color-yellow-500);       /* #f59e0b */
-  --color-log-border-error: var(--token-color-red-500);            /* #ef4444 */
-  --color-log-text-routing: var(--token-color-purple-400);         /* #c084fc */
-  --color-log-text-vector: var(--token-color-blue-400);            /* #60a5fa */
-  --color-log-text-cache: var(--token-color-green-400);            /* #4ade80 */
-  --color-log-text-docs: var(--token-color-cyan-400);              /* #22d3ee */
+  --color-log-border-success: var(--token-color-green-500); /* #22c55e */
+  --color-log-border-warning: var(--token-color-yellow-500); /* #f59e0b */
+  --color-log-border-error: var(--token-color-red-500); /* #ef4444 */
+  --color-log-text-routing: var(--token-color-purple-400); /* #c084fc */
+  --color-log-text-vector: var(--token-color-blue-400); /* #60a5fa */
+  --color-log-text-cache: var(--token-color-green-400); /* #4ade80 */
+  --color-log-text-docs: var(--token-color-cyan-400); /* #22d3ee */
 
   /* === Panel Containers === */
-  --color-panel-bg: var(--color-bg-secondary);                     /* #0f172a */
-  --color-panel-border: var(--color-border-default);               /* #374151 */
-  --color-panel-header-bg: var(--color-bg-tertiary);               /* #1e293b */
-  --color-panel-header-text: var(--color-text-primary);            /* #f9fafb */
+  --color-panel-bg: var(--color-bg-secondary); /* #0f172a */
+  --color-panel-border: var(--color-border-default); /* #374151 */
+  --color-panel-header-bg: var(--color-bg-tertiary); /* #1e293b */
+  --color-panel-header-text: var(--color-text-primary); /* #f9fafb */
 
   /* === Form Inputs === */
-  --color-input-bg: var(--color-bg-secondary);                     /* #0f172a */
-  --color-input-border: var(--color-border-default);               /* #374151 */
-  --color-input-border-hover: var(--color-border-hover);           /* #4b5563 */
-  --color-input-border-focus: var(--color-border-focus);           /* #06b6d4 - Cyan */
-  --color-input-text: var(--color-text-primary);                   /* #f9fafb */
-  --color-input-placeholder: var(--color-text-muted);              /* #4b5563 */
+  --color-input-bg: var(--color-bg-secondary); /* #0f172a */
+  --color-input-border: var(--color-border-default); /* #374151 */
+  --color-input-border-hover: var(--color-border-hover); /* #4b5563 */
+  --color-input-border-focus: var(--color-border-focus); /* #06b6d4 - Cyan */
+  --color-input-text: var(--color-text-primary); /* #f9fafb */
+  --color-input-placeholder: var(--color-text-muted); /* #4b5563 */
 
   /* === Buttons === */
-  --color-button-primary-bg: var(--token-color-cyan-600);          /* #0891b2 */
-  --color-button-primary-hover: var(--token-color-cyan-500);       /* #06b6d4 */
-  --color-button-primary-text: var(--token-color-gray-50);         /* #f9fafb */
+  --color-button-primary-bg: var(--token-color-cyan-600); /* #0891b2 */
+  --color-button-primary-hover: var(--token-color-cyan-500); /* #06b6d4 */
+  --color-button-primary-text: var(--token-color-gray-50); /* #f9fafb */
 
-  --color-button-secondary-bg: var(--color-bg-tertiary);           /* #1e293b */
-  --color-button-secondary-hover: var(--color-bg-elevated);        /* #334155 */
-  --color-button-secondary-text: var(--color-text-primary);        /* #f9fafb */
+  --color-button-secondary-bg: var(--color-bg-tertiary); /* #1e293b */
+  --color-button-secondary-hover: var(--color-bg-elevated); /* #334155 */
+  --color-button-secondary-text: var(--color-text-primary); /* #f9fafb */
 
   --color-button-ghost-bg: transparent;
-  --color-button-ghost-hover: var(--color-bg-tertiary);            /* #1e293b */
-  --color-button-ghost-text: var(--color-text-secondary);          /* #d1d5db */
+  --color-button-ghost-hover: var(--color-bg-tertiary); /* #1e293b */
+  --color-button-ghost-text: var(--color-text-secondary); /* #d1d5db */
 
   /* === Execution Graph === */
-  --color-graph-node-bg: var(--color-bg-tertiary);                 /* #1e293b */
-  --color-graph-node-border: var(--color-border-default);          /* #374151 */
-  --color-graph-node-text: var(--color-text-primary);              /* #f9fafb */
-  --color-graph-node-active: var(--token-color-green-500);         /* #22c55e - Green checkmark */
-  --color-graph-node-pending: var(--token-color-gray-600);         /* #4b5563 */
-  --color-graph-edge: var(--token-color-gray-600);                 /* #4b5563 - Connection lines */
+  --color-graph-node-bg: var(--color-bg-tertiary); /* #1e293b */
+  --color-graph-node-border: var(--color-border-default); /* #374151 */
+  --color-graph-node-text: var(--color-text-primary); /* #f9fafb */
+  --color-graph-node-active: var(
+    --token-color-green-500
+  ); /* #22c55e - Green checkmark */
+  --color-graph-node-pending: var(--token-color-gray-600); /* #4b5563 */
+  --color-graph-edge: var(
+    --token-color-gray-600
+  ); /* #4b5563 - Connection lines */
 
   /* === Cost Display === */
-  --color-cost-text: var(--token-color-yellow-400);                /* #facc15 - Gold for $0.0034 */
-  --color-cost-label: var(--color-text-tertiary);                  /* #6b7280 */
+  --color-cost-text: var(
+    --token-color-yellow-400
+  ); /* #facc15 - Gold for $0.0034 */
+  --color-cost-label: var(--color-text-tertiary); /* #6b7280 */
 
   /* === Scrollbar (Custom) === */
-  --color-scrollbar-track: var(--color-bg-primary);                /* #0a0f1e */
-  --color-scrollbar-thumb: var(--color-bg-elevated);               /* #334155 */
-  --color-scrollbar-thumb-hover: var(--token-color-gray-600);      /* #4b5563 */
+  --color-scrollbar-track: var(--color-bg-primary); /* #0a0f1e */
+  --color-scrollbar-thumb: var(--color-bg-elevated); /* #334155 */
+  --color-scrollbar-thumb-hover: var(--token-color-gray-600); /* #4b5563 */
 
   /* ============================================
      SHADCN/UI COMPONENT TOKENS
@@ -243,54 +277,88 @@
   /* === shadcn Core Color Mappings === */
 
   /* Text Colors */
-  --color-foreground: var(--color-text-primary);              /* #f9fafb */
-  --color-muted-foreground: var(--color-text-muted);          /* #4b5563 */
+  --color-foreground: var(--color-text-primary); /* #f9fafb */
+  --color-muted-foreground: var(--color-text-muted); /* #4b5563 */
 
   /* Card Colors */
-  --color-card: var(--color-bg-secondary);                    /* #0f172a */
-  --color-card-foreground: var(--color-text-primary);         /* #f9fafb */
+  --color-card: var(--color-bg-secondary); /* #0f172a */
+  --color-card-foreground: var(--color-text-primary); /* #f9fafb */
 
   /* Primary Button Colors */
-  --color-primary: var(--color-button-primary-bg);            /* #0891b2 */
+  --color-primary: var(--color-button-primary-bg); /* #0891b2 */
   --color-primary-foreground: var(--color-button-primary-text); /* #f9fafb */
 
   /* Destructive/Error Colors */
-  --color-destructive: var(--color-error);                    /* #ef4444 */
-  --color-destructive-foreground: var(--color-text-primary);  /* #f9fafb */
+  --color-destructive: var(--color-error); /* #ef4444 */
+  --color-destructive-foreground: var(--color-text-primary); /* #f9fafb */
 
   /* Accent Colors (for hover states) */
-  --color-accent: var(--color-bg-tertiary);                   /* #1e293b */
-  --color-accent-foreground: var(--color-text-primary);       /* #f9fafb */
+  --color-accent: var(--color-bg-tertiary); /* #1e293b */
+  --color-accent-foreground: var(--color-text-primary); /* #f9fafb */
 
   /* Background & Borders */
-  --color-background: var(--color-bg-primary);                /* #0a0f1e */
-  --color-border: var(--color-border-default);                /* #374151 */
-  --color-input: var(--color-input-border);                   /* #374151 */
-  --color-ring: var(--color-border-focus);                    /* #06b6d4 */
+  --color-background: var(--color-bg-primary); /* #0a0f1e */
+  --color-border: var(--color-border-default); /* #374151 */
+  --color-input: var(--color-input-border); /* #374151 */
+  --color-ring: var(--color-border-focus); /* #06b6d4 */
 
   /* === Component Opacity Colors (with baked-in opacity) === */
 
   /* Disabled State Colors (50% opacity baked in) */
-  --color-disabled-bg: color-mix(in srgb, var(--color-bg-secondary) 50%, transparent);
-  --color-disabled-text: color-mix(in srgb, var(--color-text-primary) 50%, transparent);
+  --color-disabled-bg: color-mix(
+    in srgb,
+    var(--color-bg-secondary) 50%,
+    transparent
+  );
+  --color-disabled-text: color-mix(
+    in srgb,
+    var(--color-text-primary) 50%,
+    transparent
+  );
 
   /* Hover State Background Colors (90% opacity baked in) */
-  --color-button-primary-hover-subtle: color-mix(in srgb, var(--color-button-primary-bg) 90%, transparent);
+  --color-button-primary-hover-subtle: color-mix(
+    in srgb,
+    var(--color-button-primary-bg) 90%,
+    transparent
+  );
 
   /* Ring Colors with Opacity */
-  --color-ring-focus: var(--color-border-focus);                                      /* Solid ring color */
-  --color-ring-focus-subtle: color-mix(in srgb, var(--color-border-focus) 50%, transparent);  /* 50% opacity */
-  --color-ring-error-subtle: color-mix(in srgb, var(--color-error) 20%, transparent);         /* 20% opacity */
+  --color-ring-focus: var(--color-border-focus); /* Solid ring color */
+  --color-ring-focus-subtle: color-mix(
+    in srgb,
+    var(--color-border-focus) 50%,
+    transparent
+  ); /* 50% opacity */
+  --color-ring-error-subtle: color-mix(
+    in srgb,
+    var(--color-error) 20%,
+    transparent
+  ); /* 20% opacity */
 
   /* Destructive/Error Colors with Opacity */
-  --color-destructive-hover: color-mix(in srgb, var(--color-error) 90%, transparent);
-  --color-destructive-subtle: color-mix(in srgb, var(--color-error) 60%, transparent);
+  --color-destructive-hover: color-mix(
+    in srgb,
+    var(--color-error) 90%,
+    transparent
+  );
+  --color-destructive-subtle: color-mix(
+    in srgb,
+    var(--color-error) 60%,
+    transparent
+  );
 
   /* Accent Hover States */
-  --color-accent-hover: var(--color-bg-elevated);  /* For hover states on secondary elements */
+  --color-accent-hover: var(
+    --color-bg-elevated
+  ); /* For hover states on secondary elements */
 
   /* Input Background (dark mode compatibility) */
-  --color-input-bg-overlay: color-mix(in srgb, var(--color-input-bg) 30%, transparent);
+  --color-input-bg-overlay: color-mix(
+    in srgb,
+    var(--color-input-bg) 30%,
+    transparent
+  );
 
   /* === shadcn Component-Specific Tokens === */
 
@@ -356,5 +424,16 @@
   /* Conditional padding for card footer with top border */
   .border-t .card-footer {
     padding-top: var(--space-6);
+  }
+
+  /* Separator orientation-specific sizing */
+  [data-orientation="horizontal"] {
+    height: var(--height-separator);
+    width: 100%;
+  }
+
+  [data-orientation="vertical"] {
+    height: 100%;
+    width: var(--width-separator);
   }
 }

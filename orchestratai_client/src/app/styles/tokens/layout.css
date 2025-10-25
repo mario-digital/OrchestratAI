@@ -24,8 +24,8 @@
        ============================================ */
 
     /* Flexible + Auto Patterns */
-    --token-grid-cols-flex-auto: 1fr auto;     /* Flexible first, auto-sized second */
-    --token-grid-cols-auto-flex: auto 1fr;     /* Auto-sized first, flexible second */
+    --token-grid-cols-flex-auto: 1fr auto; /* Flexible first, auto-sized second */
+    --token-grid-cols-auto-flex: auto 1fr; /* Auto-sized first, flexible second */
 
     /* Even Distribution */
     --token-grid-cols-even-2: 1fr 1fr;
@@ -33,7 +33,7 @@
     --token-grid-cols-even-4: 1fr 1fr 1fr 1fr;
 
     /* Common App Layouts */
-    --token-grid-cols-sidebar-main: 280px 1fr;           /* Fixed sidebar + flexible main */
+    --token-grid-cols-sidebar-main: 280px 1fr; /* Fixed sidebar + flexible main */
     --token-grid-cols-sidebar-main-panel: 280px 1fr 320px; /* 3-panel layout */
   }
 }
