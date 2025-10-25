@@ -1,1 +1,245 @@
+/**
+ * ORCHESTRATAI DESIGN TOKEN SYSTEM
+ *
+ * 3-Layer Architecture:
+ * Layer 1: Primitives (tokens/*.css) - Base values, never used directly
+ * Layer 2: Semantic Tokens (@theme) - General purpose naming
+ * Layer 3: Component Tokens (@theme) - Component-specific naming
+ *
+ * CRITICAL RULES (coding-standards.md):
+ * 1. NEVER use primitive tokens directly in components
+ * 2. NEVER create new tokens without approval
+ * 3. Use Tailwind utilities with /N opacity syntax
+ *
+ * Reference: my_flow_app design token pattern
+ */
+
 @import "tailwindcss";
+
+/* ============================================
+   LAYER 1: IMPORT PRIMITIVE TOKENS
+   ============================================ */
+
+@import './styles/tokens/colors.css' layer(tokens.colors);
+@import './styles/tokens/typography.css' layer(tokens.typography);
+@import './styles/tokens/spacing.css' layer(tokens.spacing);
+@import './styles/tokens/effects.css' layer(tokens.effects);
+@import './styles/tokens/animation.css' layer(tokens.animation);
+
+/* ============================================
+   LAYERS 2 & 3: SEMANTIC + COMPONENT TOKENS
+   ============================================ */
+
+@theme {
+  /* ============================================
+     LAYER 2: SEMANTIC TOKENS
+     General-purpose naming for common UI needs
+     ============================================ */
+
+  /* === Background Colors === */
+  --color-bg-primary: var(--token-color-slate-950);      /* #0a0f1e - Main app background */
+  --color-bg-secondary: var(--token-color-slate-900);    /* #0f172a - Card backgrounds */
+  --color-bg-tertiary: var(--token-color-slate-800);     /* #1e293b - Elevated surfaces */
+  --color-bg-elevated: var(--token-color-slate-700);     /* #334155 - Hover states */
+
+  /* === Text Colors === */
+  --color-text-primary: var(--token-color-gray-50);      /* #f9fafb - Primary text */
+  --color-text-secondary: var(--token-color-gray-300);   /* #d1d5db - Secondary text */
+  --color-text-tertiary: var(--token-color-gray-500);    /* #6b7280 - Tertiary text */
+  --color-text-muted: var(--token-color-gray-600);       /* #4b5563 - Muted text */
+  --color-text-disabled: var(--token-color-gray-700);    /* #374151 - Disabled text */
+
+  /* === Border Colors === */
+  --color-border-default: var(--token-color-gray-700);   /* #374151 - Default borders */
+  --color-border-subtle: var(--token-color-gray-800);    /* #1f2937 - Subtle borders */
+  --color-border-hover: var(--token-color-gray-600);     /* #4b5563 - Hover state */
+  --color-border-focus: var(--token-color-cyan-500);     /* #06b6d4 - Focus ring */
+
+  /* === Status Colors === */
+  --color-success: var(--token-color-green-500);         /* #22c55e */
+  --color-success-bg: var(--token-color-green-700);      /* For backgrounds */
+  --color-warning: var(--token-color-yellow-500);        /* #f59e0b */
+  --color-warning-bg: var(--token-color-yellow-600);     /* For backgrounds */
+  --color-error: var(--token-color-red-500);             /* #ef4444 */
+  --color-error-bg: var(--token-color-red-600);          /* For backgrounds */
+
+  /* === Typography === */
+  --font-primary: var(--token-font-primary);
+  --font-mono: var(--token-font-mono);
+
+  --font-size-micro: var(--token-font-size-11);
+  --font-size-small: var(--token-font-size-13);
+  --font-size-body: var(--token-font-size-14);
+  --font-size-base: var(--token-font-size-16);
+  --font-size-h4: var(--token-font-size-18);
+  --font-size-h3: var(--token-font-size-20);
+  --font-size-h2: var(--token-font-size-24);
+  --font-size-h1: var(--token-font-size-32);
+
+  /* === Spacing === */
+  --space-0: var(--token-space-0);
+  --space-1: var(--token-space-1);
+  --space-2: var(--token-space-2);
+  --space-3: var(--token-space-3);
+  --space-4: var(--token-space-4);
+  --space-5: var(--token-space-5);
+  --space-6: var(--token-space-6);
+  --space-8: var(--token-space-8);
+  --space-10: var(--token-space-10);
+  --space-12: var(--token-space-12);
+
+  /* === Effects === */
+  --radius-sm: var(--token-radius-sm);
+  --radius-default: var(--token-radius-default);
+  --radius-md: var(--token-radius-md);
+  --radius-lg: var(--token-radius-lg);
+
+  --shadow-sm: var(--token-shadow-sm);
+  --shadow-default: var(--token-shadow-default);
+  --shadow-md: var(--token-shadow-md);
+  --shadow-lg: var(--token-shadow-lg);
+
+  /* === Animation === */
+  --duration-fast: var(--token-duration-fast);
+  --duration-normal: var(--token-duration-normal);
+  --duration-slow: var(--token-duration-moderate);
+
+  --ease-out: var(--token-ease-out);
+  --ease-in-out: var(--token-ease-in-out);
+
+  /* ============================================
+     LAYER 3: COMPONENT TOKENS
+     Component-specific tokens for OrchestratAI
+     ============================================ */
+
+  /* === Agent Card Colors (4 Agents) === */
+  /* Note: Base colors only - use /10, /20, /30 for opacity in Tailwind */
+  --color-agent-card-bg: var(--color-bg-secondary);
+  --color-agent-card-bg-hover: var(--color-bg-tertiary);
+  --color-agent-card-border-default: var(--color-border-default);
+
+  /* Cyan - Orchestrator (Router Agent) */
+  --color-agent-card-border-cyan: var(--token-color-cyan-600);     /* #0891b2 */
+  --color-agent-card-text-cyan: var(--token-color-cyan-400);       /* #22d3ee */
+  --color-agent-card-accent-cyan: var(--token-color-cyan-500);     /* #06b6d4 */
+
+  /* Green - Billing Agent */
+  --color-agent-card-border-green: var(--token-color-green-600);   /* #16a34a */
+  --color-agent-card-text-green: var(--token-color-green-400);     /* #4ade80 */
+  --color-agent-card-accent-green: var(--token-color-green-500);   /* #22c55e */
+
+  /* Blue - Technical Agent */
+  --color-agent-card-border-blue: var(--token-color-blue-600);     /* #2563eb */
+  --color-agent-card-text-blue: var(--token-color-blue-400);       /* #60a5fa */
+  --color-agent-card-accent-blue: var(--token-color-blue-500);     /* #3b82f6 */
+
+  /* Purple - Policy Agent */
+  --color-agent-card-border-purple: var(--token-color-purple-600); /* #9333ea */
+  --color-agent-card-text-purple: var(--token-color-purple-400);   /* #c084fc */
+  --color-agent-card-accent-purple: var(--token-color-purple-500); /* #a855f7 */
+
+  /* === Status Badge Colors === */
+  --color-badge-idle-bg: var(--token-color-gray-700);              /* #374151 */
+  --color-badge-idle-text: var(--token-color-gray-400);            /* #9ca3af */
+  --color-badge-active-bg: var(--token-color-green-600);           /* #16a34a */
+  --color-badge-active-text: var(--token-color-green-300);         /* #86efac */
+  --color-badge-processing-bg: var(--token-color-cyan-600);        /* #0891b2 */
+  --color-badge-processing-text: var(--token-color-cyan-300);      /* For readability */
+
+  /* === Chat Message Bubbles === */
+  --color-message-user-bg: var(--token-color-blue-600);            /* #2563eb */
+  --color-message-user-text: var(--token-color-gray-50);           /* #f9fafb */
+  --color-message-assistant-bg: var(--color-bg-secondary);         /* #0f172a */
+  --color-message-assistant-text: var(--token-color-gray-300);     /* #d1d5db */
+  --color-message-assistant-border: var(--color-border-default);   /* #374151 */
+  --color-message-system-bg: var(--color-bg-tertiary);             /* #1e293b */
+  --color-message-system-text: var(--token-color-gray-400);        /* #9ca3af */
+
+  /* === Execution Log Panel === */
+  --color-log-border-success: var(--token-color-green-500);        /* #22c55e */
+  --color-log-border-warning: var(--token-color-yellow-500);       /* #f59e0b */
+  --color-log-border-error: var(--token-color-red-500);            /* #ef4444 */
+  --color-log-text-routing: var(--token-color-purple-400);         /* #c084fc */
+  --color-log-text-vector: var(--token-color-blue-400);            /* #60a5fa */
+  --color-log-text-cache: var(--token-color-green-400);            /* #4ade80 */
+  --color-log-text-docs: var(--token-color-cyan-400);              /* #22d3ee */
+
+  /* === Panel Containers === */
+  --color-panel-bg: var(--color-bg-secondary);                     /* #0f172a */
+  --color-panel-border: var(--color-border-default);               /* #374151 */
+  --color-panel-header-bg: var(--color-bg-tertiary);               /* #1e293b */
+  --color-panel-header-text: var(--color-text-primary);            /* #f9fafb */
+
+  /* === Form Inputs === */
+  --color-input-bg: var(--color-bg-secondary);                     /* #0f172a */
+  --color-input-border: var(--color-border-default);               /* #374151 */
+  --color-input-border-hover: var(--color-border-hover);           /* #4b5563 */
+  --color-input-border-focus: var(--color-border-focus);           /* #06b6d4 - Cyan */
+  --color-input-text: var(--color-text-primary);                   /* #f9fafb */
+  --color-input-placeholder: var(--color-text-muted);              /* #4b5563 */
+
+  /* === Buttons === */
+  --color-button-primary-bg: var(--token-color-cyan-600);          /* #0891b2 */
+  --color-button-primary-hover: var(--token-color-cyan-500);       /* #06b6d4 */
+  --color-button-primary-text: var(--token-color-gray-50);         /* #f9fafb */
+
+  --color-button-secondary-bg: var(--color-bg-tertiary);           /* #1e293b */
+  --color-button-secondary-hover: var(--color-bg-elevated);        /* #334155 */
+  --color-button-secondary-text: var(--color-text-primary);        /* #f9fafb */
+
+  --color-button-ghost-bg: transparent;
+  --color-button-ghost-hover: var(--color-bg-tertiary);            /* #1e293b */
+  --color-button-ghost-text: var(--color-text-secondary);          /* #d1d5db */
+
+  /* === Execution Graph === */
+  --color-graph-node-bg: var(--color-bg-tertiary);                 /* #1e293b */
+  --color-graph-node-border: var(--color-border-default);          /* #374151 */
+  --color-graph-node-text: var(--color-text-primary);              /* #f9fafb */
+  --color-graph-node-active: var(--token-color-green-500);         /* #22c55e - Green checkmark */
+  --color-graph-node-pending: var(--token-color-gray-600);         /* #4b5563 */
+  --color-graph-edge: var(--token-color-gray-600);                 /* #4b5563 - Connection lines */
+
+  /* === Cost Display === */
+  --color-cost-text: var(--token-color-yellow-400);                /* #facc15 - Gold for $0.0034 */
+  --color-cost-label: var(--color-text-tertiary);                  /* #6b7280 */
+
+  /* === Scrollbar (Custom) === */
+  --color-scrollbar-track: var(--color-bg-primary);                /* #0a0f1e */
+  --color-scrollbar-thumb: var(--color-bg-elevated);               /* #334155 */
+  --color-scrollbar-thumb-hover: var(--token-color-gray-600);      /* #4b5563 */
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+
+@layer base {
+  * {
+    @apply border-border-default;
+  }
+
+  body {
+    @apply bg-bg-primary text-text-primary font-primary;
+    font-size: var(--font-size-body);
+    line-height: var(--token-line-height-normal);
+  }
+
+  /* Custom Scrollbar for Dark Theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+    border-radius: var(--radius-default);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover);
+  }
+}
