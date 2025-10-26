@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { Separator } from "@/components/ui/separator";
 import { CollapsiblePanel } from "@/components/panels/collapsible-panel";
 
 interface ThreePanelLayoutProps {
@@ -10,11 +9,11 @@ export function ThreePanelLayout({
   children,
 }: ThreePanelLayoutProps): React.ReactElement {
   return (
-    <div className="hidden md:grid grid-cols-three-panel-chat min-h-screen">
+    <div className="flex-1 overflow-hidden grid grid-cols-three-panel-chat">
       {/* Left Panel - Agent Pipeline */}
       <aside
         aria-label="Agent Pipeline"
-        className="bg-bg-secondary p-4 border-r border-border-default"
+        className="bg-bg-secondary p-4 border-r border-border-default overflow-y-auto"
         tabIndex={0}
       >
         <CollapsiblePanel side="left" storageKey="agent-panel-collapsed">
@@ -22,12 +21,10 @@ export function ThreePanelLayout({
         </CollapsiblePanel>
       </aside>
 
-      <Separator orientation="vertical" className="h-full" />
-
       {/* Center Panel - Chat Interface */}
       <main
         aria-label="Chat Interface"
-        className="bg-bg-primary p-4"
+        className="bg-bg-primary p-4 overflow-y-auto"
         tabIndex={0}
       >
         {children || (
@@ -35,12 +32,10 @@ export function ThreePanelLayout({
         )}
       </main>
 
-      <Separator orientation="vertical" className="h-full" />
-
       {/* Right Panel - Retrieval Log */}
       <aside
         aria-label="Retrieval Log"
-        className="bg-bg-secondary p-4 border-l border-border-default"
+        className="bg-bg-secondary p-4 border-l border-border-default overflow-y-auto"
         tabIndex={0}
       >
         <CollapsiblePanel side="right" storageKey="log-panel-collapsed">

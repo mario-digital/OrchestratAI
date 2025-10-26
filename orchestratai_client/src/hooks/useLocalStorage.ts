@@ -5,9 +5,9 @@ import { useState, useEffect } from "react";
  *
  * Features:
  * - SSR-safe: Handles `window` being undefined during server-side rendering
+ * - Hydration-safe: Always starts with defaultValue, syncs with localStorage after mount
  * - Error handling: Gracefully handles QuotaExceededError, SecurityError, and other localStorage failures
  * - Type-safe: Generic type parameter ensures type safety
- * - Lazy initialization: Reads localStorage only once on mount
  * - Automatic persistence: Saves to localStorage whenever value changes
  *
  * @template T - The type of value to store
@@ -25,17 +25,23 @@ export function useLocalStorage<T>(
   key: string,
   defaultValue: T
 ): [T, (value: T) => void] {
-  // Initialize state from localStorage or defaultValue
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    // SSR safety: Return default if window is undefined
+  // Always start with defaultValue to match SSR
+  const [storedValue, setStoredValue] = useState<T>(defaultValue);
+
+  // Load from localStorage after mount (client-side only)
+  useEffect(() => {
+    // SSR safety: Skip if window is undefined
     if (typeof window === "undefined") {
-      return defaultValue;
+      return;
     }
 
     try {
       const item = localStorage.getItem(key);
       if (item !== null) {
-        return JSON.parse(item) as T;
+        // Using queueMicrotask to avoid cascading renders
+        queueMicrotask(() => {
+          setStoredValue(JSON.parse(item) as T);
+        });
       }
     } catch (error) {
       console.warn(
@@ -43,9 +49,7 @@ export function useLocalStorage<T>(
         error
       );
     }
-
-    return defaultValue;
-  });
+  }, [key]);
 
   // Save to localStorage whenever storedValue changes
   useEffect(() => {

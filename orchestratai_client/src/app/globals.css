@@ -480,3 +480,13 @@
     width: var(--width-separator);
   }
 }
+
+/* ============================================
+   LAYOUT UTILITIES
+   ============================================ */
+
+@layer utilities {
+  .grid-cols-three-panel-chat {
+    grid-template-columns: var(--grid-cols-three-panel-chat);
+  }
+}
