@@ -495,6 +495,40 @@
     height: 100%;
     width: var(--width-separator);
   }
+
+  /* Tabs component - Active state styling */
+  [data-slot="tabs-list"] {
+    background: transparent;
+  }
+
+  [data-slot="tabs-trigger"] {
+    position: relative;
+    color: var(--color-text-secondary);
+    min-height: 3rem;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    transition:
+      color var(--duration-normal) var(--ease-out),
+      border-bottom-color var(--duration-normal) var(--ease-out);
+  }
+
+  [data-slot="tabs-trigger"][data-state="active"] {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-border-focus);
+    background: transparent;
+  }
+
+  [data-slot="tabs-trigger"]:hover:not([data-state="active"]) {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-border-hover);
+  }
+
+  [data-slot="tabs-trigger"] svg {
+    pointer-events: none;
+    flex-shrink: 0;
+    width: var(--size-4);
+    height: var(--size-4);
+  }
 }
 
 /* ============================================
