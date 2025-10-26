@@ -4,12 +4,13 @@ import { Footer } from "@/components/layout/footer";
 import { ThreePanelLayout } from "@/components/layout/three-panel-layout";
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { CollapsiblePanel } from "@/components/panels/collapsible-panel";
+import { ChatInterface } from "@/components/chat/chat-interface";
 
 export default function Home(): ReactElement {
-  // Placeholder panels (to be replaced with real components in Epic 2+)
-  const chatPanel = (
-    <p className="text-text-secondary">Chat Interface (Epic 2)</p>
-  );
+  // Chat interface with full state management
+  const chatPanel = <ChatInterface />;
+
+  // Placeholder panels (to be replaced with real components in Epic 3+)
   const agentsPanel = (
     <CollapsiblePanel side="left">
       <p className="text-text-secondary">Agent Pipeline (Epic 3)</p>
@@ -22,11 +23,11 @@ export default function Home(): ReactElement {
   );
 
   return (
-    <div className="flex flex-col min-h-screen max-w-screen-2xl mx-auto">
+    <div className="flex flex-col h-screen max-w-screen-2xl mx-auto overflow-hidden">
       <Header />
 
       {/* Desktop Layout (>=768px) */}
-      <div className="hidden md:flex md:flex-1">
+      <div className="hidden md:flex md:flex-1 overflow-hidden">
         <ThreePanelLayout>{chatPanel}</ThreePanelLayout>
       </div>
 

@@ -24,7 +24,7 @@ export function ThreePanelLayout({
       {/* Center Panel - Chat Interface */}
       <main
         aria-label="Chat Interface"
-        className="bg-bg-primary p-4 overflow-y-auto"
+        className="bg-bg-primary overflow-hidden"
         tabIndex={0}
       >
         {children || (

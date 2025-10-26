@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ChatProvider } from "@/components/providers/chat-provider";
 
 export const metadata: Metadata = {
   title: "OrchestratAI",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>): React.ReactElement {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ChatProvider>{children}</ChatProvider>
+      </body>
     </html>
   );
 }

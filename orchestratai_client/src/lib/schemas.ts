@@ -98,15 +98,13 @@ export const RetrievalLogSchema = z
     data: z
       .record(z.string(), z.unknown())
       .describe("Arbitrary key-value data for the log entry"),
-    timestamp: z
-      .string()
-      .datetime({ message: "Invalid ISO 8601 datetime" })
-      .describe("ISO 8601 timestamp of the operation"),
+    timestamp: z.string().describe("ISO 8601 timestamp of the operation"),
     status: z
       .nativeEnum(LogStatus)
       .describe("Status indicator for the operation"),
     chunks: z
       .array(DocumentChunkSchema)
+      .nullable()
       .optional()
       .describe("Optional array of retrieved document chunks"),
   })

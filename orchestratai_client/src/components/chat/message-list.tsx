@@ -50,43 +50,19 @@ export function MessageList({
   isProcessing: _isProcessing = false,
 }: MessageListProps): JSX.Element {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * Checks if user is scrolled near the bottom of the container
-   * Threshold: within 100px of bottom
-   */
-  const checkIfNearBottom = (): boolean => {
-    if (!scrollAreaRef.current) return true;
-
-    const container = scrollAreaRef.current.querySelector(
-      "[data-radix-scroll-area-viewport]"
-    ) as HTMLDivElement;
-
-    if (!container) return true;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-
-    // Consider "near bottom" if within 100px
-    return distanceFromBottom < 100;
-  };
 
   /**
    * Auto-scroll to bottom when messages change
-   * Only scrolls if user is already near bottom
+   * Always scrolls for new messages to ensure user sees latest content
    */
   useEffect(() => {
-    // Check position before scrolling
-    const shouldScroll = checkIfNearBottom();
-    if (shouldScroll && bottomRef.current) {
+    if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages.length]);
 
   return (
     <ScrollArea
-      ref={scrollAreaRef}
       className="h-full w-full px-4"
       aria-label="Chat message history"
       aria-live="polite"
