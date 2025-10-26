@@ -59,7 +59,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-asyncio_mode = "auto"
+# asyncio_mode = "auto"  # Commented out - pytest-asyncio not installed
 addopts = [
     "--strict-markers",
     "--strict-config",
