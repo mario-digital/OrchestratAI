@@ -8,7 +8,7 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage --reporter=verbose",
+    "test:coverage": "./scripts/check-coverage.sh",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
