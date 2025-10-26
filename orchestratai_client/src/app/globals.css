@@ -293,7 +293,9 @@
 
   /* Secondary Button Colors */
   --color-secondary: var(--color-button-secondary-bg); /* #1e293b */
-  --color-secondary-foreground: var(--color-button-secondary-text); /* #f9fafb */
+  --color-secondary-foreground: var(
+    --color-button-secondary-text
+  ); /* #f9fafb */
 
   /* Destructive/Error Colors */
   --color-destructive: var(--color-error); /* #ef4444 */
