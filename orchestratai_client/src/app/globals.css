@@ -470,9 +470,19 @@
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-scrollbar-thumb-hover);
   }
+}
+
+/* ============================================
+   LAYOUT UTILITIES
+   ============================================ */
+
+@layer utilities {
+  .grid-cols-three-panel-chat {
+    grid-template-columns: var(--grid-cols-three-panel-chat);
+  }
 
   /* ============================================
-     UTILITY CLASSES - shadcn/ui Card Conditional Spacing
+     shadcn/ui Component Utilities
      ============================================ */
 
   /* Conditional padding for card header with bottom border */
@@ -528,15 +538,5 @@
     flex-shrink: 0;
     width: var(--size-4);
     height: var(--size-4);
-  }
-}
-
-/* ============================================
-   LAYOUT UTILITIES
-   ============================================ */
-
-@layer utilities {
-  .grid-cols-three-panel-chat {
-    grid-template-columns: var(--grid-cols-three-panel-chat);
   }
 }
