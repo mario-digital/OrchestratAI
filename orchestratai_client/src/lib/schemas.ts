@@ -199,3 +199,51 @@ export const ChatResponseSchema = z
     metrics: ChatMetricsSchema.describe("Performance and cost metrics"),
   })
   .strict();
+
+// =============================================================================
+// Type Inference - Single Source of Truth
+// =============================================================================
+// All types are inferred from Zod schemas to ensure runtime and compile-time
+// type safety are always in sync.
+
+/**
+ * ChatRequest - Type-safe chat request payload
+ * @see ChatRequestSchema
+ */
+export type ChatRequest = z.infer<typeof ChatRequestSchema>;
+
+/**
+ * ChatMetrics - Type-safe performance metrics
+ * @see ChatMetricsSchema
+ */
+export type ChatMetrics = z.infer<typeof ChatMetricsSchema>;
+
+/**
+ * DocumentChunk - Type-safe document chunk data
+ * @see DocumentChunkSchema
+ */
+export type DocumentChunk = z.infer<typeof DocumentChunkSchema>;
+
+/**
+ * RetrievalLog - Type-safe retrieval operation log
+ * @see RetrievalLogSchema
+ */
+export type RetrievalLog = z.infer<typeof RetrievalLogSchema>;
+
+/**
+ * Message - Type-safe chat message
+ * @see MessageSchema
+ */
+export type Message = z.infer<typeof MessageSchema>;
+
+/**
+ * Agent - Type-safe agent data model
+ * @see AgentSchema
+ */
+export type Agent = z.infer<typeof AgentSchema>;
+
+/**
+ * ChatResponse - Type-safe complete API response
+ * @see ChatResponseSchema
+ */
+export type ChatResponse = z.infer<typeof ChatResponseSchema>;
