@@ -24,9 +24,10 @@ describe("Home Page", () => {
 
   it("renders the three panel layout", () => {
     render(<Home />);
-    expect(screen.getByLabelText("Agent Pipeline")).toBeInTheDocument();
-    expect(screen.getByLabelText("Chat Interface")).toBeInTheDocument();
-    expect(screen.getByLabelText("Retrieval Log")).toBeInTheDocument();
+    // Both desktop and mobile layouts render these panels
+    expect(screen.getAllByLabelText("Agent Pipeline").length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText("Chat Interface").length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText("Retrieval Log").length).toBeGreaterThan(0);
   });
 
   it("renders footer metrics", () => {
