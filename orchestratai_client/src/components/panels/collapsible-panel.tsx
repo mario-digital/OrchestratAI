@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, ReactElement } from "react";
+import { ReactNode, ReactElement, useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -9,12 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLocalStorage } from "@/hooks";
 
 interface CollapsiblePanelProps {
   children: ReactNode;
   side: "left" | "right";
-  storageKey: string;
   defaultOpen?: boolean;
 }
 
@@ -35,10 +33,9 @@ function getChevronIcon(isOpen: boolean, side: "left" | "right"): LucideIcon {
 export function CollapsiblePanel({
   children,
   side,
-  storageKey,
   defaultOpen = true,
 }: CollapsiblePanelProps): ReactElement {
-  const [isOpen, setIsOpen] = useLocalStorage(storageKey, defaultOpen);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   // Render the appropriate icon inline to satisfy ESLint rules
   const renderIcon = (): ReactElement => {
