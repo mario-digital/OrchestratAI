@@ -9,6 +9,7 @@ import {
   NetworkError,
   TimeoutError,
 } from "../errors";
+import { z } from "zod";
 
 describe("Custom Error Classes", () => {
   describe("APIError", () => {
@@ -53,26 +54,68 @@ describe("Custom Error Classes", () => {
 
   describe("ValidationError", () => {
     it("should create ValidationError extending APIError", () => {
-      const validationErrors = [
-        { field: "email", message: "Invalid email" },
-        { field: "password", message: "Too short" },
-      ];
-      const error = new ValidationError("Validation failed", validationErrors);
+      // Generate real ZodIssue objects using Zod's validation
+      const schema = z.object({
+        email: z.string().email(),
+        password: z.string().min(8),
+      });
 
-      expect(error).toBeInstanceOf(Error);
-      expect(error).toBeInstanceOf(APIError);
-      expect(error).toBeInstanceOf(ValidationError);
-      expect(error.name).toBe("ValidationError");
-      expect(error.statusCode).toBe(422); // Unprocessable Entity
-      expect(error.message).toBe("Validation failed");
-      expect(error.errors).toEqual(validationErrors);
+      const result = schema.safeParse({
+        email: 123, // invalid type
+        password: "short", // too short
+      });
+
+      if (!result.success) {
+        const error = new ValidationError(
+          "Validation failed",
+          result.error.issues
+        );
+
+        expect(error).toBeInstanceOf(Error);
+        expect(error).toBeInstanceOf(APIError);
+        expect(error).toBeInstanceOf(ValidationError);
+        expect(error.name).toBe("ValidationError");
+        expect(error.statusCode).toBe(422); // Unprocessable Entity
+        expect(error.message).toBe("Validation failed");
+        expect(Array.isArray(error.errors)).toBe(true);
+        expect(error.errors.length).toBeGreaterThan(0);
+        // Verify first error has proper ZodIssue structure
+        expect(error.errors[0]).toHaveProperty("code");
+        expect(error.errors[0]).toHaveProperty("path");
+        expect(error.errors[0]).toHaveProperty("message");
+      }
     });
 
     it("should have stack trace", () => {
-      const error = new ValidationError("Invalid data", {});
+      const error = new ValidationError("Invalid data", []);
 
       expect(error.stack).toBeDefined();
       expect(error.stack).toContain("ValidationError");
+    });
+
+    it("should properly type ZodIssue[] for type safety", () => {
+      // Generate real ZodIssue using Zod validation
+      const emailSchema = z.string().email();
+      const result = emailSchema.safeParse("not-an-email");
+
+      if (!result.success) {
+        const error = new ValidationError(
+          "Email validation failed",
+          result.error.issues
+        );
+
+        // TypeScript should infer errors as ZodIssue[]
+        expect(Array.isArray(error.errors)).toBe(true);
+        expect(error.errors[0]?.code).toBe("invalid_format");
+        expect(error.errors[0]?.path).toEqual([]);
+        expect(error.errors[0]?.message).toContain("Invalid");
+
+        // Type-safe access to ZodIssue properties with discriminated union
+        const firstError = error.errors[0];
+        if (firstError && firstError.code === "invalid_format") {
+          expect(firstError.format).toBe("email");
+        }
+      }
     });
   });
 
@@ -127,7 +170,7 @@ describe("Custom Error Classes", () => {
   describe("Error instanceof checks", () => {
     it("should allow proper error type discrimination", () => {
       const apiError = new APIError(500, "Server error");
-      const validationError = new ValidationError("Invalid", {});
+      const validationError = new ValidationError("Invalid", []);
       const networkError = new NetworkError("Connection failed");
       const timeoutError = new TimeoutError("Timeout");
 
@@ -138,6 +181,7 @@ describe("Custom Error Classes", () => {
 
       if (validationError instanceof ValidationError) {
         expect(validationError.errors).toBeDefined();
+        expect(Array.isArray(validationError.errors)).toBe(true);
       }
 
       if (networkError instanceof NetworkError) {
@@ -152,7 +196,7 @@ describe("Custom Error Classes", () => {
     it("should support error catching with type checking", () => {
       const errors = [
         new APIError(404, "Not found"),
-        new ValidationError("Invalid", {}),
+        new ValidationError("Invalid", []),
         new NetworkError("Failed"),
         new TimeoutError("Timeout"),
       ];
@@ -162,6 +206,7 @@ describe("Custom Error Classes", () => {
 
         if (error instanceof ValidationError) {
           expect(error.statusCode).toBe(422);
+          expect(Array.isArray(error.errors)).toBe(true);
         } else if (error instanceof APIError) {
           expect(error.statusCode).toBeDefined();
         } else if (error instanceof NetworkError) {

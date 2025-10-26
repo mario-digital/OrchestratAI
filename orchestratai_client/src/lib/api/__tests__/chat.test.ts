@@ -41,10 +41,14 @@ describe("chat API", () => {
       );
 
       expect(result).toEqual(mockResponse);
-      expect(apiClient.post).toHaveBeenCalledWith("/api/chat", {
-        message: "What is my account balance?",
-        session_id: "550e8400-e29b-41d4-a716-446655440000",
-      });
+      expect(apiClient.post).toHaveBeenCalledWith(
+        "/api/chat",
+        {
+          message: "What is my account balance?",
+          session_id: "550e8400-e29b-41d4-a716-446655440000",
+        },
+        undefined
+      );
     });
 
     it("should generate UUID if sessionId not provided", async () => {
@@ -219,6 +223,55 @@ describe("chat API", () => {
         expect(error).toBeInstanceOf(ValidationError);
         expect((error as ValidationError).message).toContain("metrics");
       }
+    });
+
+    it("should pass custom timeout to apiClient.post", async () => {
+      const mockResponse = {
+        message: "Test response",
+        agent: "orchestrator",
+        confidence: 0.9,
+        logs: [],
+        metrics: { tokensUsed: 100, cost: 0.001, latency: 500 },
+      };
+
+      vi.mocked(apiClient.post).mockResolvedValue(mockResponse);
+
+      const customTimeout = 60000; // 60 seconds
+      await sendMessage("Complex query", undefined, customTimeout);
+
+      // Verify timeout was passed to apiClient.post
+      expect(apiClient.post).toHaveBeenCalledWith(
+        "/api/chat",
+        expect.objectContaining({
+          message: "Complex query",
+          session_id: expect.any(String),
+        }),
+        customTimeout
+      );
+    });
+
+    it("should use default timeout when not specified", async () => {
+      const mockResponse = {
+        message: "Test response",
+        agent: "orchestrator",
+        confidence: 0.9,
+        logs: [],
+        metrics: { tokensUsed: 100, cost: 0.001, latency: 500 },
+      };
+
+      vi.mocked(apiClient.post).mockResolvedValue(mockResponse);
+
+      await sendMessage("Simple query");
+
+      // Verify no timeout parameter was passed (will use apiClient default)
+      expect(apiClient.post).toHaveBeenCalledWith(
+        "/api/chat",
+        expect.objectContaining({
+          message: "Simple query",
+          session_id: expect.any(String),
+        }),
+        undefined
+      );
     });
   });
 

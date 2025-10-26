@@ -3,10 +3,16 @@
  * Provides specific error types for different failure scenarios
  */
 
+import type { ZodIssue } from "zod";
+
 /**
  * Error details type for additional error information
  */
-export type ErrorDetails = Record<string, unknown> | string | undefined;
+export type ErrorDetails =
+  | Record<string, unknown>
+  | ZodIssue[]
+  | string
+  | undefined;
 
 /**
  * Base API error class for all HTTP-related errors
@@ -30,11 +36,20 @@ export class APIError extends Error {
 /**
  * Validation error for schema validation failures
  * Used when request or response data doesn't match expected schema
+ *
+ * This error specifically handles Zod validation failures and provides
+ * type-safe access to validation issues.
  */
 export class ValidationError extends APIError {
+  /**
+   * Creates a new ValidationError with Zod validation issues
+   *
+   * @param message - Human-readable error message
+   * @param errors - Array of Zod validation issues with field paths and error details
+   */
   constructor(
     message: string,
-    public errors: unknown
+    public errors: ZodIssue[]
   ) {
     super(422, message, errors as ErrorDetails);
     this.name = "ValidationError";
