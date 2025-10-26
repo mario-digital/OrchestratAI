@@ -24,7 +24,13 @@ import type { ZodSchema, ZodError } from "zod";
  * @param schema - Zod schema to validate against
  * @param data - Unknown data to validate
  * @returns Validated and typed data
- * @throws {ValidationError} If validation fails with detailed error information
+ * @throws {ValidationError} If validation fails with detailed Zod issues
+ *
+ * @example
+ * ```typescript
+ * const validated = validateResponse(ChatResponseSchema, apiResponse);
+ * // validated is now typed as ChatResponse
+ * ```
  */
 export function validateResponse<T>(schema: ZodSchema<T>, data: unknown): T {
   const result = schema.safeParse(data);
@@ -33,7 +39,7 @@ export function validateResponse<T>(schema: ZodSchema<T>, data: unknown): T {
     const errorMessage = formatZodError(result.error);
     throw new ValidationError(
       `Response validation failed: ${errorMessage}`,
-      result.error.issues
+      result.error.issues // Now strongly typed as ZodIssue[]
     );
   }
 
@@ -67,6 +73,7 @@ function formatZodError(error: ZodError): string {
  *
  * @param message - User message text (1-2000 characters)
  * @param sessionId - Optional session UUID (auto-generated if not provided)
+ * @param timeout - Optional timeout in milliseconds (defaults to 30000ms). Chat operations may take longer due to LLM processing, consider increasing for complex queries.
  * @returns Validated ChatResponse from backend
  * @throws {ValidationError} If request or response fails schema validation
  * @throws {APIError} If backend returns error status (4xx/5xx)
@@ -75,7 +82,7 @@ function formatZodError(error: ZodError): string {
  *
  * @example
  * ```typescript
- * // Auto-generate session ID
+ * // Auto-generate session ID with default 30s timeout
  * const response = await sendMessage("What is my account balance?");
  *
  * // Provide existing session ID
@@ -83,11 +90,19 @@ function formatZodError(error: ZodError): string {
  *   "Thanks!",
  *   "550e8400-e29b-41d4-a716-446655440000"
  * );
+ *
+ * // Use custom timeout for complex queries (60 seconds)
+ * const response = await sendMessage(
+ *   "Analyze my last 100 transactions",
+ *   undefined,
+ *   60000
+ * );
  * ```
  */
 export async function sendMessage(
   message: string,
-  sessionId?: string
+  sessionId?: string,
+  timeout?: number
 ): Promise<ChatResponse> {
   // Generate session ID if not provided using built-in crypto API
   const session_id = sessionId || crypto.randomUUID();
@@ -96,8 +111,13 @@ export async function sendMessage(
   // This will throw if message is too long, empty, or session_id is invalid
   const requestData = ChatRequestSchema.parse({ message, session_id });
 
-  // Call backend API
-  const response = await apiClient.post<unknown>("/api/chat", requestData);
+  // Call backend API with optional timeout
+  // Default is 30s, but chat operations may need more time for LLM processing
+  const response = await apiClient.post<unknown>(
+    "/api/chat",
+    requestData,
+    timeout
+  );
 
   // Validate response structure and return typed data
   // This ensures backend contract is enforced at runtime
