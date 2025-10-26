@@ -150,7 +150,7 @@ describe("InputArea", () => {
     await user.paste(tooLongMessage);
 
     const charCount = screen.getByText(/2100\/2000/);
-    expect(charCount).toHaveClass("text-error");
+    expect(charCount).toHaveClass("text-input-text-error");
   });
 
   it("trims whitespace before sending", async () => {

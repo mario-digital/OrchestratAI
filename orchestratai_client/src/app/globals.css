@@ -245,6 +245,9 @@
   --color-input-border-focus: var(--color-border-focus); /* #06b6d4 - Cyan */
   --color-input-text: var(--color-text-primary); /* #f9fafb */
   --color-input-placeholder: var(--color-text-muted); /* #4b5563 */
+  --color-input-text-error: var(
+    --color-error
+  ); /* #ef4444 - Validation error text */
 
   /* === Buttons === */
   --color-button-primary-bg: var(--token-color-cyan-600); /* #0891b2 */
