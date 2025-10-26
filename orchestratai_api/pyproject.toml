@@ -59,7 +59,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-# asyncio_mode = "auto"  # Commented out - pytest-asyncio not installed
+# asyncio_mode = "auto"
+# NOTE: Temporarily commented out for Story 2.1 - pytest-asyncio is listed in dev dependencies
+# but not yet required since current tests are synchronous. Uncomment after running 'uv sync'
+# when implementing async endpoint tests in Story 2.2+
 addopts = [
     "--strict-markers",
     "--strict-config",
