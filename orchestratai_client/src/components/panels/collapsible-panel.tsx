@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, ReactNode, ReactElement } from "react";
+import { ReactNode, ReactElement } from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocalStorage } from "@/hooks";
 
 interface CollapsiblePanelProps {
   children: ReactNode;
@@ -17,41 +18,33 @@ interface CollapsiblePanelProps {
   defaultOpen?: boolean;
 }
 
+/**
+ * Determines the appropriate chevron icon based on panel state and side.
+ * - Open left panel: ChevronLeft (points inward to collapse)
+ * - Closed left panel: ChevronRight (points outward to expand)
+ * - Open right panel: ChevronRight (points inward to collapse)
+ * - Closed right panel: ChevronLeft (points outward to expand)
+ */
+function getChevronIcon(isOpen: boolean, side: "left" | "right"): LucideIcon {
+  if (isOpen) {
+    return side === "left" ? ChevronLeft : ChevronRight;
+  }
+  return side === "left" ? ChevronRight : ChevronLeft;
+}
+
 export function CollapsiblePanel({
   children,
   side,
   storageKey,
   defaultOpen = true,
 }: CollapsiblePanelProps): ReactElement {
-  // Initialize state from localStorage or defaultOpen
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window === "undefined") return defaultOpen;
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored !== null) return JSON.parse(stored) as boolean;
-    } catch (error) {
-      console.warn(`Failed to load panel state: ${error}`);
-    }
-    return defaultOpen;
-  });
+  const [isOpen, setIsOpen] = useLocalStorage(storageKey, defaultOpen);
 
-  // Save state to localStorage when it changes
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(isOpen));
-    } catch (error) {
-      console.warn(`Failed to persist panel state: ${error}`);
-    }
-  }, [isOpen, storageKey]);
-
-  const Icon = isOpen
-    ? side === "left"
-      ? ChevronLeft
-      : ChevronRight
-    : side === "left"
-      ? ChevronRight
-      : ChevronLeft;
+  // Render the appropriate icon inline to satisfy ESLint rules
+  const renderIcon = (): ReactElement => {
+    const IconComponent = getChevronIcon(isOpen, side);
+    return <IconComponent className="h-4 w-4" />;
+  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -62,7 +55,7 @@ export function CollapsiblePanel({
             size="sm"
             className={cn("mb-2", side === "left" ? "self-start" : "self-end")}
           >
-            <Icon className="h-4 w-4" />
+            {renderIcon()}
             {isOpen && <span className="ml-2">Collapse</span>}
           </Button>
         </CollapsibleTrigger>
