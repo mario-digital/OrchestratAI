@@ -25,16 +25,24 @@ export function CollapsiblePanel({
 }: CollapsiblePanelProps): ReactElement {
   // Initialize state from localStorage or defaultOpen
   const [isOpen, setIsOpen] = useState(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored !== null) {
-      return JSON.parse(stored) as boolean;
+    if (typeof window === "undefined") return defaultOpen;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored !== null) return JSON.parse(stored) as boolean;
+    } catch (error) {
+      console.warn(`Failed to load panel state: ${error}`);
     }
     return defaultOpen;
   });
 
   // Save state to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(isOpen));
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(isOpen));
+    } catch (error) {
+      console.warn(`Failed to persist panel state: ${error}`);
+    }
   }, [isOpen, storageKey]);
 
   const Icon = isOpen
