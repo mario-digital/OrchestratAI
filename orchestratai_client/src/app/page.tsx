@@ -5,10 +5,15 @@ import { ThreePanelLayout } from "@/components/layout/three-panel-layout";
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { CollapsiblePanel } from "@/components/panels/collapsible-panel";
 import { ChatInterface } from "@/components/chat/chat-interface";
+import { ChatErrorBoundary } from "@/components/chat/chat-error-boundary";
 
 export default function Home(): ReactElement {
-  // Chat interface with full state management
-  const chatPanel = <ChatInterface />;
+  // Chat interface with full state management wrapped in error boundary
+  const chatPanel = (
+    <ChatErrorBoundary>
+      <ChatInterface />
+    </ChatErrorBoundary>
+  );
 
   // Placeholder panels (to be replaced with real components in Epic 3+)
   const agentsPanel = (

@@ -438,6 +438,13 @@
 
   /* ScrollArea Component - Inherit Radius */
   --radius-scroll-viewport: var(--radius-inherit);
+
+  /* === Toast/Notification Component Tokens === */
+  --color-toast-bg: var(--color-bg-tertiary); /* #1e293b - Toast background */
+  --color-toast-text: var(--color-text-primary); /* #f9fafb - Toast primary text */
+  --color-toast-text-secondary: var(--color-text-secondary); /* #d1d5db - Toast description */
+  --color-toast-border: var(--color-border-default); /* #374151 - Toast border */
+  --radius-toast: var(--radius-default); /* Toast border radius */
 }
 
 /* ============================================

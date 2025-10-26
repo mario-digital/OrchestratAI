@@ -34,9 +34,26 @@ import type { JSX } from "react";
  * </ChatProvider>
  * ```
  */
+/**
+ * Get human-readable agent name from AgentId
+ */
+function getAgentName(agentId: AgentId): string {
+  switch (agentId) {
+    case AgentId.ORCHESTRATOR:
+      return "Orchestrator";
+    case AgentId.BILLING:
+      return "Billing Agent";
+    case AgentId.TECHNICAL:
+      return "Technical Agent";
+    case AgentId.POLICY:
+      return "Policy Agent";
+    default:
+      return "AI Assistant";
+  }
+}
+
 export function ChatInterface(): JSX.Element {
-  const { messages, isProcessing, error, sendMessage, clearError } =
-    useChatContext();
+  const { messages, isProcessing, typingAgent, sendMessage } = useChatContext();
 
   const handleSendMessage = (message: string): void => {
     void sendMessage(message);
@@ -44,36 +61,17 @@ export function ChatInterface(): JSX.Element {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Error Banner */}
-      {error && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm text-red-800 font-medium">
-              Failed to send message
-            </p>
-            <p className="text-xs text-red-600 mt-1">{error.message}</p>
-          </div>
-          <button
-            onClick={clearError}
-            className="text-red-800 hover:text-red-900 text-sm font-medium ml-4"
-            aria-label="Dismiss error"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
       {/* Message List */}
       <div className="flex-1 overflow-hidden">
         <MessageList messages={messages} isProcessing={isProcessing} />
       </div>
 
       {/* Typing Indicator */}
-      {isProcessing && (
+      {typingAgent && (
         <div className="px-4 py-2 border-t border-input-border">
           <TypingIndicator
-            agentName="AI Assistant"
-            agentId={AgentId.ORCHESTRATOR}
+            agentName={getAgentName(typingAgent)}
+            agentId={typingAgent}
           />
         </div>
       )}

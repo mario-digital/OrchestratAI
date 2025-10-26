@@ -17,8 +17,10 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import { toast } from "sonner";
 import { sendMessage as sendMessageAPI } from "@/lib/api/chat";
 import { AgentId, MessageRole } from "@/lib/enums";
+import { getUserFriendlyMessage } from "@/lib/utils/error-messages";
 
 // =============================================================================
 // Types
@@ -46,6 +48,8 @@ export interface ChatState {
   isProcessing: boolean;
   sessionId: string | null;
   error: Error | null;
+  typingAgent: AgentId | null;
+  failedMessage: string | null;
 }
 
 /**
@@ -53,9 +57,12 @@ export interface ChatState {
  */
 export type ChatAction =
   | { type: "ADD_MESSAGE"; payload: Message }
+  | { type: "REMOVE_MESSAGE"; payload: string }
   | { type: "SET_PROCESSING"; payload: boolean }
   | { type: "SET_ERROR"; payload: Error | null }
   | { type: "SET_SESSION_ID"; payload: string }
+  | { type: "SET_TYPING_AGENT"; payload: AgentId | null }
+  | { type: "SET_FAILED_MESSAGE"; payload: string | null }
   | { type: "CLEAR_MESSAGES" };
 
 /**
@@ -63,6 +70,7 @@ export type ChatAction =
  */
 export interface ChatContextValue extends ChatState {
   sendMessage: (message: string) => Promise<void>;
+  retryMessage: () => Promise<void>;
   clearMessages: () => void;
   clearError: () => void;
 }
@@ -98,6 +106,12 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         error: null, // Auto-clear errors on successful message
       };
 
+    case "REMOVE_MESSAGE":
+      return {
+        ...state,
+        messages: state.messages.filter((msg) => msg.id !== action.payload),
+      };
+
     case "SET_PROCESSING":
       return { ...state, isProcessing: action.payload };
 
@@ -106,6 +120,12 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
     case "SET_SESSION_ID":
       return { ...state, sessionId: action.payload };
+
+    case "SET_TYPING_AGENT":
+      return { ...state, typingAgent: action.payload };
+
+    case "SET_FAILED_MESSAGE":
+      return { ...state, failedMessage: action.payload };
 
     case "CLEAR_MESSAGES":
       return { ...state, messages: [], error: null };
@@ -170,6 +190,8 @@ export function ChatProvider({
     isProcessing: false,
     sessionId: initialSessionId || null,
     error: null,
+    typingAgent: null,
+    failedMessage: null,
   });
 
   // Initialize sessionId from localStorage or generate new
@@ -216,12 +238,12 @@ export function ChatProvider({
   /**
    * sendMessage - Send user message and receive AI response
    *
-   * Handles complete chat flow:
-   * 1. Set processing state
-   * 2. Add user message to state
+   * Handles complete chat flow with optimistic updates:
+   * 1. Add user message to state immediately (optimistic update)
+   * 2. Set processing state
    * 3. Call chat API
    * 4. Add AI response to state
-   * 5. Handle errors
+   * 5. Handle errors (remove optimistic message on failure)
    * 6. Clear processing state
    *
    * @param message - User message text
@@ -233,22 +255,24 @@ export function ChatProvider({
       return;
     }
 
+    // Step 1: Optimistic update - add user message BEFORE API call
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: MessageRole.USER,
+      content: message,
+      timestamp: new Date(),
+    };
+    dispatch({ type: "ADD_MESSAGE", payload: userMessage });
+
+    // Step 2: Set processing state and typing indicator
     dispatch({ type: "SET_PROCESSING", payload: true });
+    dispatch({ type: "SET_TYPING_AGENT", payload: AgentId.ORCHESTRATOR });
 
     try {
-      // Add user message immediately
-      const userMessage: Message = {
-        id: crypto.randomUUID(),
-        role: MessageRole.USER,
-        content: message,
-        timestamp: new Date(),
-      };
-      dispatch({ type: "ADD_MESSAGE", payload: userMessage });
-
-      // Call API
+      // Step 3: Call API
       const response = await sendMessageAPI(message, state.sessionId);
 
-      // Add AI response
+      // Step 4: Add AI response
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: MessageRole.ASSISTANT,
@@ -259,10 +283,47 @@ export function ChatProvider({
       };
       dispatch({ type: "ADD_MESSAGE", payload: assistantMessage });
     } catch (error) {
+      // Step 5: Remove optimistic user message on error
+      dispatch({ type: "REMOVE_MESSAGE", payload: userMessage.id });
       dispatch({ type: "SET_ERROR", payload: error as Error });
+      dispatch({ type: "SET_FAILED_MESSAGE", payload: message });
+
+      // Show user-friendly error toast with retry button
+      const errorMessage = getUserFriendlyMessage(error as Error);
+      toast.error(errorMessage, {
+        action: {
+          label: "Retry",
+          onClick: () => {
+            void retryMessage();
+          },
+        },
+      });
     } finally {
+      // Step 6: Clear processing state and typing indicator
       dispatch({ type: "SET_PROCESSING", payload: false });
+      dispatch({ type: "SET_TYPING_AGENT", payload: null });
     }
+  };
+
+  /**
+   * retryMessage - Retry sending the last failed message
+   *
+   * Retrieves the failed message from state and resends it.
+   * Clears error and failed message state on successful send.
+   */
+  const retryMessage = async (): Promise<void> => {
+    if (!state.failedMessage) {
+      return;
+    }
+
+    const messageToRetry = state.failedMessage;
+
+    // Clear error and failed message state
+    dispatch({ type: "SET_ERROR", payload: null });
+    dispatch({ type: "SET_FAILED_MESSAGE", payload: null });
+
+    // Resend the message
+    await sendMessage(messageToRetry);
   };
 
   /**
@@ -286,6 +347,7 @@ export function ChatProvider({
   const value: ChatContextValue = {
     ...state,
     sendMessage,
+    retryMessage,
     clearMessages,
     clearError,
   };

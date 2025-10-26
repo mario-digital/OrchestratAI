@@ -196,9 +196,9 @@ describe("ChatProvider", () => {
         expect(result.current.isProcessing).toBe(false);
       });
 
-      // User message should still be added even if API fails
-      expect(result.current.messages).toHaveLength(1);
-      expect(result.current.messages[0]!.content).toBe("Test");
+      // With optimistic updates, user message is removed on error
+      expect(result.current.messages).toHaveLength(0);
+      expect(result.current.failedMessage).toBe("Test");
     });
 
     it("auto-clears error on successful message send", async () => {
@@ -240,7 +240,9 @@ describe("ChatProvider", () => {
 
       await waitFor(() => {
         expect(result.current.error).toBeNull();
-        expect(result.current.messages).toHaveLength(3); // First user + Second user + Second assistant
+        // With optimistic updates: first user message was removed on error
+        // So we only have: Second user + Second assistant = 2 messages
+        expect(result.current.messages).toHaveLength(2);
       });
     });
   });
