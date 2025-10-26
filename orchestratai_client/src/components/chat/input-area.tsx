@@ -65,7 +65,7 @@ export function InputArea({
   };
 
   return (
-    <div className="flex gap-2 p-4 border-t border-border-default">
+    <div className="flex gap-2 p-4 border-t border-input-border">
       <div className="flex-1 relative">
         <Textarea
           ref={textareaRef}
@@ -78,7 +78,11 @@ export function InputArea({
         />
         {showCharCount && (
           <div className="absolute bottom-2 right-2 text-xs pointer-events-none">
-            <span className={isOverLimit ? "text-error" : "text-text-muted"}>
+            <span
+              className={
+                isOverLimit ? "text-input-text-error" : "text-text-secondary"
+              }
+            >
               {message.length}/{MAX_MESSAGE_LENGTH}
             </span>
           </div>
