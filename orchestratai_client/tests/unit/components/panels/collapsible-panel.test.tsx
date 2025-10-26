@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CollapsiblePanel } from '@/components/panels/collapsible-panel';
