@@ -14,16 +14,16 @@ export function MobileLayout({
   agentsPanel,
   logsPanel,
 }: MobileLayoutProps): ReactElement {
-  // Initialize state from URL hash
-  const getInitialTab = (): string => {
-    if (typeof window === "undefined") return "chat";
-    const hash = window.location.hash.replace("#", "");
-    return hash === "agents" || hash === "logs" || hash === "chat"
-      ? hash
-      : "chat";
-  };
-
-  const [activeTab, setActiveTab] = useState(getInitialTab);
+  // Initialize with URL hash if available, otherwise default to "chat"
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.replace("#", "");
+      if (hash === "agents" || hash === "logs" || hash === "chat") {
+        return hash;
+      }
+    }
+    return "chat";
+  });
 
   // Update URL hash when tab changes
   const handleTabChange = (value: string): void => {
@@ -38,14 +38,14 @@ export function MobileLayout({
         onValueChange={handleTabChange}
         className="flex-1 flex flex-col"
       >
-        <TabsList className="w-full justify-start border-b border-border-default bg-bg-secondary rounded-none">
-          <TabsTrigger value="chat" className="flex-1">
+        <TabsList className="w-full justify-start border-b border-border-default bg-transparent rounded-none h-auto p-0">
+          <TabsTrigger value="chat" className="flex-1 rounded-none">
             Chat
           </TabsTrigger>
-          <TabsTrigger value="agents" className="flex-1">
+          <TabsTrigger value="agents" className="flex-1 rounded-none">
             Agents
           </TabsTrigger>
-          <TabsTrigger value="logs" className="flex-1">
+          <TabsTrigger value="logs" className="flex-1 rounded-none">
             Logs
           </TabsTrigger>
         </TabsList>
