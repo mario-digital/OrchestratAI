@@ -46,11 +46,15 @@ export function CollapsiblePanel({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="flex flex-col h-full">
+        {/* Hide collapse trigger on mobile (<768px), show only on desktop */}
         <CollapsibleTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
-            className={cn("mb-2", side === "left" ? "self-start" : "self-end")}
+            className={cn(
+              "mb-2 hidden md:flex",
+              side === "left" ? "self-start" : "self-end"
+            )}
           >
             {renderIcon()}
             {isOpen && <span className="ml-2">Collapse</span>}

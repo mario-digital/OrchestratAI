@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, ReactElement } from "react";
 import { CollapsiblePanel } from "@/components/panels/collapsible-panel";
 
 interface ThreePanelLayoutProps {
@@ -7,7 +7,7 @@ interface ThreePanelLayoutProps {
 
 export function ThreePanelLayout({
   children,
-}: ThreePanelLayoutProps): React.ReactElement {
+}: ThreePanelLayoutProps): ReactElement {
   return (
     <div className="flex-1 overflow-hidden grid grid-cols-three-panel-chat">
       {/* Left Panel - Agent Pipeline */}
