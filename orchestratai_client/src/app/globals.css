@@ -160,6 +160,16 @@
   /* === Border Radius === */
   --radius-inherit: var(--token-radius-inherit);
 
+  /* === Sizes (Fixed dimensions) === */
+  --size-1: var(--token-size-1); /* 4px */
+  --size-3: var(--token-size-3); /* 12px */
+  --size-4: var(--token-size-4); /* 16px */
+  --size-9: var(--token-size-9); /* 36px */
+
+  /* === Spacing (Fractional) === */
+  --space-half: var(--token-space-half); /* 2px - 0.5 */
+  --space-1-half: var(--token-space-1-half); /* 6px - 1.5 */
+
   /* === Layout Grid Templates === */
   --grid-cols-three-panel-chat: var(--token-grid-cols-three-panel-chat);
 
@@ -409,6 +419,12 @@
   --size-separator: var(--token-size-px);
   --height-separator: var(--size-separator);
   --width-separator: var(--size-separator);
+
+  /* Tabs Component */
+  --color-muted: var(--color-bg-tertiary); /* #1e293b - Muted background */
+  --color-border-ring: var(--color-border-focus); /* #06b6d4 - Ring border */
+  --color-outline-ring: var(--color-border-focus); /* #06b6d4 - Ring outline */
+  --color-border-input: var(--color-input-border); /* #374151 - Input border */
 
   /* Card Component - Grid Templates */
   --grid-rows-card-header: var(--token-grid-rows-auto-2);

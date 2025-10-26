@@ -32,5 +32,21 @@
        ============================================ */
 
     --token-size-px: 1px; /* 1px separator lines */
+
+    /* ============================================
+       FRACTIONAL SPACING (For fine-grained control)
+       ============================================ */
+
+    --token-space-half: 0.125rem; /* 2px - 0.5 */
+    --token-space-1-half: 0.375rem; /* 6px - 1.5 */
+
+    /* ============================================
+       FIXED SIZES (For specific UI elements)
+       ============================================ */
+
+    --token-size-1: 0.25rem; /* 4px */
+    --token-size-3: 0.75rem; /* 12px */
+    --token-size-4: 1rem; /* 16px */
+    --token-size-9: 2.25rem; /* 36px */
   }
 }
