@@ -1,57 +1,13 @@
 // @vitest-environment jsdom
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CollapsiblePanel } from '@/components/panels/collapsible-panel';
 
-// Mock localStorage
-class LocalStorageMock {
-  private store: Record<string, string> = {};
-
-  clear() {
-    this.store = {};
-  }
-
-  getItem(key: string) {
-    return this.store[key] || null;
-  }
-
-  setItem(key: string, value: string) {
-    this.store[key] = value;
-  }
-
-  removeItem(key: string) {
-    delete this.store[key];
-  }
-
-  get length() {
-    return Object.keys(this.store).length;
-  }
-
-  key(index: number) {
-    const keys = Object.keys(this.store);
-    return keys[index] || null;
-  }
-}
-
-const localStorageMock = new LocalStorageMock();
-Object.defineProperty(global, 'localStorage', {
-  value: localStorageMock,
-  writable: true,
-});
-
 describe('CollapsiblePanel', () => {
-  beforeEach(() => {
-    localStorageMock.clear();
-  });
-
-  afterEach(() => {
-    localStorageMock.clear();
-  });
-
   it('collapses panel when trigger clicked', async () => {
     render(
-      <CollapsiblePanel side="left" storageKey="test-left">
+      <CollapsiblePanel side="left">
         <div>Test Content</div>
       </CollapsiblePanel>
     );
@@ -73,7 +29,7 @@ describe('CollapsiblePanel', () => {
 
   it('expands panel when trigger clicked while collapsed', async () => {
     render(
-      <CollapsiblePanel side="left" storageKey="test-left" defaultOpen={false}>
+      <CollapsiblePanel side="left" defaultOpen={false}>
         <div>Test Content</div>
       </CollapsiblePanel>
     );
@@ -92,46 +48,9 @@ describe('CollapsiblePanel', () => {
     });
   });
 
-  it('persists collapsed state to localStorage', async () => {
-    render(
-      <CollapsiblePanel side="left" storageKey="test-panel">
-        <div>Content</div>
-      </CollapsiblePanel>
-    );
-
-    const trigger = screen.getByRole('button');
-
-    // Collapse
-    fireEvent.click(trigger);
-    await waitFor(() => {
-      expect(localStorage.getItem('test-panel')).toBe('false');
-    });
-
-    // Expand
-    fireEvent.click(trigger);
-    await waitFor(() => {
-      expect(localStorage.getItem('test-panel')).toBe('true');
-    });
-  });
-
-  it('loads collapsed state from localStorage on mount', () => {
-    // Set localStorage before render
-    localStorage.setItem('test-panel', 'false');
-
-    render(
-      <CollapsiblePanel side="left" storageKey="test-panel" defaultOpen={true}>
-        <div>Content</div>
-      </CollapsiblePanel>
-    );
-
-    // localStorage value (false) should override defaultOpen (true)
-    // Collapsed content is not in the document
-    expect(screen.queryByText('Content')).not.toBeInTheDocument();
-  });
-
   it('shows correct icon based on side and state', () => {
     const { rerender } = render(
-      <CollapsiblePanel side="left" storageKey="test-left">
+      <CollapsiblePanel side="left">
         <div>Content</div>
       </CollapsiblePanel>
     );
@@ -141,7 +60,7 @@ describe('CollapsiblePanel', () => {
 
     // Rerender as right panel
     rerender(
-      <CollapsiblePanel side="right" storageKey="test-right">
+      <CollapsiblePanel side="right">
         <div>Content</div>
       </CollapsiblePanel>
     );
@@ -153,10 +72,10 @@ describe('CollapsiblePanel', () => {
   it('left and right panels collapse independently', async () => {
     render(
       <div>
-        <CollapsiblePanel side="left" storageKey="test-left">
+        <CollapsiblePanel side="left">
           <div>Left Content</div>
         </CollapsiblePanel>
-        <CollapsiblePanel side="right" storageKey="test-right">
+        <CollapsiblePanel side="right">
           <div>Right Content</div>
         </CollapsiblePanel>
       </div>
