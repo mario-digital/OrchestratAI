@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ChatProvider } from "@/components/providers/chat-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "OrchestratAI",
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ChatProvider>{children}</ChatProvider>
+        <ChatProvider>
+          {children}
+          <Toaster />
+        </ChatProvider>
       </body>
     </html>
   );
