@@ -72,8 +72,8 @@ if [ "$BACKEND_CHANGED" = "true" ] && [ -d "orchestratai_api" ]; then
   echo "🐍 Type checking backend..."
   (cd orchestratai_api && uv run mypy src/) || { echo "❌ Backend type check failed"; exit 1; }
 
-  echo "🐍 Running backend tests..."
-  PYTHONPATH=./orchestratai_api uv run --project orchestratai_api pytest || { echo "❌ Backend tests failed"; exit 1; }
+  echo "🐍 Running backend tests with coverage..."
+  PYTHONPATH=./orchestratai_api uv run --project orchestratai_api pytest --cov=src --cov-report=term --cov-report=html --cov-fail-under=80 || { echo "❌ Backend tests or coverage failed"; exit 1; }
 elif [ "$BACKEND_CHANGED" = "true" ]; then
   echo "⚠️ Backend files changed but orchestratai_api directory not found (worktree?)."
   echo "   Skipping backend checks - ensure they pass in main repo or CI/CD."
