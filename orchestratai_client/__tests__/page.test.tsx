@@ -1,29 +1,42 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import Home from "@/app/page";
+import { ChatProvider } from "@/components/providers/chat-provider";
+
+const renderHome = (): void => {
+  render(
+    <ChatProvider>
+      <Home />
+    </ChatProvider>
+  );
+};
 
 describe("Home Page", () => {
+  beforeEach(() => {
+    // Mock scrollIntoView for MessageList component
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  });
   it("renders the header with OrchestratAI branding", () => {
-    render(<Home />);
+    renderHome();
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading).toBeInTheDocument();
     expect(heading.textContent).toContain("OrchestratAI");
   });
 
   it("renders the header subtitle", () => {
-    render(<Home />);
+    renderHome();
     expect(
       screen.getByText(/LangGraph Orchestrator \+ RAG\/CAG Hybrid/i)
     ).toBeInTheDocument();
   });
 
   it("renders the ACTIVE status badge", () => {
-    render(<Home />);
+    renderHome();
     expect(screen.getByText("ACTIVE")).toBeInTheDocument();
   });
 
   it("renders the three panel layout", () => {
-    render(<Home />);
+    renderHome();
     // Both desktop and mobile layouts render these panels
     expect(screen.getAllByLabelText("Agent Pipeline").length).toBeGreaterThan(0);
     expect(screen.getAllByLabelText("Chat Interface").length).toBeGreaterThan(0);
@@ -31,7 +44,7 @@ describe("Home Page", () => {
   });
 
   it("renders footer metrics", () => {
-    render(<Home />);
+    renderHome();
     expect(screen.getByText(/Latency:/)).toBeInTheDocument();
     expect(screen.getByText(/Tokens:/)).toBeInTheDocument();
     expect(screen.getByText(/Cost:/)).toBeInTheDocument();
