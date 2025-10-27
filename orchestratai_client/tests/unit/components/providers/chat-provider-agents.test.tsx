@@ -282,4 +282,82 @@ describe("ChatProvider agent state management", () => {
       });
     });
   });
+
+  describe("Orchestrator timeout cleanup", () => {
+    it("clears previous timeout when rapid messages sent", () => {
+      const { result } = renderHook(() => useChatContext(), { wrapper });
+
+      // Set orchestrator to ROUTING
+      act(() => {
+        result.current.updateAgentStatus(AgentId.ORCHESTRATOR, AgentStatus.ROUTING);
+      });
+
+      expect(result.current.agents[AgentId.ORCHESTRATOR].status).toBe(
+        AgentStatus.ROUTING
+      );
+
+      // Immediately set to IDLE (simulating rapid message sending)
+      act(() => {
+        result.current.updateAgentStatus(AgentId.ORCHESTRATOR, AgentStatus.IDLE);
+      });
+
+      // Should be IDLE immediately
+      expect(result.current.agents[AgentId.ORCHESTRATOR].status).toBe(
+        AgentStatus.IDLE
+      );
+
+      // Set back to ROUTING again
+      act(() => {
+        result.current.updateAgentStatus(AgentId.ORCHESTRATOR, AgentStatus.ROUTING);
+      });
+
+      expect(result.current.agents[AgentId.ORCHESTRATOR].status).toBe(
+        AgentStatus.ROUTING
+      );
+    });
+  });
+
+  describe("Invalid agent ID handling", () => {
+    it("ignores updateAgentStatus for unknown agent ID", () => {
+      const { result } = renderHook(() => useChatContext(), { wrapper });
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const initialState = { ...result.current.agents };
+
+      // Try to update unknown agent (should be ignored)
+      act(() => {
+        result.current.updateAgentStatus("UNKNOWN_AGENT" as AgentId, AgentStatus.ACTIVE);
+      });
+
+      // State should be unchanged
+      expect(result.current.agents).toEqual(initialState);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'UPDATE_AGENT_STATUS: Unknown agent ID "UNKNOWN_AGENT"'
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it("ignores incrementAgentMetrics for unknown agent ID", () => {
+      const { result } = renderHook(() => useChatContext(), { wrapper });
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const initialState = { ...result.current.agents };
+
+      // Try to increment metrics for unknown agent (should be ignored)
+      act(() => {
+        result.current.incrementAgentMetrics("INVALID_AGENT" as AgentId, {
+          tokens: 100,
+        });
+      });
+
+      // State should be unchanged
+      expect(result.current.agents).toEqual(initialState);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'INCREMENT_AGENT_METRICS: Unknown agent ID "INVALID_AGENT"'
+      );
+
+      consoleSpy.mockRestore();
+    });
+  });
 });

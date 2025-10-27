@@ -15,6 +15,7 @@ import {
   useContext,
   useReducer,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
@@ -130,6 +131,19 @@ export interface ChatProviderProps {
 // =============================================================================
 
 /**
+ * localStorage key for session ID persistence
+ */
+const SESSION_ID_KEY = "orchestratai_session_id";
+
+/**
+ * Duration in milliseconds for orchestrator routing animation
+ *
+ * This delay provides visual feedback to users that the orchestrator
+ * is processing their message before routing to a specialist agent.
+ */
+const ORCHESTRATOR_ROUTING_ANIMATION_MS = 500;
+
+/**
  * INITIAL_AGENTS - Default agent state initialization
  *
  * All agents start in IDLE status with zero metrics
@@ -212,50 +226,73 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case "CLEAR_MESSAGES":
       return { ...state, messages: [], error: null };
 
-    case "UPDATE_AGENT_STATUS":
+    case "UPDATE_AGENT_STATUS": {
+      const agent = action.payload.agent;
+      if (!state.agents[agent]) {
+        console.warn(`UPDATE_AGENT_STATUS: Unknown agent ID "${agent}"`);
+        return state;
+      }
       return {
         ...state,
         agents: {
           ...state.agents,
-          [action.payload.agent]: {
-            ...state.agents[action.payload.agent],
+          [agent]: {
+            ...state.agents[agent],
             status: action.payload.status,
           },
         },
       };
+    }
 
-    case "INCREMENT_AGENT_METRICS":
+    case "INCREMENT_AGENT_METRICS": {
+      const agent = action.payload.agent;
+      if (!state.agents[agent]) {
+        console.warn(`INCREMENT_AGENT_METRICS: Unknown agent ID "${agent}"`);
+        return state;
+      }
       return {
         ...state,
         agents: {
           ...state.agents,
-          [action.payload.agent]: {
-            ...state.agents[action.payload.agent],
+          [agent]: {
+            ...state.agents[agent],
             metrics: {
               tokens:
-                state.agents[action.payload.agent].metrics.tokens +
+                state.agents[agent].metrics.tokens +
                 (action.payload.metrics.tokens || 0),
               cost:
-                state.agents[action.payload.agent].metrics.cost +
+                state.agents[agent].metrics.cost +
                 (action.payload.metrics.cost || 0),
               latency:
-                state.agents[action.payload.agent].metrics.latency +
+                state.agents[agent].metrics.latency +
                 (action.payload.metrics.latency || 0),
             },
             cacheStatus:
               (action.payload.cacheStatus as "hit" | "miss" | "none") ||
-              state.agents[action.payload.agent].cacheStatus,
+              state.agents[agent].cacheStatus,
           },
         },
       };
+    }
 
-    case "SET_ALL_AGENT_STATUS":
+    case "SET_ALL_AGENT_STATUS": {
+      // Filter out unknown agent IDs and warn
+      const validUpdates = Object.entries(action.payload).filter(
+        ([agentId]) => {
+          if (!state.agents[agentId as AgentId]) {
+            console.warn(`SET_ALL_AGENT_STATUS: Unknown agent ID "${agentId}"`);
+            return false;
+          }
+          return true;
+        }
+      );
+
       return {
         ...state,
         agents: {
           ...state.agents,
           ...Object.fromEntries(
-            Object.entries(action.payload).map(([agentId, status]) => [
+            validUpdates.map(([agentId, status]) => [
               agentId,
               {
                 ...state.agents[agentId as AgentId],
@@ -265,6 +302,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
           ),
         },
       };
+    }
 
     default:
       return state;
@@ -287,11 +325,6 @@ export const ChatContext = createContext<ChatContextValue | null>(null);
 // =============================================================================
 
 /**
- * localStorage key for session ID persistence
- */
-const SESSION_ID_KEY = "orchestratai_session_id";
-
-/**
  * ChatProvider - Provides chat state and operations to child components
  *
  * Manages:
@@ -299,6 +332,7 @@ const SESSION_ID_KEY = "orchestratai_session_id";
  * - Session ID (persisted in localStorage)
  * - Processing state (loading indicators)
  * - Error state (API errors)
+ * - Agent state and metrics
  *
  * @param props - Component props
  * @returns Provider component wrapping children
@@ -330,6 +364,9 @@ export function ChatProvider({
     failedMessage: null,
     agents: INITIAL_AGENTS,
   });
+
+  // Ref to track orchestrator animation timeout for cleanup
+  const orchestratorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize sessionId from localStorage or generate new
   useEffect(() => {
@@ -372,6 +409,15 @@ export function ChatProvider({
     }
   }, [state.sessionId]);
 
+  // Cleanup orchestrator timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (orchestratorTimeoutRef.current) {
+        clearTimeout(orchestratorTimeoutRef.current);
+      }
+    };
+  }, []);
+
   /**
    * sendMessage - Send user message and receive AI response
    *
@@ -406,17 +452,23 @@ export function ChatProvider({
     dispatch({ type: "SET_TYPING_AGENT", payload: AgentId.ORCHESTRATOR });
 
     // Step 3: Orchestrator routing animation
+    // Clear any existing timeout to prevent race conditions
+    if (orchestratorTimeoutRef.current) {
+      clearTimeout(orchestratorTimeoutRef.current);
+    }
+
     dispatch({
       type: "UPDATE_AGENT_STATUS",
       payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.ROUTING },
     });
 
-    setTimeout(() => {
+    orchestratorTimeoutRef.current = setTimeout(() => {
       dispatch({
         type: "UPDATE_AGENT_STATUS",
         payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.IDLE },
       });
-    }, 500);
+      orchestratorTimeoutRef.current = null;
+    }, ORCHESTRATOR_ROUTING_ANIMATION_MS);
 
     try {
       // Step 4: Call API
