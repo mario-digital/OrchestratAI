@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.models.enums import AgentId, AgentStatus
+from src.models.enums import AgentId, AgentStatus, LogStatus, LogType
 from src.models.schemas import (
     CacheOperation,
     ChatMetrics,
@@ -240,8 +240,6 @@ class TestRetrievalLogPolymorphic:
 
     def test_routing_log_with_query_analysis_data(self) -> None:
         """Test RetrievalLog with query_analysis type data."""
-        from src.models.enums import LogStatus, LogType
-
         log = RetrievalLog(
             id="550e8400-e29b-41d4-a716-446655440000",
             type=LogType.ROUTING,
@@ -262,8 +260,6 @@ class TestRetrievalLogPolymorphic:
 
     def test_vector_search_log_with_search_data(self) -> None:
         """Test RetrievalLog with vector_search type data."""
-        from src.models.enums import LogStatus, LogType
-
         log = RetrievalLog(
             id="550e8400-e29b-41d4-a716-446655440001",
             type=LogType.VECTOR_SEARCH,
@@ -283,8 +279,6 @@ class TestRetrievalLogPolymorphic:
 
     def test_cache_log_with_operation_data(self) -> None:
         """Test RetrievalLog with cache type data."""
-        from src.models.enums import LogStatus, LogType
-
         log = RetrievalLog(
             id="550e8400-e29b-41d4-a716-446655440002",
             type=LogType.CACHE,
