@@ -8,9 +8,10 @@ for chat interactions during development and testing.
 import random
 import uuid
 from datetime import UTC, datetime
+from typing import Literal, cast
 
 from ..models.enums import AgentId, AgentStatus, LogStatus, LogType
-from ..models.schemas import ChatMetrics, ChatResponse, RetrievalLog
+from ..models.schemas import ChatMetrics, ChatResponse, DocumentChunk, RetrievalLog
 
 # Response templates for each agent type
 BILLING_RESPONSES = [
@@ -139,73 +140,265 @@ def route_message(message: str) -> AgentId:
     return AgentId.ORCHESTRATOR
 
 
-def generate_mock_retrieval_logs(agent: AgentId, num_logs: int | None = None) -> list[RetrievalLog]:
+# ruff: noqa: E501
+# Document content templates - long lines intentional for realistic content
+def generate_document_snippet(filename: str) -> str:
     """
-    Generate realistic retrieval logs for mock responses.
+    Generate realistic document content snippet based on filename.
+
+    Args:
+        filename: Document filename to generate content for
+
+    Returns:
+        Realistic content snippet (150-200 characters)
+    """
+    # Content templates by filename pattern
+    content_templates = {
+        # Billing domain
+        "pricing_faq.md": [
+            "Our pricing structure includes three tiers. The Starter plan at $29/month provides essential features for small teams. Professional plan offers advanced analytics at $99/month.",
+            "Subscription billing occurs on the first of each month. You can upgrade or downgrade at any time, with prorated charges applied to your next invoice within 24 hours.",
+            "Enterprise pricing is customized based on team size and feature requirements. Contact our sales team for a detailed quote and volume discounts for organizations over 100 users.",
+        ],
+        "subscription_guide.md": [
+            "Managing your subscription is simple through the account dashboard. Change plans, update payment methods, or view billing history anytime without contacting support.",
+            "Annual subscriptions receive a 20% discount compared to monthly billing. Switch to annual billing to save money and lock in current pricing for 12 months.",
+            "Subscription renewals are automatic. We'll send reminders 7 days before each billing cycle. Cancel anytime with no penalties or hidden fees.",
+        ],
+        "payment_methods.md": [
+            "Payment methods accepted include all major credit cards, ACH transfers for enterprise accounts, and PayPal for international customers. Crypto payments coming soon.",
+            "Update payment information in your account settings. We encrypt all payment data using industry-standard AES-256 encryption and never store full card numbers.",
+            "Failed payments will be retried automatically three times over 7 days. Update your payment method to avoid service interruption and maintain access to your account.",
+        ],
+        # Technical domain
+        "api_documentation.md": [
+            "The REST API endpoint /v1/chat requires authentication via Bearer token. Include the token in the Authorization header for all requests. Rate limits apply per API key.",
+            "API responses follow JSON:API specification with consistent error formatting. All timestamps use ISO 8601 format. Pagination uses cursor-based navigation for efficiency.",
+            "WebSocket connections are available at wss://api.orchestratai.com/ws for real-time updates. Authenticate using the same Bearer token in the connection handshake.",
+        ],
+        "troubleshooting_guide.md": [
+            "Troubleshooting connection timeouts: Check your network firewall settings. API requests timeout after 30 seconds. Implement exponential backoff for retry logic.",
+            "Error code 429 indicates rate limit exceeded. Default limits are 100 requests per minute. Contact support to request higher limits for production workloads.",
+            "If you receive 401 Unauthorized, verify your API key is valid and not expired. Regenerate keys in the dashboard if needed. Keys expire after 90 days for security.",
+        ],
+        "sdk_reference.md": [
+            "SDK installation via npm: npm install @orchestratai/sdk. Initialize the client with your API key: const client = new OrchestratAI({ apiKey: process.env.API_KEY });",
+            "Python SDK supports async operations using asyncio. Install with pip: pip install orchestratai-sdk. Full type hints provided for IDE autocomplete and static analysis.",
+            "SDK automatically handles retries, rate limiting, and error recovery. Configure custom timeout values and retry strategies using the SDK configuration options.",
+        ],
+        # Policy domain
+        "terms_of_service.md": [
+            "Terms of Service updates are communicated via email 30 days before taking effect. Continued use of the service constitutes acceptance of the updated terms.",
+            "Service availability is guaranteed at 99.9% uptime per our SLA. Scheduled maintenance windows are announced 7 days in advance. Emergency maintenance may occur with shorter notice.",
+            "Acceptable use policy prohibits illegal activity, spam, malware distribution, or abuse of service resources. Violations may result in immediate account suspension.",
+        ],
+        "privacy_policy.md": [
+            "Data privacy: We comply with GDPR, CCPA, and SOC 2 Type II standards. Customer data is encrypted at rest using AES-256 and in transit using TLS 1.3.",
+            "Data retention policies follow regulatory requirements. User data is retained for 90 days after account deletion. Backups are kept for 30 days for disaster recovery.",
+            "Third-party data sharing is limited to essential service providers. We never sell customer data. View our data processing addendum for complete details.",
+        ],
+        "refund_policy.md": [
+            "Refund policy: Customers may request a full refund within 30 days of initial purchase. Contact support@orchestratai.com with your account ID to initiate the refund process.",
+            "Partial refunds are available for unused portions of annual subscriptions when downgrading or canceling mid-term. Processing takes 5-7 business days.",
+            "Enterprise contracts have custom refund terms negotiated during contract signing. Refer to your service agreement for specific refund and cancellation policies.",
+        ],
+        # Orchestrator/General domain
+        "general_faq.md": [
+            "Frequently asked questions cover account setup, billing, technical integration, and policy information. Search our knowledge base or contact support for assistance.",
+            "Getting started is easy: Create an account, verify your email, generate an API key, and start making requests. Check our quickstart guide for detailed instructions.",
+            "Support channels include email (support@orchestratai.com), live chat (business hours), and community forums. Enterprise customers have dedicated Slack channels.",
+        ],
+        "getting_started.md": [
+            "Welcome to OrchestratAI! This guide walks you through account setup, API authentication, making your first request, and exploring advanced features.",
+            "Step 1: Create your account at app.orchestratai.com. Step 2: Verify your email address. Step 3: Generate an API key in the dashboard. Step 4: Install the SDK.",
+            "Our platform supports multiple programming languages including Python, JavaScript, Ruby, and Go. Choose your preferred language and follow the integration guide.",
+        ],
+    }
+
+    # Find matching template
+    for file_pattern, templates in content_templates.items():
+        if file_pattern in filename:
+            content = random.choice(templates)
+            # Truncate to 150-200 characters for snippet display
+            if len(content) > 200:
+                return content[:197] + "..."
+            return content
+
+    # Default fallback content
+    return (
+        "Documentation content related to user query. "
+        "Contains relevant information from knowledge base."
+    )
+
+
+def generate_query_analysis_log(agent: AgentId, message: str) -> RetrievalLog:
+    """
+    Generate QueryAnalysis log for routing decision.
+
+    Args:
+        agent: The agent selected for handling the query
+        message: User input message
+
+    Returns:
+        RetrievalLog with QueryAnalysis data
+    """
+    # Generate intent based on agent type
+    intent_map = {
+        AgentId.BILLING: "Billing inquiry detected",
+        AgentId.TECHNICAL: "Technical support request detected",
+        AgentId.POLICY: "Policy question detected",
+        AgentId.ORCHESTRATOR: "General inquiry detected",
+    }
+    intent = intent_map[agent]
+
+    # Generate confidence score
+    confidence = round(random.uniform(0.85, 0.99), 3)
+
+    # Generate reasoning based on agent type
+    reasoning_map = {
+        AgentId.BILLING: "Message contains pricing/billing keywords",
+        AgentId.TECHNICAL: "Message contains technical/error keywords",
+        AgentId.POLICY: "Message contains policy/refund keywords",
+        AgentId.ORCHESTRATOR: "No specific domain keywords detected",
+    }
+    reasoning = reasoning_map[agent]
+
+    # Create QueryAnalysis data structure
+    query_analysis_data = {
+        "intent": intent,
+        "confidence": confidence,
+        "target_agent": agent.value,
+        "reasoning": reasoning,
+    }
+
+    return RetrievalLog(
+        id=str(uuid.uuid4()),
+        type=LogType.ROUTING,
+        title=f"Query Analysis: Routed to {agent.value}",
+        data=query_analysis_data,
+        timestamp=datetime.now(UTC).isoformat(),
+        status=LogStatus.SUCCESS,
+        chunks=None,
+    )
+
+
+def generate_vector_search_log(agent: AgentId) -> RetrievalLog:
+    """
+    Generate VectorSearch log with realistic document chunks.
 
     Args:
         agent: The agent handling the request
-        num_logs: Number of logs to generate (2-4 if not specified)
 
     Returns:
-        List of RetrievalLog objects with varying types and statuses
+        RetrievalLog with VectorSearch data and DocumentChunks
     """
-    if num_logs is None:
-        num_logs = random.randint(2, 4)
+    # Filenames by agent domain
+    filenames_by_agent = {
+        AgentId.BILLING: ["pricing_faq.md", "subscription_guide.md", "payment_methods.md"],
+        AgentId.TECHNICAL: ["api_documentation.md", "troubleshooting_guide.md", "sdk_reference.md"],
+        AgentId.POLICY: ["terms_of_service.md", "privacy_policy.md", "refund_policy.md"],
+        AgentId.ORCHESTRATOR: ["general_faq.md", "getting_started.md"],
+    }
 
-    logs = []
-    log_types = [LogType.ROUTING, LogType.VECTOR_SEARCH, LogType.CACHE, LogType.DOCUMENTS]
+    filenames = filenames_by_agent[agent]
+    chunks_retrieved = random.randint(3, 7)
 
-    # Always include a routing log first
-    logs.append(
-        RetrievalLog(
-            id=str(uuid.uuid4()),
-            type=LogType.ROUTING,
-            title=f"Routed to {agent.value} agent",
-            data={"agent": agent.value, "confidence": random.uniform(0.85, 0.98)},
-            timestamp=datetime.now(UTC).isoformat(),
-            status=LogStatus.SUCCESS,
-            chunks=None,
+    # Generate document chunks
+    chunks = []
+    for i in range(chunks_retrieved):
+        filename = random.choice(filenames)
+        content = generate_document_snippet(filename)
+        similarity = round(random.uniform(0.75, 0.95), 3)
+
+        chunk = DocumentChunk(
+            id=i,
+            content=content,
+            similarity=similarity,
+            source=filename,
+            metadata={"chunk_index": i, "collection": "knowledge_base_v1"},
         )
+        chunks.append(chunk)
+
+    # Create VectorSearch data structure
+    latency = random.randint(50, 300)
+    vector_search_data = {
+        "collection": "knowledge_base_v1",
+        "chunks_retrieved": chunks_retrieved,
+        "chunks": [chunk.model_dump() for chunk in chunks],
+        "latency": latency,
+    }
+
+    return RetrievalLog(
+        id=str(uuid.uuid4()),
+        type=LogType.VECTOR_SEARCH,
+        title=f"Vector Search: Retrieved {chunks_retrieved} chunks",
+        data=vector_search_data,
+        timestamp=datetime.now(UTC).isoformat(),
+        status=LogStatus.SUCCESS,
+        chunks=chunks,
     )
 
-    # Add additional random logs
-    for _ in range(num_logs - 1):
-        log_type = random.choice(log_types[1:])  # Skip ROUTING for remaining logs
-        status = random.choices(
-            [LogStatus.SUCCESS, LogStatus.WARNING, LogStatus.ERROR],
-            weights=[0.7, 0.2, 0.1],  # 70% success, 20% warning, 10% error
-        )[0]
 
-        log_data = {}
-        if log_type == LogType.VECTOR_SEARCH:
-            log_data = {
-                "query": "user query embedding",
-                "resultsFound": random.randint(3, 15),
-                "topSimilarity": round(random.uniform(0.75, 0.95), 3),
-            }
-        elif log_type == LogType.CACHE:
-            log_data = {
-                "cacheHit": random.choice([True, False]),
-                "key": f"cache_{uuid.uuid4().hex[:8]}",
-            }
-        elif log_type == LogType.DOCUMENTS:
-            log_data = {
-                "documentsRetrieved": random.randint(2, 8),
-                "sources": ["kb_doc_1", "kb_doc_2"],
-            }
+def generate_cache_operation_log() -> RetrievalLog:
+    """
+    Generate CacheOperation log with hit/miss status.
 
-        logs.append(
-            RetrievalLog(
-                id=str(uuid.uuid4()),
-                type=log_type,
-                title=f"{log_type.value.replace('_', ' ').title()} operation",
-                data=log_data,
-                timestamp=datetime.now(UTC).isoformat(),
-                status=status,
-                chunks=None,
-            )
-        )
+    Returns:
+        RetrievalLog with CacheOperation data
+    """
+    # Random status: hit or miss
+    status = random.choice(["hit", "miss"])
+
+    # Generate hit_rate
+    hit_rate = round(random.uniform(0.60, 0.90), 3)
+
+    # Generate cache size
+    size = f"{random.uniform(1.0, 5.0):.1f} MB"
+
+    # Create CacheOperation data structure
+    cache_operation_data = {
+        "status": status,
+        "hit_rate": hit_rate,
+        "size": size,
+    }
+
+    title = f"Cache {'Hit' if status == 'hit' else 'Miss'}: {size} cached"
+    log_status = LogStatus.SUCCESS if status == "hit" else LogStatus.WARNING
+
+    return RetrievalLog(
+        id=str(uuid.uuid4()),
+        type=LogType.CACHE,
+        title=title,
+        data=cache_operation_data,
+        timestamp=datetime.now(UTC).isoformat(),
+        status=log_status,
+        chunks=None,
+    )
+
+
+def generate_mock_retrieval_logs(agent: AgentId, message: str) -> list[RetrievalLog]:
+    """
+    Generate realistic retrieval logs using specialized log generators.
+
+    Args:
+        agent: The agent handling the request
+        message: User input message
+
+    Returns:
+        List of RetrievalLog objects with QueryAnalysis, VectorSearch, and CacheOperation
+    """
+    logs = []
+
+    # 1. Always include QueryAnalysis log first (routing decision)
+    logs.append(generate_query_analysis_log(agent, message))
+
+    # 2. 80% chance: Add VectorSearch log
+    if random.random() < 0.8:
+        logs.append(generate_vector_search_log(agent))
+
+    # 3. 50% chance: Add CacheOperation log
+    if random.random() < 0.5:
+        logs.append(generate_cache_operation_log())
 
     return logs
 
@@ -233,28 +426,33 @@ def generate_mock_response(message: str) -> ChatResponse:
         confidence = random.uniform(0.85, 0.98)  # Higher confidence for specialized agents
 
     # Generate mock retrieval logs
-    logs = generate_mock_retrieval_logs(agent)
+    logs = generate_mock_retrieval_logs(agent, message)
 
     # Generate realistic metrics
     tokens_used = random.randint(200, 800)
     latency_ms = random.randint(800, 2000)
     cost = round(random.uniform(0.001, 0.005), 5)
+    cache_status = cast(
+        Literal["hit", "miss", "none"],
+        random.choices(["hit", "miss", "none"], weights=[0.3, 0.3, 0.4])[0],
+    )
 
     metrics = ChatMetrics(
         tokensUsed=tokens_used,
         cost=cost,
         latency=latency_ms,
-        cache_status="none",
+        cache_status=cache_status,
     )
 
-    # Set agent status - selected agent is ACTIVE, others are IDLE
+    # Set agent status - orchestrator IDLE (already routed),
+    # selected agent COMPLETE (finished processing)
     agent_status = {
         AgentId.ORCHESTRATOR: AgentStatus.IDLE,
         AgentId.BILLING: AgentStatus.IDLE,
         AgentId.TECHNICAL: AgentStatus.IDLE,
         AgentId.POLICY: AgentStatus.IDLE,
     }
-    agent_status[agent] = AgentStatus.ACTIVE
+    agent_status[agent] = AgentStatus.COMPLETE
 
     return ChatResponse(
         message=response_text,
