@@ -19,14 +19,16 @@ class TestAgentStatus:
         assert AgentStatus.IDLE.value == "idle"
         assert AgentStatus.ROUTING.value == "routing"
         assert AgentStatus.ACTIVE.value == "active"
+        assert AgentStatus.COMPLETE.value == "complete"
 
     def test_has_all_expected_members(self) -> None:
         """Verify all expected enum members exist."""
         members = list(AgentStatus)
-        assert len(members) == 3
+        assert len(members) == 4
         assert AgentStatus.IDLE in members
         assert AgentStatus.ROUTING in members
         assert AgentStatus.ACTIVE in members
+        assert AgentStatus.COMPLETE in members
 
     def test_json_serialization(self) -> None:
         """Verify enum can be serialized to JSON string."""
