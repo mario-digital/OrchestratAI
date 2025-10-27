@@ -30,7 +30,12 @@ describe("chat API", () => {
         agent: "billing",
         confidence: 0.95,
         logs: [],
-        metrics: { tokensUsed: 100, cost: 0.001, latency: 500 },
+        metrics: {
+          tokensUsed: 100,
+          cost: 0.001,
+          latency: 500,
+          cache_status: "none",
+        },
       };
 
       vi.mocked(apiClient.post).mockResolvedValue(mockResponse);
@@ -189,7 +194,12 @@ describe("chat API", () => {
             status: "success",
           },
         ],
-        metrics: { tokensUsed: 250, cost: 0.0025, latency: 750 },
+        metrics: {
+          tokensUsed: 250,
+          cost: 0.0025,
+          latency: 750,
+          cache_status: "none",
+        },
       };
 
       vi.mocked(apiClient.post).mockResolvedValue(mockResponse);
@@ -282,7 +292,12 @@ describe("chat API", () => {
         agent: "orchestrator",
         confidence: 0.9,
         logs: [],
-        metrics: { tokensUsed: 100, cost: 0.001, latency: 500 },
+        metrics: {
+          tokensUsed: 100,
+          cost: 0.001,
+          latency: 500,
+          cache_status: "none",
+        },
       };
 
       const result = validateResponse(ChatResponseSchema, validData);
