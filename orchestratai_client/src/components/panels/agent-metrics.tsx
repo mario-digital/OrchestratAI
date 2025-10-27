@@ -17,6 +17,11 @@ export interface AgentMetricsProps {
 
 /**
  * CacheStatusIcon - Displays cache status with appropriate icon and color
+ *
+ * Uses semantic design tokens for consistent styling:
+ * - hit: --color-cache-hit (green)
+ * - miss: --color-cache-miss (yellow)
+ * - none: --color-cache-none (gray)
  */
 function CacheStatusIcon({
   status,
@@ -24,9 +29,9 @@ function CacheStatusIcon({
   status: "hit" | "miss" | "none";
 }): JSX.Element {
   const iconMap = {
-    hit: <CheckCircle className="h-4 w-4 text-green-600" />,
-    miss: <MinusCircle className="h-4 w-4 text-yellow-600" />,
-    none: <Circle className="h-4 w-4 text-gray-400" />,
+    hit: <CheckCircle className="h-4 w-4 text-cache-hit" />,
+    miss: <MinusCircle className="h-4 w-4 text-cache-miss" />,
+    none: <Circle className="h-4 w-4 text-cache-none" />,
   };
 
   return iconMap[status];

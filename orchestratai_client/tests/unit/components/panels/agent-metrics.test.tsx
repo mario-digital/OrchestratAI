@@ -35,7 +35,7 @@ describe("AgentMetrics", () => {
     expect(screen.getByText("0ms")).toBeInTheDocument();
   });
 
-  it("renders cache hit status with green icon", () => {
+  it("renders cache hit status with semantic token class", () => {
     const { container } = render(
       <AgentMetrics
         tokens={100}
@@ -45,11 +45,11 @@ describe("AgentMetrics", () => {
       />
     );
 
-    const icon = container.querySelector(".text-green-600");
+    const icon = container.querySelector(".text-cache-hit");
     expect(icon).toBeInTheDocument();
   });
 
-  it("renders cache miss status with yellow icon", () => {
+  it("renders cache miss status with semantic token class", () => {
     const { container } = render(
       <AgentMetrics
         tokens={100}
@@ -59,11 +59,11 @@ describe("AgentMetrics", () => {
       />
     );
 
-    const icon = container.querySelector(".text-yellow-600");
+    const icon = container.querySelector(".text-cache-miss");
     expect(icon).toBeInTheDocument();
   });
 
-  it("renders cache none status with gray icon", () => {
+  it("renders cache none status with semantic token class", () => {
     const { container } = render(
       <AgentMetrics
         tokens={100}
@@ -73,7 +73,7 @@ describe("AgentMetrics", () => {
       />
     );
 
-    const icon = container.querySelector(".text-gray-400");
+    const icon = container.querySelector(".text-cache-none");
     expect(icon).toBeInTheDocument();
   });
 

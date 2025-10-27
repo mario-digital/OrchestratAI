@@ -229,11 +229,11 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    // Initial cache status: none (gray)
-    let cacheIcon = container.querySelector(".text-gray-400");
+    // Initial cache status: none (semantic token)
+    let cacheIcon = container.querySelector(".text-cache-none");
     expect(cacheIcon).toBeInTheDocument();
 
-    // After first query: miss (yellow)
+    // After first query: miss (semantic token)
     rerender(
       <AgentCard
         agentId={AgentId.ORCHESTRATOR}
@@ -250,10 +250,10 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    cacheIcon = container.querySelector(".text-yellow-600");
+    cacheIcon = container.querySelector(".text-cache-miss");
     expect(cacheIcon).toBeInTheDocument();
 
-    // After second query: hit (green)
+    // After second query: hit (semantic token)
     rerender(
       <AgentCard
         agentId={AgentId.ORCHESTRATOR}
@@ -270,7 +270,7 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    cacheIcon = container.querySelector(".text-green-600");
+    cacheIcon = container.querySelector(".text-cache-hit");
     expect(cacheIcon).toBeInTheDocument();
   });
 

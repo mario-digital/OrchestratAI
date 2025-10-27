@@ -214,6 +214,11 @@
     --token-color-cyan-300
   ); /* For readability */
 
+  /* === Cache Status Icons === */
+  --color-cache-hit: var(--token-color-green-600); /* #16a34a - Cache hit */
+  --color-cache-miss: var(--token-color-yellow-600); /* #ca8a04 - Cache miss */
+  --color-cache-none: var(--token-color-gray-400); /* #9ca3af - No cache */
+
   /* === Chat Message Bubbles === */
   --color-message-user-bg: var(--token-color-blue-600); /* #2563eb */
   --color-message-user-text: var(--token-color-gray-50); /* #f9fafb */

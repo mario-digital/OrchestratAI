@@ -175,7 +175,7 @@ describe("AgentCard", () => {
     it("passes cache status to AgentMetrics component", () => {
       const { container } = render(<AgentCard {...defaultProps} cacheStatus="hit" />);
 
-      const cacheIcon = container.querySelector(".text-green-600");
+      const cacheIcon = container.querySelector(".text-cache-hit");
       expect(cacheIcon).toBeInTheDocument();
     });
 
@@ -184,11 +184,11 @@ describe("AgentCard", () => {
         <AgentCard {...defaultProps} cacheStatus="miss" />
       );
 
-      let cacheIcon = container.querySelector(".text-yellow-600");
+      let cacheIcon = container.querySelector(".text-cache-miss");
       expect(cacheIcon).toBeInTheDocument();
 
       rerender(<AgentCard {...defaultProps} cacheStatus="none" />);
-      cacheIcon = container.querySelector(".text-gray-400");
+      cacheIcon = container.querySelector(".text-cache-none");
       expect(cacheIcon).toBeInTheDocument();
     });
 
