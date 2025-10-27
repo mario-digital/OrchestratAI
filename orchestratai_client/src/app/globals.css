@@ -451,6 +451,11 @@
     --color-border-default
   ); /* #374151 - Toast border */
   --radius-toast: var(--radius-default); /* Toast border radius */
+
+  /* === Mobile Layout Tokens === */
+  --space-mobile-tabs-chat-top: var(--space-12); /* aligns chat panel under safe-area */
+  --space-mobile-tabs-panel-top: var(--space-4); /* spacing for agents/logs panels */
+  --space-mobile-tabs-panel-x: var(--space-4); /* horizontal inset for secondary panels */
 }
 
 /* ============================================
@@ -524,15 +529,16 @@
 
   /* Tabs component - Active state styling */
   [data-slot="tabs-list"] {
-    background: transparent;
+    background-color: var(--color-bg-primary) !important;
   }
 
   [data-slot="tabs-trigger"] {
     position: relative;
-    color: var(--color-text-secondary);
+    color: var(--color-text-tertiary);
     min-height: 3rem;
-    border-bottom: 2px solid transparent;
-    background: transparent;
+    border-bottom: 3px solid transparent;
+    background-color: var(--color-bg-primary);
+    font-weight: 500;
     transition:
       color var(--duration-normal) var(--ease-out),
       border-bottom-color var(--duration-normal) var(--ease-out);
@@ -541,11 +547,12 @@
   [data-slot="tabs-trigger"][data-state="active"] {
     color: var(--color-text-primary);
     border-bottom-color: var(--color-border-focus);
-    background: transparent;
+    background-color: var(--color-bg-primary);
+    font-weight: 600;
   }
 
   [data-slot="tabs-trigger"]:hover:not([data-state="active"]) {
-    color: var(--color-text-primary);
+    color: var(--color-text-secondary);
     border-bottom-color: var(--color-border-hover);
   }
 
@@ -554,5 +561,15 @@
     flex-shrink: 0;
     width: var(--size-4);
     height: var(--size-4);
+  }
+
+  .mobile-tabs-chat-content {
+    padding-top: var(--space-mobile-tabs-chat-top);
+  }
+
+  .mobile-tabs-secondary-content {
+    padding-top: var(--space-mobile-tabs-panel-top);
+    padding-left: var(--space-mobile-tabs-panel-x);
+    padding-right: var(--space-mobile-tabs-panel-x);
   }
 }

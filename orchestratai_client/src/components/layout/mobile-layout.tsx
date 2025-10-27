@@ -32,13 +32,13 @@ export function MobileLayout({
   };
 
   return (
-    <div className="md:hidden min-h-screen flex flex-col">
+    <div className="md:hidden flex flex-col flex-1">
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
         className="flex-1 flex flex-col"
       >
-        <TabsList className="w-full justify-start border-b border-border-default bg-transparent rounded-none h-auto p-0">
+        <TabsList className="sticky top-0 z-10 w-full justify-start border-b border-border-default rounded-none h-auto p-0 shrink-0 pt-safe">
           <TabsTrigger value="chat" className="flex-1 rounded-none">
             Chat
           </TabsTrigger>
@@ -52,26 +52,26 @@ export function MobileLayout({
 
         <TabsContent
           value="chat"
-          className="flex-1 m-0 p-4"
+          className="flex-1 overflow-hidden p-0 mobile-tabs-chat-content"
           aria-label="Chat Interface"
         >
-          {chatPanel}
+          <div className="h-full">{chatPanel}</div>
         </TabsContent>
 
         <TabsContent
           value="agents"
-          className="flex-1 m-0 p-4"
+          className="flex-1 overflow-hidden p-0 mobile-tabs-secondary-content"
           aria-label="Agent Pipeline"
         >
-          {agentsPanel}
+          <div className="h-full">{agentsPanel}</div>
         </TabsContent>
 
         <TabsContent
           value="logs"
-          className="flex-1 m-0 p-4"
+          className="flex-1 overflow-hidden p-0 mobile-tabs-secondary-content"
           aria-label="Retrieval Log"
         >
-          {logsPanel}
+          <div className="h-full">{logsPanel}</div>
         </TabsContent>
       </Tabs>
     </div>

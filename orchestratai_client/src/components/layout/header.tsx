@@ -1,8 +1,18 @@
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-export function Header(): React.JSX.Element {
+export interface HeaderProps {
+  className?: string;
+}
+
+export function Header({ className }: HeaderProps = {}): React.JSX.Element {
   return (
-    <header className="bg-bg-secondary border-b border-border-default p-4">
+    <header
+      className={cn(
+        "bg-bg-secondary border-b border-border-default p-4",
+        className
+      )}
+    >
       <div className="flex items-center justify-between">
         {/* Branding */}
         <div>

@@ -28,8 +28,9 @@ export default function Home(): ReactElement {
   );
 
   return (
-    <div className="flex flex-col h-screen max-w-screen-2xl mx-auto overflow-hidden">
-      <Header />
+    <div className="flex flex-col h-screen max-w-screen-2xl mx-auto">
+      {/* Header - Hidden on mobile, visible on desktop */}
+      <Header className="hidden md:block shrink-0" />
 
       {/* Desktop Layout (>=768px) */}
       <div className="hidden md:flex md:flex-1 overflow-hidden">
@@ -43,7 +44,8 @@ export default function Home(): ReactElement {
         logsPanel={logsPanel}
       />
 
-      <Footer />
+      {/* Footer - Hidden on mobile, visible on desktop */}
+      <Footer className="hidden md:block shrink-0" />
     </div>
   );
 }
