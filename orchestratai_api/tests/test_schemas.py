@@ -255,12 +255,19 @@ class TestChatResponse:
             confidence=0.95,
             logs=[],
             metrics=ChatMetrics(tokensUsed=100, cost=0.01, latency=250),
+            agent_status={
+                AgentId.ORCHESTRATOR: AgentStatus.IDLE,
+                AgentId.BILLING: AgentStatus.ACTIVE,
+                AgentId.TECHNICAL: AgentStatus.IDLE,
+                AgentId.POLICY: AgentStatus.IDLE,
+            },
         )
         assert response.message == "Here is your answer"
         assert response.agent == AgentId.BILLING
         assert response.confidence == 0.95
         assert len(response.logs) == 0
         assert response.metrics.tokensUsed == 100
+        assert response.agent_status[AgentId.BILLING] == AgentStatus.ACTIVE
 
     def test_response_with_logs(self) -> None:
         """Test response with retrieval logs."""
@@ -280,6 +287,12 @@ class TestChatResponse:
             confidence=0.92,
             logs=logs,
             metrics=ChatMetrics(tokensUsed=150, cost=0.02, latency=300),
+            agent_status={
+                AgentId.ORCHESTRATOR: AgentStatus.IDLE,
+                AgentId.BILLING: AgentStatus.IDLE,
+                AgentId.TECHNICAL: AgentStatus.ACTIVE,
+                AgentId.POLICY: AgentStatus.IDLE,
+            },
         )
         assert len(response.logs) == 1
         assert response.logs[0].type == LogType.ROUTING

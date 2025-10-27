@@ -14,11 +14,13 @@
  * - IDLE: Agent is waiting for work assignment
  * - ROUTING: Orchestrator agent is routing a query to specialist agents
  * - ACTIVE: Agent is actively processing a user query
+ * - COMPLETE: Agent has finished processing
  */
 export enum AgentStatus {
   IDLE = "idle",
   ROUTING = "routing",
   ACTIVE = "active",
+  COMPLETE = "complete",
 }
 
 /**

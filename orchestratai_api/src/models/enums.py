@@ -16,6 +16,7 @@ class AgentStatus(str, Enum):
     IDLE = "idle"
     ROUTING = "routing"
     ACTIVE = "active"
+    COMPLETE = "complete"
 
 
 class AgentId(str, Enum):
