@@ -57,6 +57,10 @@ export const ChatMetricsSchema = z
       .number()
       .nonnegative("Latency cannot be negative")
       .describe("Operation latency in milliseconds"),
+    cache_status: z
+      .enum(["hit", "miss", "none"])
+      .optional()
+      .describe("Cache hit/miss status for this request"),
   })
   .strict();
 
@@ -203,6 +207,10 @@ export const ChatResponseSchema = z
       .array(RetrievalLogSchema)
       .describe("Array of retrieval operation logs for transparency"),
     metrics: ChatMetricsSchema.describe("Performance and cost metrics"),
+    agent_status: z
+      .record(z.nativeEnum(AgentId), z.nativeEnum(AgentStatus))
+      .optional()
+      .describe("Current status of all agents in the system"),
   })
   .strict();
 

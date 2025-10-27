@@ -1,6 +1,6 @@
 "use client";
 
-import { type JSX } from "react";
+import { type JSX, memo } from "react";
 import { AgentId, AgentStatus, RetrievalStrategy } from "@/lib/enums";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,59 +56,74 @@ function AgentIcon({
  * - Model name display
  * - Strategy badge (RAG/CAG/Hybrid)
  * - Hover effect for interactivity
+ * - React.memo optimization to prevent unnecessary re-renders
  */
-export function AgentCard({
-  agentId,
-  name,
-  status,
-  model,
-  strategy,
-  metrics,
-  cacheStatus,
-}: AgentCardProps): JSX.Element {
-  const borderColor = getAgentBorderColor(agentId);
-  const accentColor = getAgentAccentColor(agentId);
+export const AgentCard = memo(
+  function AgentCard({
+    agentId,
+    name,
+    status,
+    model,
+    strategy,
+    metrics,
+    cacheStatus,
+  }: AgentCardProps): JSX.Element {
+    const borderColor = getAgentBorderColor(agentId);
+    const accentColor = getAgentAccentColor(agentId);
 
-  // Strategy badge colors using design tokens
-  const strategyColorMap: Record<RetrievalStrategy, string> = {
-    [RetrievalStrategy.PURE_RAG]:
-      "bg-agent-card-border-purple/20 text-agent-card-text-purple",
-    [RetrievalStrategy.PURE_CAG]:
-      "bg-agent-card-border-cyan/20 text-agent-card-text-cyan",
-    [RetrievalStrategy.HYBRID_RAG_CAG]:
-      "bg-agent-card-border-blue/20 text-agent-card-text-blue",
-  };
+    // Strategy badge colors using design tokens
+    const strategyColorMap: Record<RetrievalStrategy, string> = {
+      [RetrievalStrategy.PURE_RAG]:
+        "bg-agent-card-border-purple/20 text-agent-card-text-purple",
+      [RetrievalStrategy.PURE_CAG]:
+        "bg-agent-card-border-cyan/20 text-agent-card-text-cyan",
+      [RetrievalStrategy.HYBRID_RAG_CAG]:
+        "bg-agent-card-border-blue/20 text-agent-card-text-blue",
+    };
 
-  return (
-    <Card
-      className="hover:shadow-md transition-shadow duration-200"
-      style={{
-        borderLeftColor: `var(${borderColor})`,
-        borderLeftWidth: "4px",
-      }}
-    >
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="flex items-center gap-3">
-          <AgentIcon name={name} color={accentColor} />
-          <h3 className="font-semibold">{name}</h3>
-        </div>
-        <AgentStatusBadge status={status} agentName={name} />
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <p className="text-sm text-text-secondary">{model}</p>
-        {strategy && (
-          <Badge variant="outline" className={strategyColorMap[strategy]}>
-            {strategy}
-          </Badge>
-        )}
-        <Separator />
-        <AgentMetrics
-          tokens={metrics.tokens}
-          cost={metrics.cost}
-          latency={metrics.latency}
-          cacheStatus={cacheStatus}
-        />
-      </CardContent>
-    </Card>
-  );
-}
+    return (
+      <Card
+        className="hover:shadow-md transition-shadow duration-200"
+        style={{
+          borderLeftColor: `var(${borderColor})`,
+          borderLeftWidth: "4px",
+        }}
+      >
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="flex items-center gap-3">
+            <AgentIcon name={name} color={accentColor} />
+            <h3 className="font-semibold">{name}</h3>
+          </div>
+          <AgentStatusBadge status={status} agentName={name} />
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm text-text-secondary">{model}</p>
+          {strategy && (
+            <Badge variant="outline" className={strategyColorMap[strategy]}>
+              {strategy}
+            </Badge>
+          )}
+          <Separator />
+          <AgentMetrics
+            tokens={metrics.tokens}
+            cost={metrics.cost}
+            latency={metrics.latency}
+            cacheStatus={cacheStatus}
+          />
+        </CardContent>
+      </Card>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if this specific agent's data changed
+    return (
+      prevProps.status === nextProps.status &&
+      prevProps.metrics.tokens === nextProps.metrics.tokens &&
+      prevProps.metrics.cost === nextProps.metrics.cost &&
+      prevProps.metrics.latency === nextProps.metrics.latency &&
+      prevProps.cacheStatus === nextProps.cacheStatus &&
+      prevProps.strategy === nextProps.strategy &&
+      prevProps.model === nextProps.model
+    );
+  }
+);

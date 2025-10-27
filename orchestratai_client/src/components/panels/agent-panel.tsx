@@ -1,10 +1,9 @@
-import { type JSX } from "react";
-import type { Agent } from "@/lib/types";
-import { AgentCard } from "./agent-card";
+"use client";
 
-interface AgentPanelProps {
-  agents: Agent[];
-}
+import { type JSX } from "react";
+import { AgentId } from "@/lib/enums";
+import { AgentCard } from "./agent-card";
+import { useChatAgents } from "@/hooks/use-chat-agents";
 
 /**
  * AgentPanel - Container for displaying all agent cards in the pipeline
@@ -15,28 +14,39 @@ interface AgentPanelProps {
  * - Consistent spacing and layout
  *
  * Expected agent order: Orchestrator, Billing, Technical, Policy
+ *
+ * Now reads agent state directly from ChatProvider context.
  */
-export function AgentPanel({ agents }: AgentPanelProps): JSX.Element {
+export function AgentPanel(): JSX.Element {
+  const { agents } = useChatAgents();
+
+  // Define agent order and display names
+  const agentOrder = [
+    { id: AgentId.ORCHESTRATOR, name: "Orchestrator" },
+    { id: AgentId.BILLING, name: "Billing Agent" },
+    { id: AgentId.TECHNICAL, name: "Technical Agent" },
+    { id: AgentId.POLICY, name: "Policy Agent" },
+  ];
+
   return (
     <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
       <h2 className="text-lg font-semibold">Agent Pipeline</h2>
       <div className="flex flex-col gap-4">
-        {agents.map((agent) => (
-          <AgentCard
-            key={agent.id}
-            agentId={agent.id}
-            name={agent.name}
-            status={agent.status}
-            model={agent.model}
-            strategy={agent.strategy || null}
-            metrics={{
-              tokens: agent.tokensUsed,
-              cost: agent.cost,
-              latency: agent.latency,
-            }}
-            cacheStatus={agent.cacheStatus}
-          />
-        ))}
+        {agentOrder.map(({ id, name }) => {
+          const agentState = agents[id];
+          return (
+            <AgentCard
+              key={id}
+              agentId={id}
+              name={name}
+              status={agentState.status}
+              model={agentState.model}
+              strategy={agentState.strategy}
+              metrics={agentState.metrics}
+              cacheStatus={agentState.cacheStatus}
+            />
+          );
+        })}
       </div>
     </div>
   );

@@ -19,7 +19,12 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { sendMessage as sendMessageAPI } from "@/lib/api/chat";
-import { AgentId, MessageRole } from "@/lib/enums";
+import {
+  AgentId,
+  AgentStatus,
+  MessageRole,
+  RetrievalStrategy,
+} from "@/lib/enums";
 import { getUserFriendlyMessage } from "@/lib/utils/error-messages";
 
 // =============================================================================
@@ -41,6 +46,23 @@ export interface Message {
 }
 
 /**
+ * AgentState - Individual agent state tracking
+ *
+ * Tracks status, metrics, and configuration for each agent
+ */
+export interface AgentState {
+  status: AgentStatus;
+  model: string;
+  strategy: RetrievalStrategy | null;
+  metrics: {
+    tokens: number;
+    cost: number;
+    latency: number;
+  };
+  cacheStatus: "hit" | "miss" | "none";
+}
+
+/**
  * ChatState - Complete chat state managed by reducer
  */
 export interface ChatState {
@@ -50,6 +72,7 @@ export interface ChatState {
   error: Error | null;
   typingAgent: AgentId | null;
   failedMessage: string | null;
+  agents: Record<AgentId, AgentState>;
 }
 
 /**
@@ -63,7 +86,20 @@ export type ChatAction =
   | { type: "SET_SESSION_ID"; payload: string }
   | { type: "SET_TYPING_AGENT"; payload: AgentId | null }
   | { type: "SET_FAILED_MESSAGE"; payload: string | null }
-  | { type: "CLEAR_MESSAGES" };
+  | { type: "CLEAR_MESSAGES" }
+  | {
+      type: "UPDATE_AGENT_STATUS";
+      payload: { agent: AgentId; status: AgentStatus };
+    }
+  | {
+      type: "INCREMENT_AGENT_METRICS";
+      payload: {
+        agent: AgentId;
+        metrics: Partial<AgentState["metrics"]>;
+        cacheStatus?: string;
+      };
+    }
+  | { type: "SET_ALL_AGENT_STATUS"; payload: Record<AgentId, AgentStatus> };
 
 /**
  * ChatContextValue - Complete context value with state and methods
@@ -73,6 +109,12 @@ export interface ChatContextValue extends ChatState {
   retryMessage: () => Promise<void>;
   clearMessages: () => void;
   clearError: () => void;
+  updateAgentStatus: (agent: AgentId, status: AgentStatus) => void;
+  incrementAgentMetrics: (
+    agent: AgentId,
+    metrics: Partial<AgentState["metrics"]>,
+    cacheStatus?: string
+  ) => void;
 }
 
 /**
@@ -82,6 +124,46 @@ export interface ChatProviderProps {
   children: ReactNode;
   initialSessionId?: string;
 }
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+/**
+ * INITIAL_AGENTS - Default agent state initialization
+ *
+ * All agents start in IDLE status with zero metrics
+ */
+const INITIAL_AGENTS: Record<AgentId, AgentState> = {
+  [AgentId.ORCHESTRATOR]: {
+    status: AgentStatus.IDLE,
+    model: "OpenAI GPT-4o",
+    strategy: null,
+    metrics: { tokens: 0, cost: 0, latency: 0 },
+    cacheStatus: "none",
+  },
+  [AgentId.BILLING]: {
+    status: AgentStatus.IDLE,
+    model: "OpenAI GPT-4o",
+    strategy: null,
+    metrics: { tokens: 0, cost: 0, latency: 0 },
+    cacheStatus: "none",
+  },
+  [AgentId.TECHNICAL]: {
+    status: AgentStatus.IDLE,
+    model: "OpenAI GPT-4o",
+    strategy: null,
+    metrics: { tokens: 0, cost: 0, latency: 0 },
+    cacheStatus: "none",
+  },
+  [AgentId.POLICY]: {
+    status: AgentStatus.IDLE,
+    model: "OpenAI GPT-4o",
+    strategy: null,
+    metrics: { tokens: 0, cost: 0, latency: 0 },
+    cacheStatus: "none",
+  },
+};
 
 // =============================================================================
 // Reducer
@@ -130,6 +212,60 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case "CLEAR_MESSAGES":
       return { ...state, messages: [], error: null };
 
+    case "UPDATE_AGENT_STATUS":
+      return {
+        ...state,
+        agents: {
+          ...state.agents,
+          [action.payload.agent]: {
+            ...state.agents[action.payload.agent],
+            status: action.payload.status,
+          },
+        },
+      };
+
+    case "INCREMENT_AGENT_METRICS":
+      return {
+        ...state,
+        agents: {
+          ...state.agents,
+          [action.payload.agent]: {
+            ...state.agents[action.payload.agent],
+            metrics: {
+              tokens:
+                state.agents[action.payload.agent].metrics.tokens +
+                (action.payload.metrics.tokens || 0),
+              cost:
+                state.agents[action.payload.agent].metrics.cost +
+                (action.payload.metrics.cost || 0),
+              latency:
+                state.agents[action.payload.agent].metrics.latency +
+                (action.payload.metrics.latency || 0),
+            },
+            cacheStatus:
+              (action.payload.cacheStatus as "hit" | "miss" | "none") ||
+              state.agents[action.payload.agent].cacheStatus,
+          },
+        },
+      };
+
+    case "SET_ALL_AGENT_STATUS":
+      return {
+        ...state,
+        agents: {
+          ...state.agents,
+          ...Object.fromEntries(
+            Object.entries(action.payload).map(([agentId, status]) => [
+              agentId,
+              {
+                ...state.agents[agentId as AgentId],
+                status,
+              },
+            ])
+          ),
+        },
+      };
+
     default:
       return state;
   }
@@ -144,7 +280,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
  *
  * Initialized as null to enforce usage within provider
  */
-const ChatContext = createContext<ChatContextValue | null>(null);
+export const ChatContext = createContext<ChatContextValue | null>(null);
 
 // =============================================================================
 // Provider Component
@@ -192,6 +328,7 @@ export function ChatProvider({
     error: null,
     typingAgent: null,
     failedMessage: null,
+    agents: INITIAL_AGENTS,
   });
 
   // Initialize sessionId from localStorage or generate new
@@ -268,11 +405,48 @@ export function ChatProvider({
     dispatch({ type: "SET_PROCESSING", payload: true });
     dispatch({ type: "SET_TYPING_AGENT", payload: AgentId.ORCHESTRATOR });
 
+    // Step 3: Orchestrator routing animation
+    dispatch({
+      type: "UPDATE_AGENT_STATUS",
+      payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.ROUTING },
+    });
+
+    setTimeout(() => {
+      dispatch({
+        type: "UPDATE_AGENT_STATUS",
+        payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.IDLE },
+      });
+    }, 500);
+
     try {
-      // Step 3: Call API
+      // Step 4: Call API
       const response = await sendMessageAPI(message, state.sessionId);
 
-      // Step 4: Add AI response
+      // Step 5: Update agent statuses from API response
+      if (response.agent_status) {
+        dispatch({
+          type: "SET_ALL_AGENT_STATUS",
+          payload: response.agent_status,
+        });
+      }
+
+      // Step 6: Increment metrics for the selected agent
+      if (response.metrics) {
+        dispatch({
+          type: "INCREMENT_AGENT_METRICS",
+          payload: {
+            agent: response.agent,
+            metrics: {
+              tokens: response.metrics.tokensUsed,
+              cost: response.metrics.cost,
+              latency: response.metrics.latency,
+            },
+            cacheStatus: response.metrics.cache_status,
+          },
+        });
+      }
+
+      // Step 7: Add AI response
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: MessageRole.ASSISTANT,
@@ -344,12 +518,42 @@ export function ChatProvider({
     dispatch({ type: "SET_ERROR", payload: null });
   };
 
+  /**
+   * updateAgentStatus - Update the status of a specific agent
+   *
+   * @param agent - Agent ID to update
+   * @param status - New status value
+   */
+  const updateAgentStatus = (agent: AgentId, status: AgentStatus): void => {
+    dispatch({ type: "UPDATE_AGENT_STATUS", payload: { agent, status } });
+  };
+
+  /**
+   * incrementAgentMetrics - Add to existing agent metrics (accumulation)
+   *
+   * @param agent - Agent ID to update
+   * @param metrics - Metrics to add (partial update)
+   * @param cacheStatus - Optional cache status update
+   */
+  const incrementAgentMetrics = (
+    agent: AgentId,
+    metrics: Partial<AgentState["metrics"]>,
+    cacheStatus?: string
+  ): void => {
+    dispatch({
+      type: "INCREMENT_AGENT_METRICS",
+      payload: { agent, metrics, cacheStatus },
+    });
+  };
+
   const value: ChatContextValue = {
     ...state,
     sendMessage,
     retryMessage,
     clearMessages,
     clearError,
+    updateAgentStatus,
+    incrementAgentMetrics,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

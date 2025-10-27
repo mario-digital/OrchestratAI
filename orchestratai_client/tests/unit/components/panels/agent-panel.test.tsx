@@ -3,90 +3,42 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AgentPanel } from "@/components/panels/agent-panel";
-import {
-  AgentId,
-  AgentStatus,
-  RetrievalStrategy,
-  AgentColor,
-} from "@/lib/enums";
-import type { Agent } from "@/lib/types";
+import { ChatProvider } from "@/components/providers/chat-provider";
 
 describe("AgentPanel", () => {
-  const mockAgents: Agent[] = [
-    {
-      id: AgentId.ORCHESTRATOR,
-      name: "Orchestrator Agent",
-      status: AgentStatus.ACTIVE,
-      model: "OpenAI GPT-4o",
-      strategy: RetrievalStrategy.HYBRID_RAG_CAG,
-      color: AgentColor.CYAN,
-      tokensUsed: 1200,
-      cost: 0.0034,
-      latency: 1500,
-      cacheStatus: "hit" as const,
-    },
-    {
-      id: AgentId.BILLING,
-      name: "Billing Agent",
-      status: AgentStatus.IDLE,
-      model: "OpenAI GPT-4o",
-      strategy: RetrievalStrategy.PURE_RAG,
-      color: AgentColor.GREEN,
-      tokensUsed: 0,
-      cost: 0,
-      latency: 0,
-      cacheStatus: "none" as const,
-    },
-    {
-      id: AgentId.TECHNICAL,
-      name: "Technical Agent",
-      status: AgentStatus.IDLE,
-      model: "OpenAI GPT-4o",
-      strategy: RetrievalStrategy.PURE_CAG,
-      color: AgentColor.BLUE,
-      tokensUsed: 0,
-      cost: 0,
-      latency: 0,
-      cacheStatus: "none" as const,
-    },
-    {
-      id: AgentId.POLICY,
-      name: "Policy Agent",
-      status: AgentStatus.COMPLETE,
-      model: "OpenAI GPT-4o",
-      strategy: RetrievalStrategy.HYBRID_RAG_CAG,
-      color: AgentColor.PURPLE,
-      tokensUsed: 850,
-      cost: 0.0021,
-      latency: 1200,
-      cacheStatus: "miss" as const,
-    },
-  ];
+  // Helper function to render with ChatProvider
+  const renderWithProvider = () => {
+    return render(
+      <ChatProvider>
+        <AgentPanel />
+      </ChatProvider>
+    );
+  };
 
   it('displays "Agent Pipeline" header', () => {
-    render(<AgentPanel agents={mockAgents} />);
+    renderWithProvider();
 
     expect(screen.getByText("Agent Pipeline")).toBeInTheDocument();
   });
 
   it("renders all 4 agent cards", () => {
-    render(<AgentPanel agents={mockAgents} />);
+    renderWithProvider();
 
-    expect(screen.getByText("Orchestrator Agent")).toBeInTheDocument();
+    expect(screen.getByText("Orchestrator")).toBeInTheDocument();
     expect(screen.getByText("Billing Agent")).toBeInTheDocument();
     expect(screen.getByText("Technical Agent")).toBeInTheDocument();
     expect(screen.getByText("Policy Agent")).toBeInTheDocument();
   });
 
   it("renders agents in the correct order", () => {
-    render(<AgentPanel agents={mockAgents} />);
+    renderWithProvider();
 
     const agentNames = screen
       .getAllByRole("heading", { level: 3 })
       .map((heading) => heading.textContent);
 
     expect(agentNames).toEqual([
-      "Orchestrator Agent",
+      "Orchestrator",
       "Billing Agent",
       "Technical Agent",
       "Policy Agent",
@@ -94,51 +46,53 @@ describe("AgentPanel", () => {
   });
 
   it("container has overflow-y-auto for scrolling", () => {
-    const { container } = render(<AgentPanel agents={mockAgents} />);
+    const { container } = renderWithProvider();
 
     const scrollContainer = container.querySelector(".overflow-y-auto");
     expect(scrollContainer).toBeInTheDocument();
   });
 
   it("container has h-full class for full height", () => {
-    const { container } = render(<AgentPanel agents={mockAgents} />);
+    const { container } = renderWithProvider();
 
     const mainContainer = container.querySelector(".h-full");
     expect(mainContainer).toBeInTheDocument();
   });
 
   it("applies correct spacing classes", () => {
-    const { container } = render(<AgentPanel agents={mockAgents} />);
+    const { container } = renderWithProvider();
 
     const mainContainer = container.querySelector(".gap-4.p-4");
     expect(mainContainer).toBeInTheDocument();
   });
 
-  it("renders empty list when no agents provided", () => {
-    render(<AgentPanel agents={[]} />);
+  it("all agents start with IDLE status", () => {
+    renderWithProvider();
 
     expect(screen.getByText("Agent Pipeline")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3 })).not.toBeInTheDocument();
+    const idleBadges = screen.getAllByText("Idle");
+    expect(idleBadges).toHaveLength(4);
   });
 
-  it("renders single agent correctly", () => {
-    const singleAgent = mockAgents.slice(0, 1);
-    render(<AgentPanel agents={singleAgent} />);
+  it("displays all 4 agents from context", () => {
+    renderWithProvider();
 
-    expect(screen.getByText("Orchestrator Agent")).toBeInTheDocument();
-    expect(screen.queryByText("Billing Agent")).not.toBeInTheDocument();
+    expect(screen.getByText("Orchestrator")).toBeInTheDocument();
+    expect(screen.getByText("Billing Agent")).toBeInTheDocument();
+    expect(screen.getByText("Technical Agent")).toBeInTheDocument();
+    expect(screen.getByText("Policy Agent")).toBeInTheDocument();
   });
 
   it("displays agent status badges for all agents", () => {
-    render(<AgentPanel agents={mockAgents} />);
+    renderWithProvider();
 
-    expect(screen.getByText("Active")).toBeInTheDocument();
-    expect(screen.getAllByText("Idle")).toHaveLength(2);
-    expect(screen.getByText("Complete")).toBeInTheDocument();
+    // All should be IDLE initially
+    const idleBadges = screen.getAllByText("Idle");
+    expect(idleBadges).toHaveLength(4);
   });
 
   it("displays agent models for all agents", () => {
-    render(<AgentPanel agents={mockAgents} />);
+    renderWithProvider();
 
     const modelTexts = screen.getAllByText("OpenAI GPT-4o");
     expect(modelTexts).toHaveLength(4);
