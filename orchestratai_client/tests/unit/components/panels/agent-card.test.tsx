@@ -12,6 +12,12 @@ describe("AgentCard", () => {
     status: AgentStatus.IDLE,
     model: "OpenAI GPT-4o",
     strategy: null,
+    metrics: {
+      tokens: 450,
+      cost: 0.0023,
+      latency: 1200,
+    },
+    cacheStatus: "hit" as const,
   };
 
   it("renders agent name correctly", () => {

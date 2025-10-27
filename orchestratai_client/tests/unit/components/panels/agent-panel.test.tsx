@@ -22,6 +22,8 @@ describe("AgentPanel", () => {
       color: AgentColor.CYAN,
       tokensUsed: 1200,
       cost: 0.0034,
+      latency: 1500,
+      cacheStatus: "hit" as const,
     },
     {
       id: AgentId.BILLING,
@@ -32,6 +34,8 @@ describe("AgentPanel", () => {
       color: AgentColor.GREEN,
       tokensUsed: 0,
       cost: 0,
+      latency: 0,
+      cacheStatus: "none" as const,
     },
     {
       id: AgentId.TECHNICAL,
@@ -42,6 +46,8 @@ describe("AgentPanel", () => {
       color: AgentColor.BLUE,
       tokensUsed: 0,
       cost: 0,
+      latency: 0,
+      cacheStatus: "none" as const,
     },
     {
       id: AgentId.POLICY,
@@ -52,6 +58,8 @@ describe("AgentPanel", () => {
       color: AgentColor.PURPLE,
       tokensUsed: 850,
       cost: 0.0021,
+      latency: 1200,
+      cacheStatus: "miss" as const,
     },
   ];
 

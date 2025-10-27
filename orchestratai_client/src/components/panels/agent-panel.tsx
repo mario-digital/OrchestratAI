@@ -29,6 +29,12 @@ export function AgentPanel({ agents }: AgentPanelProps): JSX.Element {
             status={agent.status}
             model={agent.model}
             strategy={agent.strategy || null}
+            metrics={{
+              tokens: agent.tokensUsed,
+              cost: agent.cost,
+              latency: agent.latency,
+            }}
+            cacheStatus={agent.cacheStatus}
           />
         ))}
       </div>
