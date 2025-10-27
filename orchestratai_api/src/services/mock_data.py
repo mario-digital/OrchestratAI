@@ -9,7 +9,7 @@ import random
 import uuid
 from datetime import UTC, datetime
 
-from ..models.enums import AgentId, LogStatus, LogType
+from ..models.enums import AgentId, AgentStatus, LogStatus, LogType
 from ..models.schemas import ChatMetrics, ChatResponse, RetrievalLog
 
 # Response templates for each agent type
@@ -139,9 +139,7 @@ def route_message(message: str) -> AgentId:
     return AgentId.ORCHESTRATOR
 
 
-def generate_mock_retrieval_logs(
-    agent: AgentId, num_logs: int | None = None
-) -> list[RetrievalLog]:
+def generate_mock_retrieval_logs(agent: AgentId, num_logs: int | None = None) -> list[RetrievalLog]:
     """
     Generate realistic retrieval logs for mock responses.
 
@@ -246,7 +244,17 @@ def generate_mock_response(message: str) -> ChatResponse:
         tokensUsed=tokens_used,
         cost=cost,
         latency=latency_ms,
+        cache_status="none",
     )
+
+    # Set agent status - selected agent is ACTIVE, others are IDLE
+    agent_status = {
+        AgentId.ORCHESTRATOR: AgentStatus.IDLE,
+        AgentId.BILLING: AgentStatus.IDLE,
+        AgentId.TECHNICAL: AgentStatus.IDLE,
+        AgentId.POLICY: AgentStatus.IDLE,
+    }
+    agent_status[agent] = AgentStatus.ACTIVE
 
     return ChatResponse(
         message=response_text,
@@ -254,4 +262,5 @@ def generate_mock_response(message: str) -> ChatResponse:
         confidence=round(confidence, 3),
         logs=logs,
         metrics=metrics,
+        agent_status=agent_status,
     )

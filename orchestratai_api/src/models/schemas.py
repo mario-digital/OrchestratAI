@@ -5,7 +5,7 @@ Pydantic models for API request/response validation.
 These schemas enforce type safety and validate incoming requests.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -39,12 +39,28 @@ class ChatMetrics(BaseModel):
     """
     Performance metrics for chat response.
 
-    Tracks token usage, cost, and latency.
+    Tracks token usage, cost, latency, and cache status.
     """
 
     tokensUsed: int = Field(..., ge=0, description="Total tokens consumed")
     cost: float = Field(..., ge=0, description="Cost in USD")
     latency: int = Field(..., ge=0, description="Response time in milliseconds")
+    cache_status: Literal["hit", "miss", "none"] = Field(
+        "none", description="Cache hit/miss status for this request"
+    )
+
+
+class QueryAnalysis(BaseModel):
+    """
+    Query analysis result from orchestrator routing.
+
+    Contains intent classification, confidence, target agent selection, and reasoning.
+    """
+
+    intent: str = Field(..., description="Detected user intent")
+    confidence: float = Field(..., ge=0, le=1, description="Intent confidence score")
+    target_agent: AgentId = Field(..., description="Selected agent for handling query")
+    reasoning: str = Field(..., description="Routing decision reasoning")
 
 
 class DocumentChunk(BaseModel):
@@ -61,17 +77,52 @@ class DocumentChunk(BaseModel):
     metadata: dict[str, Any] | None = Field(None, description="Additional chunk metadata")
 
 
+class VectorSearch(BaseModel):
+    """
+    Vector search operation result.
+
+    Contains search metadata including collection, chunks retrieved, and latency.
+    """
+
+    collection: str = Field(..., description="Vector DB collection name")
+    chunks_retrieved: int = Field(..., ge=0, description="Number of chunks found")
+    chunks: list[DocumentChunk] = Field(..., description="Retrieved document chunks")
+    latency: int = Field(..., ge=0, description="Search latency in milliseconds")
+
+
+class CacheOperation(BaseModel):
+    """
+    Cache operation result.
+
+    Contains cache hit/miss status, hit rate, and size metrics.
+    """
+
+    status: Literal["hit", "miss"] = Field(..., description="Cache result")
+    hit_rate: float = Field(..., ge=0, le=1, description="Overall cache hit rate")
+    size: str = Field(..., description="Cache size (e.g., '2.3 MB')")
+
+
 class RetrievalLog(BaseModel):
     """
     Retrieval operation log entry.
 
     Tracks vector search, routing, cache, and document operations.
+    The `data` field is polymorphic and contains different structures based on `type`:
+    - type="routing": data contains QueryAnalysis fields (intent, confidence,
+      target_agent, reasoning)
+    - type="vector_search": data contains VectorSearch fields (collection,
+      chunks_retrieved, chunks, latency)
+    - type="cache": data contains CacheOperation fields (status, hit_rate, size)
+    - type="documents": data contains custom document retrieval metadata
     """
 
     id: str = Field(..., description="Log entry UUID")
     type: LogType = Field(..., description="Type of retrieval operation")
     title: str = Field(..., description="Human-readable log title")
-    data: dict[str, Any] = Field(..., description="Operation-specific data")
+    data: dict[str, Any] = Field(
+        ...,
+        description="Operation-specific polymorphic data (structure depends on type field)",
+    )
     timestamp: str = Field(..., description="ISO 8601 timestamp")
     status: LogStatus = Field(..., description="Operation result status")
     chunks: list[DocumentChunk] | None = Field(None, description="Retrieved document chunks")
@@ -115,7 +166,7 @@ class ChatResponse(BaseModel):
     """
     Complete chat API response.
 
-    Contains assistant message, agent info, logs, and metrics.
+    Contains assistant message, agent info, logs, metrics, and agent status mapping.
     """
 
     message: str = Field(..., description="Assistant response content")
@@ -123,3 +174,6 @@ class ChatResponse(BaseModel):
     confidence: float = Field(..., ge=0, le=1, description="Response confidence score")
     logs: list[RetrievalLog] = Field(..., description="Retrieval operation logs")
     metrics: ChatMetrics = Field(..., description="Performance metrics")
+    agent_status: dict[AgentId, AgentStatus] = Field(
+        ..., description="Current status of all agents in the system"
+    )
