@@ -161,4 +161,130 @@ describe("AgentCard", () => {
     expect(badge).toHaveClass("bg-agent-card-border-blue/20");
     expect(badge).toHaveClass("text-agent-card-text-blue");
   });
+
+  // Integration tests with AgentMetrics component
+  describe("AgentMetrics Integration", () => {
+    it("renders AgentMetrics component with correct metrics", () => {
+      render(<AgentCard {...defaultProps} />);
+
+      expect(screen.getByText("450 tokens")).toBeInTheDocument();
+      expect(screen.getByText("$0.0023")).toBeInTheDocument();
+      expect(screen.getByText("1,200ms")).toBeInTheDocument();
+    });
+
+    it("passes cache status to AgentMetrics component", () => {
+      const { container } = render(<AgentCard {...defaultProps} cacheStatus="hit" />);
+
+      const cacheIcon = container.querySelector(".text-green-600");
+      expect(cacheIcon).toBeInTheDocument();
+    });
+
+    it("renders AgentMetrics with different cache statuses", () => {
+      const { container, rerender } = render(
+        <AgentCard {...defaultProps} cacheStatus="miss" />
+      );
+
+      let cacheIcon = container.querySelector(".text-yellow-600");
+      expect(cacheIcon).toBeInTheDocument();
+
+      rerender(<AgentCard {...defaultProps} cacheStatus="none" />);
+      cacheIcon = container.querySelector(".text-gray-400");
+      expect(cacheIcon).toBeInTheDocument();
+    });
+
+    it("updates metrics when props change", () => {
+      const { rerender } = render(<AgentCard {...defaultProps} />);
+
+      expect(screen.getByText("450 tokens")).toBeInTheDocument();
+
+      rerender(
+        <AgentCard
+          {...defaultProps}
+          metrics={{
+            tokens: 1000,
+            cost: 0.005,
+            latency: 2500,
+          }}
+        />
+      );
+
+      expect(screen.getByText("1,000 tokens")).toBeInTheDocument();
+      expect(screen.getByText("$0.0050")).toBeInTheDocument();
+      expect(screen.getByText("2,500ms")).toBeInTheDocument();
+    });
+
+    it("renders separator between strategy and metrics", () => {
+      const { container } = render(
+        <AgentCard {...defaultProps} strategy={RetrievalStrategy.PURE_RAG} />
+      );
+
+      // Separator component from shadcn should be present
+      const separator = container.querySelector('[data-orientation="horizontal"]');
+      expect(separator).toBeInTheDocument();
+    });
+
+    it("displays all four metric labels correctly", () => {
+      render(<AgentCard {...defaultProps} />);
+
+      expect(screen.getByText("Tokens")).toBeInTheDocument();
+      expect(screen.getByText("Cost")).toBeInTheDocument();
+      expect(screen.getByText("Latency")).toBeInTheDocument();
+      expect(screen.getByText("Cache")).toBeInTheDocument();
+    });
+
+    it("handles zero metrics correctly", () => {
+      render(
+        <AgentCard
+          {...defaultProps}
+          metrics={{
+            tokens: 0,
+            cost: 0,
+            latency: 0,
+          }}
+          cacheStatus="none"
+        />
+      );
+
+      expect(screen.getByText("0 tokens")).toBeInTheDocument();
+      expect(screen.getByText("$0.0000")).toBeInTheDocument();
+      expect(screen.getByText("0ms")).toBeInTheDocument();
+    });
+
+    it("handles large metrics with proper formatting", () => {
+      render(
+        <AgentCard
+          {...defaultProps}
+          metrics={{
+            tokens: 1234567,
+            cost: 12.3456,
+            latency: 125000,
+          }}
+        />
+      );
+
+      expect(screen.getByText("1,234,567 tokens")).toBeInTheDocument();
+      expect(screen.getByText("$12.3456")).toBeInTheDocument();
+      expect(screen.getByText("125,000ms")).toBeInTheDocument();
+    });
+
+    it("renders complete agent card layout with all components", () => {
+      render(
+        <AgentCard
+          {...defaultProps}
+          status={AgentStatus.ACTIVE}
+          strategy={RetrievalStrategy.HYBRID_RAG_CAG}
+        />
+      );
+
+      // Verify all major components are present
+      expect(screen.getByText("Orchestrator Agent")).toBeInTheDocument(); // Name
+      expect(screen.getByText("O")).toBeInTheDocument(); // Icon
+      expect(screen.getByText("Active")).toBeInTheDocument(); // Status
+      expect(screen.getByText("OpenAI GPT-4o")).toBeInTheDocument(); // Model
+      expect(screen.getByText("Hybrid RAG/CAG")).toBeInTheDocument(); // Strategy
+      expect(screen.getByText("450 tokens")).toBeInTheDocument(); // Metrics
+      expect(screen.getByText("$0.0023")).toBeInTheDocument();
+      expect(screen.getByText("1,200ms")).toBeInTheDocument();
+    });
+  });
 });
