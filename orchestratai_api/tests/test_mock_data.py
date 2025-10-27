@@ -6,10 +6,14 @@ Tests keyword routing, response generation, and field validation.
 
 import pytest
 
-from src.models.enums import AgentId, LogStatus, LogType
+from src.models.enums import AgentId, AgentStatus, LogStatus, LogType
 from src.services.mock_data import (
+    generate_cache_operation_log,
+    generate_document_snippet,
     generate_mock_response,
     generate_mock_retrieval_logs,
+    generate_query_analysis_log,
+    generate_vector_search_log,
     route_message,
 )
 
@@ -99,30 +103,31 @@ class TestRouting:
 class TestRetrievalLogs:
     """Test retrieval log generation."""
 
-    def test_generates_correct_number_of_logs(self):
-        """Test log count matches specification."""
-        logs = generate_mock_retrieval_logs(AgentId.BILLING, num_logs=3)
-        assert len(logs) == 3
-
-    def test_generates_random_number_of_logs(self):
-        """Test random log generation (2-4 logs)."""
-        logs = generate_mock_retrieval_logs(AgentId.TECHNICAL)
-        assert 2 <= len(logs) <= 4
+    def test_always_includes_query_analysis(self):
+        """Test QueryAnalysis log is always present."""
+        logs = generate_mock_retrieval_logs(AgentId.BILLING, "What are your prices?")
+        assert len(logs) >= 1
+        assert logs[0].type == LogType.ROUTING
+        assert "intent" in logs[0].data
+        assert "target_agent" in logs[0].data
 
     def test_first_log_is_routing(self):
         """Test first log is always routing type."""
-        logs = generate_mock_retrieval_logs(AgentId.BILLING)
+        logs = generate_mock_retrieval_logs(AgentId.BILLING, "Test message")
         assert logs[0].type == LogType.ROUTING
 
-    def test_routing_log_contains_agent_data(self):
-        """Test routing log includes agent information."""
-        logs = generate_mock_retrieval_logs(AgentId.POLICY)
-        assert logs[0].data["agent"] == AgentId.POLICY.value
-        assert "confidence" in logs[0].data
+    def test_routing_log_contains_query_analysis_data(self):
+        """Test routing log includes QueryAnalysis fields."""
+        logs = generate_mock_retrieval_logs(AgentId.POLICY, "Test message")
+        query_log = logs[0]
+        assert query_log.data["target_agent"] == AgentId.POLICY.value
+        assert "intent" in query_log.data
+        assert "confidence" in query_log.data
+        assert "reasoning" in query_log.data
 
     def test_all_logs_have_required_fields(self):
         """Test all logs contain required schema fields."""
-        logs = generate_mock_retrieval_logs(AgentId.TECHNICAL)
+        logs = generate_mock_retrieval_logs(AgentId.TECHNICAL, "Test message")
         for log in logs:
             assert log.id is not None
             valid_types = [
@@ -139,7 +144,7 @@ class TestRetrievalLogs:
 
     def test_log_ids_are_unique(self):
         """Test each log has unique ID."""
-        logs = generate_mock_retrieval_logs(AgentId.ORCHESTRATOR, num_logs=4)
+        logs = generate_mock_retrieval_logs(AgentId.ORCHESTRATOR, "Test message")
         log_ids = [log.id for log in logs]
         assert len(log_ids) == len(set(log_ids))  # All unique
 
@@ -199,8 +204,8 @@ class TestMockResponse:
     def test_response_includes_logs(self):
         """Test response includes retrieval logs."""
         response = generate_mock_response("Test message")
-        assert len(response.logs) >= 2
-        assert len(response.logs) <= 4
+        assert len(response.logs) >= 1  # At least QueryAnalysis
+        # Can have 1-3 logs: QueryAnalysis (always) + VectorSearch (80%) + CacheOp (50%)
 
     def test_metrics_tokens_in_range(self):
         """Test metrics tokensUsed is within expected range."""
@@ -277,3 +282,173 @@ class TestFieldValidation:
         # Should not raise any exceptions
         response = generate_mock_response("Test message")
         assert response.model_validate(response.model_dump())
+
+    def test_response_includes_agent_status(self):
+        """Test response includes agent_status for all 4 agents."""
+        response = generate_mock_response("What are your prices?")
+        assert "agent_status" in response.model_dump()
+        agent_status = response.agent_status
+        assert AgentId.ORCHESTRATOR in agent_status
+        assert AgentId.BILLING in agent_status
+        assert AgentId.TECHNICAL in agent_status
+        assert AgentId.POLICY in agent_status
+
+    def test_selected_agent_has_complete_status(self):
+        """Test that the selected agent has COMPLETE status."""
+        response = generate_mock_response("Billing question")
+        assert response.agent == AgentId.BILLING
+        assert response.agent_status[AgentId.BILLING] == AgentStatus.COMPLETE
+
+    def test_orchestrator_has_idle_status(self):
+        """Test that orchestrator always has IDLE status when another agent is selected."""
+        response = generate_mock_response("What are your prices?")  # Routes to BILLING
+        assert response.agent_status[AgentId.ORCHESTRATOR] == AgentStatus.IDLE
+
+    def test_cache_status_in_metrics(self):
+        """Test that cache_status is included in metrics."""
+        response = generate_mock_response("Test message")
+        assert hasattr(response.metrics, "cache_status")
+        assert response.metrics.cache_status in ["hit", "miss", "none"]
+
+
+class TestQueryAnalysisLog:
+    """Test QueryAnalysis log generation."""
+
+    def test_generate_query_analysis_log_for_billing(self):
+        """Test QueryAnalysis log for billing agent."""
+        log = generate_query_analysis_log(AgentId.BILLING, "Test message")
+        assert log.type == LogType.ROUTING
+        assert log.data["intent"] == "Billing inquiry detected"
+        assert log.data["target_agent"] == AgentId.BILLING.value
+        assert "reasoning" in log.data
+        assert 0.85 <= log.data["confidence"] <= 0.99
+
+    def test_generate_query_analysis_log_for_technical(self):
+        """Test QueryAnalysis log for technical agent."""
+        log = generate_query_analysis_log(AgentId.TECHNICAL, "Test message")
+        assert log.data["intent"] == "Technical support request detected"
+        assert log.data["target_agent"] == AgentId.TECHNICAL.value
+
+    def test_generate_query_analysis_log_for_policy(self):
+        """Test QueryAnalysis log for policy agent."""
+        log = generate_query_analysis_log(AgentId.POLICY, "Test message")
+        assert log.data["intent"] == "Policy question detected"
+        assert log.data["target_agent"] == AgentId.POLICY.value
+
+    def test_generate_query_analysis_log_for_orchestrator(self):
+        """Test QueryAnalysis log for orchestrator agent."""
+        log = generate_query_analysis_log(AgentId.ORCHESTRATOR, "Test message")
+        assert log.data["intent"] == "General inquiry detected"
+        assert log.data["target_agent"] == AgentId.ORCHESTRATOR.value
+
+
+class TestVectorSearchLog:
+    """Test VectorSearch log generation."""
+
+    def test_generate_vector_search_log_returns_chunks(self):
+        """Test VectorSearch log includes document chunks."""
+        log = generate_vector_search_log(AgentId.BILLING)
+        assert log.type == LogType.VECTOR_SEARCH
+        assert 3 <= log.data["chunks_retrieved"] <= 7
+        assert len(log.data["chunks"]) == log.data["chunks_retrieved"]
+
+    def test_document_chunks_have_realistic_content(self):
+        """Test document chunks contain technical content, not Lorem."""
+        log = generate_vector_search_log(AgentId.BILLING)
+        for chunk in log.data["chunks"]:
+            content = chunk["content"]
+            assert len(content) > 50  # Substantial content
+            assert "lorem" not in content.lower()  # No placeholder text
+
+    def test_document_chunks_have_similarity_scores(self):
+        """Test document chunks have similarity scores in valid range."""
+        log = generate_vector_search_log(AgentId.TECHNICAL)
+        for chunk in log.data["chunks"]:
+            assert 0.75 <= chunk["similarity"] <= 0.95
+
+    def test_vector_search_uses_domain_specific_files(self):
+        """Test vector search uses files matching agent domain."""
+        log = generate_vector_search_log(AgentId.BILLING)
+        sources = [chunk["source"] for chunk in log.data["chunks"]]
+        # Check that at least one source is billing-related
+        billing_files = ["pricing_faq.md", "subscription_guide.md", "payment_methods.md"]
+        assert any(source in billing_files for source in sources)
+
+    def test_vector_search_includes_latency(self):
+        """Test VectorSearch log includes latency metric."""
+        log = generate_vector_search_log(AgentId.POLICY)
+        assert "latency" in log.data
+        assert 50 <= log.data["latency"] <= 300
+
+
+class TestCacheOperationLog:
+    """Test CacheOperation log generation."""
+
+    def test_generate_cache_operation_log_returns_hit_or_miss(self):
+        """Test CacheOperation log returns valid hit/miss status."""
+        log = generate_cache_operation_log()
+        assert log.type == LogType.CACHE
+        assert log.data["status"] in ["hit", "miss"]
+
+    def test_cache_operation_includes_hit_rate(self):
+        """Test CacheOperation log includes hit_rate metric."""
+        log = generate_cache_operation_log()
+        assert "hit_rate" in log.data
+        assert 0.60 <= log.data["hit_rate"] <= 0.90
+
+    def test_cache_operation_includes_size(self):
+        """Test CacheOperation log includes size metric."""
+        log = generate_cache_operation_log()
+        assert "size" in log.data
+        assert "MB" in log.data["size"]
+
+    def test_cache_hit_has_success_status(self):
+        """Test cache hit results in SUCCESS status."""
+        # Run multiple times to ensure we get a hit
+        for _ in range(20):
+            log = generate_cache_operation_log()
+            if log.data["status"] == "hit":
+                assert log.status == LogStatus.SUCCESS
+                break
+
+    def test_cache_miss_has_warning_status(self):
+        """Test cache miss results in WARNING status."""
+        # Run multiple times to ensure we get a miss
+        for _ in range(20):
+            log = generate_cache_operation_log()
+            if log.data["status"] == "miss":
+                assert log.status == LogStatus.WARNING
+                break
+
+
+class TestDocumentSnippet:
+    """Test document snippet generation."""
+
+    def test_generate_document_snippet_for_pricing_faq(self):
+        """Test snippet generation for pricing FAQ."""
+        snippet = generate_document_snippet("pricing_faq.md")
+        assert len(snippet) > 50
+        assert "lorem" not in snippet.lower()
+
+    def test_generate_document_snippet_for_api_docs(self):
+        """Test snippet generation for API documentation."""
+        snippet = generate_document_snippet("api_documentation.md")
+        assert len(snippet) > 50
+        assert any(word in snippet.lower() for word in ["api", "endpoint", "authentication"])
+
+    def test_generate_document_snippet_for_refund_policy(self):
+        """Test snippet generation for refund policy."""
+        snippet = generate_document_snippet("refund_policy.md")
+        assert len(snippet) > 50
+        assert any(word in snippet.lower() for word in ["refund", "customer", "account"])
+
+    def test_generate_document_snippet_truncates_long_content(self):
+        """Test snippet is truncated to 200 characters max."""
+        snippet = generate_document_snippet("pricing_faq.md")
+        assert len(snippet) <= 200
+
+    def test_generate_document_snippet_fallback(self):
+        """Test fallback content for unknown files."""
+        snippet = generate_document_snippet("unknown_file.md")
+        assert len(snippet) > 0
+        assert "Documentation content" in snippet
