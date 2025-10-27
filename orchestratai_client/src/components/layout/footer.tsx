@@ -1,8 +1,18 @@
 import { Clock, Cpu, TrendingUp, Database } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function Footer(): React.JSX.Element {
+export interface FooterProps {
+  className?: string;
+}
+
+export function Footer({ className }: FooterProps = {}): React.JSX.Element {
   return (
-    <footer className="bg-bg-secondary border-t border-border-default p-4">
+    <footer
+      className={cn(
+        "bg-bg-secondary border-t border-border-default p-4",
+        className
+      )}
+    >
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         {/* Latency */}
         <div className="flex items-center gap-2 text-text-secondary text-small">
