@@ -462,6 +462,19 @@
   --space-mobile-tabs-panel-x: var(
     --space-4
   ); /* horizontal inset for secondary panels */
+
+  /* === Agent Status Badge Component Tokens === */
+  --color-status-badge-idle-bg: var(--color-bg-secondary);
+  --color-status-badge-idle-text: var(--color-text-secondary);
+
+  --color-status-badge-routing-bg: var(--color-warning-bg);
+  --color-status-badge-routing-text: var(--color-warning);
+
+  --color-status-badge-active-bg: var(--color-bg-tertiary);
+  --color-status-badge-active-text: var(--color-border-focus); /* cyan accent */
+
+  --color-status-badge-complete-bg: var(--color-success-bg);
+  --color-status-badge-complete-text: var(--color-success);
 }
 
 /* ============================================
@@ -577,5 +590,37 @@
     padding-top: var(--space-mobile-tabs-panel-top);
     padding-left: var(--space-mobile-tabs-panel-x);
     padding-right: var(--space-mobile-tabs-panel-x);
+  }
+
+  /* ============================================
+     Agent Status Badge Utilities
+     ============================================ */
+
+  .bg-status-badge-idle-bg {
+    background-color: var(--color-status-badge-idle-bg);
+  }
+  .text-status-badge-idle-text {
+    color: var(--color-status-badge-idle-text);
+  }
+
+  .bg-status-badge-routing-bg {
+    background-color: var(--color-status-badge-routing-bg);
+  }
+  .text-status-badge-routing-text {
+    color: var(--color-status-badge-routing-text);
+  }
+
+  .bg-status-badge-active-bg {
+    background-color: var(--color-status-badge-active-bg);
+  }
+  .text-status-badge-active-text {
+    color: var(--color-status-badge-active-text);
+  }
+
+  .bg-status-badge-complete-bg {
+    background-color: var(--color-status-badge-complete-bg);
+  }
+  .text-status-badge-complete-text {
+    color: var(--color-status-badge-complete-text);
   }
 }
