@@ -101,6 +101,8 @@ describe('Types Module', () => {
         color: AgentColor.CYAN,
         tokensUsed: 100,
         cost: 0.01,
+        latency: 250,
+        cacheStatus: 'hit',
       };
       expect(agent.id).toBe(AgentId.ORCHESTRATOR);
       expect(agent.name).toBe('Orchestrator');

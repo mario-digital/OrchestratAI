@@ -170,6 +170,14 @@ export const AgentSchema = z
       .number()
       .nonnegative("Cost cannot be negative")
       .describe("Total cost incurred by this agent in USD"),
+    latency: z
+      .number()
+      .int()
+      .nonnegative("Latency cannot be negative")
+      .describe("Response latency in milliseconds"),
+    cacheStatus: z
+      .enum(["hit", "miss", "none"])
+      .describe("Cache status indicator for this agent's response"),
     cached: z
       .boolean()
       .optional()

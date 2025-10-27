@@ -188,6 +188,8 @@ describe('Schemas', () => {
         color: 'cyan',
         tokensUsed: 100,
         cost: 0.01,
+        latency: 250,
+        cacheStatus: 'hit',
       };
       expect(() => AgentSchema.parse(valid)).not.toThrow();
     });

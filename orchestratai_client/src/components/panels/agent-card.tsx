@@ -4,7 +4,9 @@ import { type JSX } from "react";
 import { AgentId, AgentStatus, RetrievalStrategy } from "@/lib/enums";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { AgentStatusBadge } from "./agent-status-badge";
+import { AgentMetrics } from "./agent-metrics";
 import {
   getAgentBorderColor,
   getAgentAccentColor,
@@ -16,6 +18,12 @@ interface AgentCardProps {
   status: AgentStatus;
   model: string;
   strategy: RetrievalStrategy | null;
+  metrics: {
+    tokens: number;
+    cost: number;
+    latency: number;
+  };
+  cacheStatus: "hit" | "miss" | "none";
 }
 
 /**
@@ -55,6 +63,8 @@ export function AgentCard({
   status,
   model,
   strategy,
+  metrics,
+  cacheStatus,
 }: AgentCardProps): JSX.Element {
   const borderColor = getAgentBorderColor(agentId);
   const accentColor = getAgentAccentColor(agentId);
@@ -91,6 +101,13 @@ export function AgentCard({
             {strategy}
           </Badge>
         )}
+        <Separator />
+        <AgentMetrics
+          tokens={metrics.tokens}
+          cost={metrics.cost}
+          latency={metrics.latency}
+          cacheStatus={cacheStatus}
+        />
       </CardContent>
     </Card>
   );
