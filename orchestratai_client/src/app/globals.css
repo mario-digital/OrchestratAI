@@ -453,9 +453,15 @@
   --radius-toast: var(--radius-default); /* Toast border radius */
 
   /* === Mobile Layout Tokens === */
-  --space-mobile-tabs-chat-top: var(--space-12); /* aligns chat panel under safe-area */
-  --space-mobile-tabs-panel-top: var(--space-4); /* spacing for agents/logs panels */
-  --space-mobile-tabs-panel-x: var(--space-4); /* horizontal inset for secondary panels */
+  --space-mobile-tabs-chat-top: var(
+    --space-12
+  ); /* aligns chat panel under safe-area */
+  --space-mobile-tabs-panel-top: var(
+    --space-4
+  ); /* spacing for agents/logs panels */
+  --space-mobile-tabs-panel-x: var(
+    --space-4
+  ); /* horizontal inset for secondary panels */
 }
 
 /* ============================================
