@@ -296,18 +296,20 @@ describe("VectorSearchCard Component", () => {
 });
 
 describe("CacheOperationCard Component", () => {
-  it("displays HIT badge when isHit is true", () => {
+  it("displays cache information when cache hit", () => {
     render(<CacheOperationCard _isHit={true} hitRate={0.78} cacheSize={156} />);
 
-    expect(screen.getByText("HIT")).toBeInTheDocument();
+    expect(screen.getByText(/78%/)).toBeInTheDocument();
+    expect(screen.getByText("156 B")).toBeInTheDocument();
   });
 
-  it("displays MISS badge when isHit is false", () => {
+  it("displays cache information when cache miss", () => {
     render(
       <CacheOperationCard _isHit={false} hitRate={0.65} cacheSize={120} />
     );
 
-    expect(screen.getByText("MISS")).toBeInTheDocument();
+    expect(screen.getByText(/65%/)).toBeInTheDocument();
+    expect(screen.getByText("120 B")).toBeInTheDocument();
   });
 
   it("displays hit rate as percentage", () => {
