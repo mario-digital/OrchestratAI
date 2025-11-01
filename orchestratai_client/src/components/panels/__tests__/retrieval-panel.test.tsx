@@ -374,3 +374,201 @@ describe("RetrievalPanel - Log Rendering", () => {
     consoleSpy.mockRestore();
   });
 });
+
+describe("RetrievalPanel - Malformed Data Handling", () => {
+  it("handles malformed routing log data gracefully", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Query Analysis",
+        type: LogType.ROUTING,
+        status: LogStatus.SUCCESS,
+        data: {
+          // Missing fields and wrong types
+          intent: 123, // Should be string
+          confidence: "high", // Should be number
+          target_agent: "INVALID_AGENT", // Invalid enum value
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    // Should render with defaults
+    expect(screen.getByText("QUERY ANALYSIS")).toBeInTheDocument();
+    expect(screen.getByText("unknown")).toBeInTheDocument(); // Default intent
+    expect(screen.getByText("0.00")).toBeInTheDocument(); // Default confidence
+    expect(screen.getByText(AgentId.ORCHESTRATOR)).toBeInTheDocument(); // Default agent
+  });
+
+  it("handles null routing log data", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Query Analysis",
+        type: LogType.ROUTING,
+        status: LogStatus.SUCCESS,
+        data: null as unknown as Record<string, unknown>,
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("QUERY ANALYSIS")).toBeInTheDocument();
+    expect(screen.getByText("unknown")).toBeInTheDocument();
+  });
+
+  it("handles malformed vector search log data", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Vector Search",
+        type: LogType.VECTOR_SEARCH,
+        status: LogStatus.SUCCESS,
+        data: {
+          collection_name: 123, // Should be string
+          chunks: "not an array", // Should be array
+          latency_ms: "slow", // Should be number
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("VECTOR SEARCH")).toBeInTheDocument();
+    expect(screen.getByText("unknown")).toBeInTheDocument(); // Default collection
+    expect(screen.getByText("0")).toBeInTheDocument(); // Default chunk count
+  });
+
+  it("handles malformed cache log data", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Cache Operation",
+        type: LogType.CACHE,
+        status: LogStatus.SUCCESS,
+        data: {
+          is_hit: "yes", // Should be boolean
+          hit_rate: "75%", // Should be number
+          cache_size: null, // Should be number
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("CACHED CONTEXT")).toBeInTheDocument();
+    expect(screen.getByText("0 B")).toBeInTheDocument(); // Default cache size
+  });
+
+  it("filters out invalid document chunks", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Vector Search",
+        type: LogType.VECTOR_SEARCH,
+        status: LogStatus.SUCCESS,
+        data: {
+          collection_name: "docs",
+          chunks: [
+            { source: "valid.md", content: "valid content", similarity: 0.9 },
+            { source: "invalid", missing: "content" }, // Missing required fields
+            { source: 123, content: "bad", similarity: "not a number" }, // Wrong types
+            null, // Null chunk
+          ],
+          latency_ms: 100,
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    // Should only render the valid chunk
+    expect(screen.getByText("valid.md")).toBeInTheDocument();
+    expect(screen.queryByText("invalid")).not.toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument(); // Only 1 valid chunk
+  });
+
+  it("handles empty data object", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Empty Data",
+        type: LogType.ROUTING,
+        status: LogStatus.SUCCESS,
+        data: {},
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("QUERY ANALYSIS")).toBeInTheDocument();
+    expect(screen.getByText("unknown")).toBeInTheDocument();
+  });
+});
