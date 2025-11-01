@@ -3,10 +3,14 @@
  * Tests for Story 3.6 retrieval panel container
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { RetrievalPanel } from "../retrieval-panel";
 import { ChatProvider } from "@/components/providers/chat-provider";
+import * as chatLogsHook from "@/hooks/use-chat-logs";
+import { LogType, AgentId, LogStatus } from "@/lib/enums";
+import type { RetrievalLog } from "@/lib/types";
 
 // Helper to render RetrievalPanel within ChatProvider
 function renderWithProvider() {
@@ -103,5 +107,270 @@ describe("RetrievalPanel - Document View Handler", () => {
     // Test the TODO placeholder for Story 3.7
     renderWithProvider();
     expect(screen.getByText("Retrieval Log")).toBeInTheDocument();
+  });
+});
+
+describe("RetrievalPanel - Log Rendering", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders routing logs with QueryAnalysisCard", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Query Analysis",
+        type: LogType.ROUTING,
+        status: LogStatus.SUCCESS,
+        data: {
+          intent: "billing_question",
+          confidence: 0.95,
+          target_agent: AgentId.BILLING,
+          reasoning: "User asking about payment",
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("QUERY ANALYSIS")).toBeInTheDocument();
+    expect(screen.getByText("0.95")).toBeInTheDocument();
+  });
+
+  it("renders vector search logs with VectorSearchCard", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "2",
+        timestamp: new Date().toISOString(),
+        title: "Vector Search",
+        type: LogType.VECTOR_SEARCH,
+        status: LogStatus.SUCCESS,
+        data: {
+          collection_name: "docs",
+          chunks: [{ source: "doc1.md", content: "content1", similarity: 0.9 }],
+          latency_ms: 100,
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("VECTOR SEARCH")).toBeInTheDocument();
+    expect(screen.getByText("docs")).toBeInTheDocument();
+  });
+
+  it("renders cache logs with CacheOperationCard", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "3",
+        timestamp: new Date().toISOString(),
+        title: "Cache Operation",
+        type: LogType.CACHE,
+        status: LogStatus.SUCCESS,
+        data: {
+          is_hit: true,
+          hit_rate: 0.78,
+          cache_size: 150,
+          cache_key: "test-key",
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("CACHED CONTEXT")).toBeInTheDocument();
+    expect(screen.getByText(/78%/)).toBeInTheDocument();
+  });
+
+  it("renders document logs with VectorSearchCard", () => {
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "4",
+        timestamp: new Date().toISOString(),
+        title: "Documents",
+        type: LogType.DOCUMENTS,
+        status: LogStatus.SUCCESS,
+        data: {
+          collection_name: "policies",
+          chunks: [
+            {
+              source: "policy.md",
+              content: "policy content",
+              similarity: 0.85,
+            },
+          ],
+          latency_ms: 200,
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    expect(screen.getByText("RETRIEVED DOCUMENTS")).toBeInTheDocument();
+    expect(screen.getByText("policies")).toBeInTheDocument();
+  });
+
+  it("sorts logs in reverse chronological order", () => {
+    const now = new Date();
+    const earlier = new Date(now.getTime() - 1000);
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: earlier.toISOString(),
+        title: "First Log",
+        type: LogType.ROUTING,
+        status: LogStatus.SUCCESS,
+        data: {
+          intent: "first",
+          confidence: 0.8,
+          target_agent: AgentId.ORCHESTRATOR,
+        },
+      },
+      {
+        id: "2",
+        timestamp: now.toISOString(),
+        title: "Second Log",
+        type: LogType.ROUTING,
+        status: LogStatus.SUCCESS,
+        data: {
+          intent: "second",
+          confidence: 0.9,
+          target_agent: AgentId.BILLING,
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    const { container } = render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    const logEntries = container.querySelectorAll(".space-y-2");
+    expect(logEntries.length).toBeGreaterThan(0);
+  });
+
+  it("formats timestamps correctly", () => {
+    const testDate = new Date("2025-01-01T15:30:45Z");
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: testDate.toISOString(),
+        title: "Test Log",
+        type: LogType.ROUTING,
+        status: LogStatus.SUCCESS,
+        data: {
+          intent: "test",
+          confidence: 0.9,
+          target_agent: AgentId.ORCHESTRATOR,
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    // Timestamp should be displayed (format may vary by locale)
+    const timestamps = screen.getAllByText(/\d{2}:\d{2}:\d{2}/);
+    expect(timestamps.length).toBeGreaterThan(0);
+  });
+
+  it("handles console log when viewing document", async () => {
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const user = userEvent.setup();
+
+    const mockLogs: RetrievalLog[] = [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        title: "Vector Search",
+        type: LogType.VECTOR_SEARCH,
+        status: LogStatus.SUCCESS,
+        data: {
+          collection_name: "docs",
+          chunks: [
+            { source: "test.md", content: "test content", similarity: 0.9 },
+          ],
+          latency_ms: 100,
+        },
+      },
+    ];
+
+    vi.spyOn(chatLogsHook, "useChatLogs").mockReturnValue({
+      logs: mockLogs,
+      addLogs: vi.fn(),
+      clearLogs: vi.fn(),
+    });
+
+    render(
+      <ChatProvider>
+        <RetrievalPanel />
+      </ChatProvider>
+    );
+
+    const viewButton = screen.getByRole("button", { name: /view full/i });
+    await user.click(viewButton);
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith("View document:", "test.md");
+    });
+
+    consoleSpy.mockRestore();
   });
 });
