@@ -45,7 +45,7 @@ describe("AgentPanel with ChatProvider integration", () => {
     expect(screen.getByText("Policy Agent")).toBeInTheDocument();
 
     // Check that all have IDLE status initially
-    const idleBadges = screen.getAllByText("Idle");
+    const idleBadges = screen.getAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 
@@ -102,7 +102,7 @@ describe("AgentPanel with ChatProvider integration", () => {
     });
 
     // Verify initial state
-    const idleBadges = screen.getAllByText("Idle");
+    const idleBadges = screen.getAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 

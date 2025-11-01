@@ -16,11 +16,11 @@ describe("Home Page", () => {
     // Mock scrollIntoView for MessageList component
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
-  it("renders the header with OrchestratAI branding", () => {
+  it("renders the header with system branding", () => {
     renderHome();
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading).toBeInTheDocument();
-    expect(heading.textContent).toContain("OrchestratAI");
+    expect(heading.textContent).toContain("Multi-Agent Customer Service System");
   });
 
   it("renders the header subtitle", () => {

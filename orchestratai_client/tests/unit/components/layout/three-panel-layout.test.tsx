@@ -18,8 +18,9 @@ describe('ThreePanelLayout', () => {
   it('uses correct grid column widths', () => {
     const { container } = render(<ThreePanelLayout />);
 
-    // Find grid container (first div child)
-    const gridContainer = container.firstChild as HTMLElement;
+    // Find grid container (nested inside wrapper div)
+    const wrapperDiv = container.firstChild as HTMLElement;
+    const gridContainer = wrapperDiv.firstChild as HTMLElement;
 
     // Assert grid class is applied
     expect(gridContainer).toHaveClass('grid-cols-three-panel-chat');

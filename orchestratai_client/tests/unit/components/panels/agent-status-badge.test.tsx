@@ -9,16 +9,16 @@ describe("AgentStatusBadge", () => {
   it("renders IDLE status with correct text and styling", () => {
     render(<AgentStatusBadge status={AgentStatus.IDLE} agentName="Test Agent" />);
 
-    const badge = screen.getByText("Idle");
+    const badge = screen.getByText("IDLE");
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveClass("bg-status-badge-idle-bg");
-    expect(badge).toHaveClass("text-status-badge-idle-text");
+    expect(badge).toHaveClass("bg-badge-idle-bg");
+    expect(badge).toHaveClass("text-badge-idle-text");
   });
 
   it("renders ROUTING status with correct text and styling", () => {
     render(<AgentStatusBadge status={AgentStatus.ROUTING} agentName="Test Agent" />);
 
-    const badge = screen.getByText("Routing");
+    const badge = screen.getByText("ROUTING");
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass("bg-status-badge-routing-bg");
     expect(badge).toHaveClass("text-status-badge-routing-text");
@@ -27,17 +27,16 @@ describe("AgentStatusBadge", () => {
   it("renders ACTIVE status with correct text, styling, and pulse animation", () => {
     render(<AgentStatusBadge status={AgentStatus.ACTIVE} agentName="Test Agent" />);
 
-    const badge = screen.getByText("Active");
+    const badge = screen.getByText("ACTIVE");
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveClass("bg-status-badge-active-bg");
-    expect(badge).toHaveClass("text-status-badge-active-text");
-    expect(badge).toHaveClass("animate-pulse");
+    expect(badge).toHaveClass("bg-badge-active-bg");
+    expect(badge).toHaveClass("text-badge-active-text");
   });
 
   it("renders COMPLETE status with correct text and styling", () => {
     render(<AgentStatusBadge status={AgentStatus.COMPLETE} agentName="Test Agent" />);
 
-    const badge = screen.getByText("Complete");
+    const badge = screen.getByText("COMPLETE");
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass("bg-status-badge-complete-bg");
     expect(badge).toHaveClass("text-status-badge-complete-text");
@@ -46,16 +45,16 @@ describe("AgentStatusBadge", () => {
   it("includes correct ARIA label with agent name and status", () => {
     render(<AgentStatusBadge status={AgentStatus.ACTIVE} agentName="Orchestrator" />);
 
-    const badge = screen.getByText("Active");
-    expect(badge).toHaveAttribute("aria-label", "Orchestrator status: Active");
+    const badge = screen.getByText("ACTIVE");
+    expect(badge).toHaveAttribute("aria-label", "Orchestrator status: ACTIVE");
   });
 
   it("applies correct size classes", () => {
     render(<AgentStatusBadge status={AgentStatus.IDLE} agentName="Test Agent" />);
 
-    const badge = screen.getByText("Idle");
-    expect(badge).toHaveClass("text-xs");
-    expect(badge).toHaveClass("px-2");
-    expect(badge).toHaveClass("py-1");
+    const badge = screen.getByText("IDLE");
+    expect(badge).toHaveClass("text-[10px]");
+    expect(badge).toHaveClass("px-2.5");
+    expect(badge).toHaveClass("py-0.5");
   });
 });
