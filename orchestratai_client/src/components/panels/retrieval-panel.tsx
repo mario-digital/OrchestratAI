@@ -5,7 +5,6 @@ import type { JSX } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChatLogs } from "@/hooks/use-chat-logs";
 import { usePanelCollapse } from "@/components/layout/three-panel-layout";
-import { LogEntry } from "./log-entry";
 import { QueryAnalysisCard } from "./query-analysis-card";
 import { VectorSearchCard } from "./vector-search-card";
 import { CacheOperationCard } from "./cache-operation-card";
@@ -20,26 +19,6 @@ interface DocumentChunk {
   content: string;
   similarity: number;
   metadata?: Record<string, unknown>;
-}
-
-/**
- * Map LogType enum to LogEntry component type
- */
-function mapLogTypeToEntryType(
-  logType: LogType
-): "routing" | "vector_search" | "cache" | "documents" | "error" {
-  switch (logType) {
-    case LogType.ROUTING:
-      return "routing";
-    case LogType.VECTOR_SEARCH:
-      return "vector_search";
-    case LogType.CACHE:
-      return "cache";
-    case LogType.DOCUMENTS:
-      return "documents";
-    default:
-      return "error";
-  }
 }
 
 /**
@@ -118,7 +97,7 @@ function renderLogCard(
       // Cache operation data structure
       return (
         <CacheOperationCard
-          isHit={data["is_hit"] as boolean}
+          _isHit={data["is_hit"] as boolean}
           hitRate={data["hit_rate"] as number}
           cacheSize={data["cache_size"] as number}
           cacheKey={data["cache_key"] as string | undefined}
@@ -219,7 +198,11 @@ export function RetrievalPanel(): JSX.Element {
         <button
           onClick={toggleRightPanel}
           className="text-text-tertiary hover:text-text-primary transition-colors"
-          aria-label={isRightPanelCollapsed ? "Expand retrieval log" : "Collapse retrieval log"}
+          aria-label={
+            isRightPanelCollapsed
+              ? "Expand retrieval log"
+              : "Collapse retrieval log"
+          }
         >
           <svg
             className="w-4 h-4 transition-transform duration-200"
@@ -227,7 +210,9 @@ export function RetrievalPanel(): JSX.Element {
             stroke="currentColor"
             viewBox="0 0 24 24"
             style={{
-              transform: isRightPanelCollapsed ? "rotate(180deg)" : "rotate(0deg)",
+              transform: isRightPanelCollapsed
+                ? "rotate(180deg)"
+                : "rotate(0deg)",
             }}
           >
             <path

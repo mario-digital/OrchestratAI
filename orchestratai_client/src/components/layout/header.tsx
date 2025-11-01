@@ -3,7 +3,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ExecutionGraph, ExecutionStep } from "@/components/panels/execution-graph";
+import {
+  ExecutionGraph,
+  ExecutionStep,
+} from "@/components/panels/execution-graph";
 import { useChatAgents } from "@/hooks/use-chat-agents";
 import { AgentId, AgentStatus } from "@/lib/enums";
 
@@ -38,8 +41,8 @@ export function Header({ className }: HeaderProps = {}): React.JSX.Element {
         agents[AgentId.ORCHESTRATOR].status === AgentStatus.ACTIVE
           ? "active"
           : agents[AgentId.ORCHESTRATOR].status === AgentStatus.COMPLETE
-          ? "complete"
-          : "pending",
+            ? "complete"
+            : "pending",
     },
     {
       id: "billing",
@@ -48,8 +51,8 @@ export function Header({ className }: HeaderProps = {}): React.JSX.Element {
         agents[AgentId.BILLING].status === AgentStatus.ACTIVE
           ? "active"
           : agents[AgentId.BILLING].status === AgentStatus.COMPLETE
-          ? "complete"
-          : "pending",
+            ? "complete"
+            : "pending",
     },
     {
       id: "response",

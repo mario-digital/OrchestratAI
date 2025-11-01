@@ -35,7 +35,8 @@ export function AgentStatusBadge({
     },
     [AgentStatus.ROUTING]: {
       text: "ROUTING",
-      className: "bg-status-badge-routing-bg border-status-badge-routing-text text-status-badge-routing-text",
+      className:
+        "bg-status-badge-routing-bg border-status-badge-routing-text text-status-badge-routing-text",
     },
     [AgentStatus.ACTIVE]: {
       text: "ACTIVE",
@@ -45,7 +46,8 @@ export function AgentStatusBadge({
     },
     [AgentStatus.COMPLETE]: {
       text: "COMPLETE",
-      className: "bg-status-badge-complete-bg border-status-badge-complete-text text-status-badge-complete-text",
+      className:
+        "bg-status-badge-complete-bg border-status-badge-complete-text text-status-badge-complete-text",
     },
   };
 

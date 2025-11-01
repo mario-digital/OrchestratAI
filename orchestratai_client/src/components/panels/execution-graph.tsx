@@ -109,7 +109,10 @@ function Connector(): JSX.Element {
  * />
  * ```
  */
-export function ExecutionGraph({ steps, compact = false }: ExecutionGraphProps): JSX.Element {
+export function ExecutionGraph({
+  steps,
+  compact = false,
+}: ExecutionGraphProps): JSX.Element {
   if (compact) {
     // Compact mode for header - horizontal layout
     return (
@@ -189,7 +192,9 @@ export function ExecutionGraph({ steps, compact = false }: ExecutionGraphProps):
                   step.status === "pending" && "text-text-tertiary"
                 )}
               >
-                {step.id === "input" || step.id === "response" ? step.label : step.id.charAt(0).toUpperCase() + step.id.slice(1)}
+                {step.id === "input" || step.id === "response"
+                  ? step.label
+                  : step.id.charAt(0).toUpperCase() + step.id.slice(1)}
               </div>
               {/* Model name in cyan */}
               {step.id !== "input" && step.id !== "response" && (
@@ -201,7 +206,10 @@ export function ExecutionGraph({ steps, compact = false }: ExecutionGraphProps):
 
             {/* Checkmark on the right for completed/active */}
             {(step.status === "complete" || step.status === "active") && (
-              <Check className="w-4 h-4 text-execution-step-complete flex-shrink-0" strokeWidth={2.5} />
+              <Check
+                className="w-4 h-4 text-execution-step-complete flex-shrink-0"
+                strokeWidth={2.5}
+              />
             )}
           </div>
         ))}

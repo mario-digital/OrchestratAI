@@ -1,9 +1,6 @@
 "use client";
 
 import type { JSX } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle } from "lucide-react";
 
 /**
  * CacheOperationCard Props
@@ -11,7 +8,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
  */
 interface CacheOperationCardProps {
   /** Whether the cache operation was a hit (true) or miss (false) */
-  isHit: boolean;
+  _isHit: boolean;
   /** Cache hit rate as a percentage (0.0 to 1.0) */
   hitRate: number;
   /** Current cache size (number of entries) */
@@ -40,7 +37,7 @@ interface CacheOperationCardProps {
  * ```
  */
 export function CacheOperationCard({
-  isHit,
+  _isHit: _,
   hitRate,
   cacheSize,
   cacheKey,

@@ -1,10 +1,6 @@
 "use client";
 
 import type { JSX } from "react";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { FileText } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 /**
  * DocumentPreview Props
@@ -33,18 +29,6 @@ function truncateContent(content: string, maxLength: number = 200): string {
 }
 
 /**
- * Get color class for similarity score
- * - High similarity (>= 0.8): Green
- * - Medium similarity (0.6 - 0.8): Yellow
- * - Low similarity (< 0.6): Red
- */
-function getSimilarityColorClass(similarity: number): string {
-  if (similarity >= 0.8) return "bg-green-500";
-  if (similarity >= 0.6) return "bg-yellow-500";
-  return "bg-red-500";
-}
-
-/**
  * DocumentPreview Component
  *
  * Displays a preview of a retrieved document including:
@@ -70,8 +54,6 @@ export function DocumentPreview({
   onViewFull,
 }: DocumentPreviewProps): JSX.Element {
   const truncatedContent = truncateContent(content, 200);
-  const similarityPercent = Math.round(similarity * 100);
-  const similarityColorClass = getSimilarityColorClass(similarity);
 
   return (
     <div className="space-y-2">
@@ -81,7 +63,10 @@ export function DocumentPreview({
           {source}
         </span>
         <span className="text-xs text-doc-similarity-label whitespace-nowrap">
-          sim: <span className="text-doc-similarity-value">{similarity.toFixed(2)}</span>
+          sim:{" "}
+          <span className="text-doc-similarity-value">
+            {similarity.toFixed(2)}
+          </span>
         </span>
       </div>
 

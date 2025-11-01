@@ -297,31 +297,33 @@ describe("VectorSearchCard Component", () => {
 
 describe("CacheOperationCard Component", () => {
   it("displays HIT badge when isHit is true", () => {
-    render(<CacheOperationCard isHit={true} hitRate={0.78} cacheSize={156} />);
+    render(<CacheOperationCard _isHit={true} hitRate={0.78} cacheSize={156} />);
 
     expect(screen.getByText("HIT")).toBeInTheDocument();
   });
 
   it("displays MISS badge when isHit is false", () => {
-    render(<CacheOperationCard isHit={false} hitRate={0.65} cacheSize={120} />);
+    render(
+      <CacheOperationCard _isHit={false} hitRate={0.65} cacheSize={120} />
+    );
 
     expect(screen.getByText("MISS")).toBeInTheDocument();
   });
 
   it("displays hit rate as percentage", () => {
-    render(<CacheOperationCard isHit={true} hitRate={0.82} cacheSize={200} />);
+    render(<CacheOperationCard _isHit={true} hitRate={0.82} cacheSize={200} />);
 
     expect(screen.getByText("82%")).toBeInTheDocument();
   });
 
   it("displays cache size with plural 'entries'", () => {
-    render(<CacheOperationCard isHit={true} hitRate={0.75} cacheSize={150} />);
+    render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={150} />);
 
     expect(screen.getByText("150 entries")).toBeInTheDocument();
   });
 
   it("displays cache size with singular 'entry'", () => {
-    render(<CacheOperationCard isHit={true} hitRate={0.75} cacheSize={1} />);
+    render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={1} />);
 
     expect(screen.getByText("1 entry")).toBeInTheDocument();
   });
@@ -329,7 +331,7 @@ describe("CacheOperationCard Component", () => {
   it("displays cache key when provided", () => {
     render(
       <CacheOperationCard
-        isHit={true}
+        _isHit={true}
         hitRate={0.75}
         cacheSize={100}
         cacheKey="query:12345"
@@ -340,7 +342,7 @@ describe("CacheOperationCard Component", () => {
   });
 
   it("does not display cache key section when not provided", () => {
-    render(<CacheOperationCard isHit={true} hitRate={0.75} cacheSize={100} />);
+    render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={100} />);
 
     expect(screen.queryByText("Cache Key:")).not.toBeInTheDocument();
   });
