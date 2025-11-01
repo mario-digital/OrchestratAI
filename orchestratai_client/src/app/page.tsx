@@ -3,7 +3,6 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ThreePanelLayout } from "@/components/layout/three-panel-layout";
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { CollapsiblePanel } from "@/components/panels/collapsible-panel";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChatErrorBoundary } from "@/components/chat/chat-error-boundary";
 import { RetrievalPanel } from "@/components/panels/retrieval-panel";
@@ -18,18 +17,12 @@ export default function Home(): ReactElement {
   );
 
   // Left panel: Agent Pipeline (Story 3.5)
-  const agentsPanel = (
-    <CollapsiblePanel side="left">
-      <AgentPanel />
-    </CollapsiblePanel>
-  );
+  // Note: AgentPanel handles its own collapse via ThreePanelLayout context
+  const agentsPanel = <AgentPanel />;
 
   // Right panel: Retrieval Logs (Story 3.6)
-  const logsPanel = (
-    <CollapsiblePanel side="right">
-      <RetrievalPanel />
-    </CollapsiblePanel>
-  );
+  // Note: RetrievalPanel handles its own collapse via ThreePanelLayout context
+  const logsPanel = <RetrievalPanel />;
 
   return (
     <div className="flex flex-col h-screen max-w-screen-2xl mx-auto">

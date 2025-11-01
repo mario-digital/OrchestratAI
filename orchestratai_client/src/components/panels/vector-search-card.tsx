@@ -60,66 +60,61 @@ export function VectorSearchCard({
   onViewDocument,
 }: VectorSearchCardProps): JSX.Element {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-text-primary">
-          Vector Search
-        </h4>
+    <div className="space-y-2 text-sm">
+      {/* Collection and chunk count */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <span className="text-xs text-text-tertiary">Collection:</span>
+          <p className="text-text-primary">{collectionName}</p>
+        </div>
+        <div className="text-right">
+          <span className="text-xs text-text-tertiary">Chunks:</span>
+          <p className="text-text-primary">{chunks.length}</p>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        {/* Collection and count */}
-        <div className="flex items-center justify-between">
+      {/* TopSimilarity and Method */}
+      {chunks.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <span className="text-xs font-medium text-text-secondary">
-              Collection:
-            </span>
-            <p className="text-sm text-text-primary mt-0.5">{collectionName}</p>
+            <span className="text-xs text-text-tertiary">TopSimilarity:</span>
+            <p className="text-text-primary">{chunks[0].similarity.toFixed(2)}</p>
           </div>
           <div className="text-right">
-            <span className="text-xs font-medium text-text-secondary">
-              Retrieved:
-            </span>
-            <p className="text-sm text-text-primary mt-0.5">
-              {chunks.length} chunk{chunks.length !== 1 ? "s" : ""}
-            </p>
+            <span className="text-xs text-text-tertiary">Method:</span>
+            <p className="text-agent-card-text-blue">RAG</p>
           </div>
         </div>
+      )}
 
-        {/* Latency */}
-        <div>
-          <span className="text-xs font-medium text-text-secondary">
-            Latency:
-          </span>
-          <p className="text-sm text-text-primary mt-0.5">{latencyMs}ms</p>
-        </div>
-
-        {/* Document chunks */}
-        {chunks.length > 0 && (
-          <div className="space-y-2 pt-2">
-            <span className="text-xs font-medium text-text-secondary">
-              Retrieved Documents:
-            </span>
-            <div className="space-y-2">
-              {chunks.map((chunk, index) => (
-                <DocumentPreview
-                  key={`${chunk.source}-${index}`}
-                  source={chunk.source}
-                  content={chunk.content}
-                  similarity={chunk.similarity}
-                  onViewFull={() => onViewDocument?.(chunk)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {chunks.length === 0 && (
-          <p className="text-xs text-text-tertiary italic">
-            No documents retrieved
-          </p>
-        )}
+      {/* Latency */}
+      <div>
+        <span className="text-xs text-text-tertiary">Latency:</span>
+        <p className="text-agent-card-text-cyan">{latencyMs}ms</p>
       </div>
+
+      {/* Retrieved Documents Section */}
+      {chunks.length > 0 && (
+        <div className="space-y-2 pt-2 border-t border-border-default">
+          <div className="space-y-3">
+            {chunks.map((chunk, index) => (
+              <DocumentPreview
+                key={`${chunk.source}-${index}`}
+                source={chunk.source}
+                content={chunk.content}
+                similarity={chunk.similarity}
+                onViewFull={() => onViewDocument?.(chunk)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {chunks.length === 0 && (
+        <p className="text-xs text-text-tertiary italic">
+          No documents retrieved
+        </p>
+      )}
     </div>
   );
 }

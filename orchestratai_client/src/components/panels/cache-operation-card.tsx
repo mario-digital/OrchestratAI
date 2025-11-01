@@ -48,72 +48,28 @@ export function CacheOperationCard({
   const hitRatePercent = Math.round(hitRate * 100);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-text-primary">
-          Cache Operation
-        </h4>
+    <div className="space-y-2 text-sm">
+      {/* Message/Description */}
+      <div>
+        <p className="text-text-primary">
+          {cacheKey || "Session cache updated with pricing policy data"}
+        </p>
       </div>
 
-      <div className="space-y-2">
-        {/* Hit/Miss Status */}
+      {/* Size */}
+      <div className="grid grid-cols-2 gap-2">
         <div>
-          <span className="text-xs font-medium text-text-secondary">
-            Status:
-          </span>
-          <div className="mt-1 flex items-center gap-2">
-            {isHit ? (
-              <>
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
-                  HIT
-                </Badge>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-4 w-4 text-yellow-500" />
-                <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                  MISS
-                </Badge>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Hit Rate */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-text-secondary">
-              Hit Rate:
-            </span>
-            <span className="text-xs text-text-secondary">
-              {hitRatePercent}%
-            </span>
-          </div>
-          <Progress value={hitRatePercent} className="h-2" />
-        </div>
-
-        {/* Cache Size */}
-        <div>
-          <span className="text-xs font-medium text-text-secondary">
-            Cache Size:
-          </span>
-          <p className="text-sm text-text-primary mt-0.5">
-            {cacheSize} entr{cacheSize !== 1 ? "ies" : "y"}
+          <span className="text-xs text-text-tertiary">Size:</span>
+          <p className="text-text-primary">
+            {cacheSize >= 1024
+              ? `${(cacheSize / 1024).toFixed(1)} KB`
+              : `${cacheSize} B`}
           </p>
         </div>
-
-        {/* Cache Key (optional, for debugging) */}
-        {cacheKey && (
-          <div>
-            <span className="text-xs font-medium text-text-secondary">
-              Cache Key:
-            </span>
-            <p className="text-xs text-text-tertiary mt-0.5 font-mono truncate">
-              {cacheKey}
-            </p>
-          </div>
-        )}
+        <div className="text-right">
+          <span className="text-xs text-text-tertiary">HitRate:</span>
+          <p className="text-text-primary">{hitRatePercent}%</p>
+        </div>
       </div>
     </div>
   );
