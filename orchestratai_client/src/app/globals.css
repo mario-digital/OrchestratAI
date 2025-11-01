@@ -100,6 +100,10 @@
   --font-size-h2: var(--token-font-size-24);
   --font-size-h1: var(--token-font-size-32);
 
+  /* Section Header Typography (Mockup v2.0) */
+  --font-size-section-header: var(--token-font-size-11); /* 11px - UPPERCASE headers */
+  --font-weight-section-header: var(--token-font-weight-semibold); /* 600 */
+
   /* === Spacing === */
   --space-0: var(--token-space-0);
   --space-1: var(--token-space-1);
@@ -123,6 +127,14 @@
   --shadow-default: var(--token-shadow-default);
   --shadow-md: var(--token-shadow-md);
   --shadow-lg: var(--token-shadow-lg);
+
+  /* Glow Effects (Mockup v2.0) */
+  --shadow-badge-active: var(--token-shadow-glow-active-badge);
+  --shadow-glow-green-subtle: var(--token-shadow-glow-green-subtle);
+
+  /* === Border Widths === */
+  --border-width-default: var(--token-border-width-1); /* 1px - default borders */
+  --border-width-badge: 0.4px; /* Thin borders for badges */
 
   /* === Animation === */
   --duration-fast: var(--token-duration-fast);
@@ -204,15 +216,28 @@
   --color-agent-card-text-purple: var(--token-color-purple-400); /* #c084fc */
   --color-agent-card-accent-purple: var(--token-color-purple-500); /* #a855f7 */
 
+  /* === Agent Card Active State (Mockup v2.0) === */
+  --color-agent-card-active-bg: var(--token-color-green-600); /* #16a34a - Full green background */
+  --color-agent-card-active-text: var(--token-color-gray-50); /* #f9fafb - White text */
+  --color-agent-card-active-label: var(--token-color-gray-50); /* #f9fafb - Label text */
+  --color-agent-card-active-value: var(--token-color-gray-100); /* #f3f4f6 - Value text */
+  --color-agent-card-active-cost: var(--token-color-yellow-400); /* #facc15 - Gold cost */
+  --color-agent-card-active-border: var(--token-color-green-500); /* #22c55e - Lighter green border */
+
   /* === Status Badge Colors === */
-  --color-badge-idle-bg: var(--token-color-gray-700); /* #374151 */
-  --color-badge-idle-text: var(--token-color-gray-400); /* #9ca3af */
-  --color-badge-active-bg: var(--token-color-green-600); /* #16a34a */
-  --color-badge-active-text: var(--token-color-green-300); /* #86efac */
+  --color-badge-idle-bg: transparent; /* Transparent background */
+  --color-badge-idle-text: var(--token-color-gray-300); /* #d1d5db - Lighter for better contrast */
+  --color-badge-active-bg: transparent; /* Transparent background */
+  --color-badge-active-text: var(--token-color-green-400); /* #4ade80 - Brighter green */
+  --color-badge-active-icon: var(--token-color-green-400); /* #4ade80 - Sparkle icon */
   --color-badge-processing-bg: var(--token-color-cyan-600); /* #0891b2 */
   --color-badge-processing-text: var(
     --token-color-cyan-300
   ); /* For readability */
+
+  /* Active Badge on Green Background (Mockup v2.0) */
+  --color-badge-active-on-green-bg: transparent; /* Transparent background */
+  --color-badge-active-on-green-text: var(--token-color-green-200); /* #bbf7d0 - Light green */
 
   /* === Cache Status Icons === */
   --color-cache-hit: var(--token-color-green-600); /* #16a34a - Cache hit */
@@ -220,8 +245,13 @@
   --color-cache-none: var(--token-color-gray-400); /* #9ca3af - No cache */
 
   /* === Chat Message Bubbles === */
-  --color-message-user-bg: var(--token-color-blue-600); /* #2563eb */
-  --color-message-user-text: var(--token-color-gray-50); /* #f9fafb */
+  --color-message-user-bg: color-mix(
+    in srgb,
+    var(--token-color-blue-600) 12%,
+    transparent
+  ); /* Subtle blue wash */
+  --color-message-user-text: var(--token-color-blue-50); /* Light text for contrast */
+  --color-message-user-border: color-mix(in srgb, var(--token-color-blue-500) 60%, transparent);
   --color-message-assistant-bg: var(--color-bg-secondary); /* #0f172a */
   --color-message-assistant-text: var(--token-color-gray-300); /* #d1d5db */
   --color-message-assistant-border: var(--color-border-default); /* #374151 */
@@ -268,7 +298,7 @@
   --color-button-ghost-text: var(--color-text-secondary); /* #d1d5db */
 
   /* === Execution Graph === */
-  --color-graph-node-bg: var(--color-bg-tertiary); /* #1e293b */
+  --color-graph-node-bg: var(--color-bg-tertiary); /* #21262d */
   --color-graph-node-border: var(--color-border-default); /* #374151 */
   --color-graph-node-text: var(--color-text-primary); /* #f9fafb */
   --color-graph-node-active: var(
@@ -278,6 +308,20 @@
   --color-graph-edge: var(
     --token-color-gray-600
   ); /* #4b5563 - Connection lines */
+
+  /* === Execution Graph Component (Mockup v2.0) === */
+  --color-execution-graph-bg: var(--color-bg-secondary); /* #161b22 */
+  --color-execution-graph-border: var(--color-border-default); /* #374151 */
+  --color-execution-graph-header-text: var(--token-color-cyan-400); /* #22d3ee */
+
+  /* Execution Step States */
+  --color-execution-step-complete-bg: var(--token-color-green-500); /* #22c55e */
+  --color-execution-step-complete-icon: var(--token-color-gray-50); /* #f9fafb */
+  --color-execution-step-active-bg: var(--token-color-cyan-500); /* #06b6d4 */
+  --color-execution-step-pending-bg: var(--token-color-gray-600); /* #4b5563 */
+
+  /* Connector Lines */
+  --color-execution-connector: var(--token-color-gray-700); /* #374151 */
 
   /* === Cost Display === */
   --color-cost-text: var(
@@ -478,7 +522,7 @@
   --color-status-badge-active-bg: var(--color-bg-tertiary);
   --color-status-badge-active-text: var(--color-border-focus); /* cyan accent */
 
-  --color-status-badge-complete-bg: var(--color-success-bg);
+  --color-status-badge-complete-bg: transparent;
   --color-status-badge-complete-text: var(--color-success);
 
   /* === Retrieval Log Entry Component Tokens === */
@@ -497,6 +541,27 @@
   --color-log-entry-error-bg: var(--color-bg-tertiary);
   --color-log-entry-error-border: var(--color-log-border-error);
   --color-log-entry-error-text: var(--token-color-red-400);
+
+  /* === Retrieval Log Section Headers (Mockup v2.0) === */
+  --color-log-header-query: var(--token-color-purple-400); /* #c084fc */
+  --color-log-header-vector: var(--token-color-blue-400); /* #60a5fa */
+  --color-log-header-cache: var(--token-color-green-400); /* #4ade80 */
+  --color-log-header-docs: var(--token-color-cyan-400); /* #22d3ee */
+  --color-log-header-timestamp: var(--color-text-tertiary); /* #6b7280 */
+  --color-log-header-bg: transparent; /* No background */
+
+  /* === Document Card Styling (Mockup v2.0) === */
+  --color-doc-filename: var(--token-color-cyan-400); /* #22d3ee - Cyan filenames */
+  --color-doc-view-link: var(--token-color-cyan-500); /* #06b6d4 - "View Full" link */
+  --color-doc-similarity-label: var(--color-text-secondary); /* #d1d5db */
+  --color-doc-similarity-value: var(--token-color-gray-50); /* #f9fafb */
+
+  /* === Agent Icon Colors (Mockup v2.0) === */
+  --color-icon-orchestrator: var(--token-color-cyan-400); /* #22d3ee - Robot icon */
+  --color-icon-billing: var(--token-color-green-400); /* #4ade80 - Dollar icon */
+  --color-icon-technical: var(--token-color-blue-400); /* #60a5fa - Wrench icon */
+  --color-icon-policy: var(--token-color-purple-400); /* #c084fc - Shield icon */
+  --color-icon-execution-graph: var(--token-color-cyan-500); /* #06b6d4 - Graph icon */
 }
 
 /* ============================================
@@ -688,5 +753,162 @@
   }
   .text-log-error {
     color: var(--color-log-entry-error-text);
+  }
+
+  /* ============================================
+     Execution Graph Component Utilities (Mockup v2.0)
+     ============================================ */
+
+  .bg-execution-graph {
+    background-color: var(--color-execution-graph-bg);
+  }
+
+  .border-execution-graph {
+    border-color: var(--color-execution-graph-border);
+  }
+
+  .text-execution-graph-header {
+    color: var(--color-execution-graph-header-text);
+  }
+
+  .bg-execution-step-complete {
+    background-color: var(--color-execution-step-complete-bg);
+  }
+
+  .text-execution-step-complete {
+    color: var(--color-execution-step-complete-icon);
+  }
+
+  .bg-execution-step-active {
+    background-color: var(--color-execution-step-active-bg);
+  }
+
+  .bg-execution-step-pending {
+    background-color: var(--color-execution-step-pending-bg);
+  }
+
+  .bg-execution-connector {
+    background-color: var(--color-execution-connector);
+  }
+
+  /* ============================================
+     Agent Icon Utilities (Mockup v2.0)
+     ============================================ */
+
+  .text-icon-orchestrator {
+    color: var(--color-icon-orchestrator);
+  }
+
+  .text-icon-billing {
+    color: var(--color-icon-billing);
+  }
+
+  .text-icon-technical {
+    color: var(--color-icon-technical);
+  }
+
+  .text-icon-policy {
+    color: var(--color-icon-policy);
+  }
+
+  .text-icon-execution-graph {
+    color: var(--color-icon-execution-graph);
+  }
+
+  /* ============================================
+     Agent Card Active State Utilities (Mockup v2.0)
+     ============================================ */
+
+  .bg-agent-active {
+    background-color: var(--color-agent-card-active-bg);
+  }
+
+  .text-agent-active {
+    color: var(--color-agent-card-active-text);
+  }
+
+  .text-agent-active-label {
+    color: var(--color-agent-card-active-label);
+  }
+
+  .text-agent-active-value {
+    color: var(--color-agent-card-active-value);
+  }
+
+  .text-agent-active-cost {
+    color: var(--color-agent-card-active-cost);
+  }
+
+  .border-agent-active {
+    border-color: var(--color-agent-card-active-border);
+  }
+
+  /* Active Badge on Green Background */
+  .bg-badge-active-on-green {
+    background-color: var(--color-badge-active-on-green-bg);
+  }
+
+  .text-badge-active-on-green {
+    color: var(--color-badge-active-on-green-text);
+  }
+
+  /* ============================================
+     Retrieval Log Section Header Utilities (Mockup v2.0)
+     ============================================ */
+
+  .text-log-header-query {
+    color: var(--color-log-header-query);
+  }
+
+  .text-log-header-vector {
+    color: var(--color-log-header-vector);
+  }
+
+  .text-log-header-cache {
+    color: var(--color-log-header-cache);
+  }
+
+  .text-log-header-docs {
+    color: var(--color-log-header-docs);
+  }
+
+  .text-log-header-timestamp {
+    color: var(--color-log-header-timestamp);
+  }
+
+  /* ============================================
+     Document Card Utilities (Mockup v2.0)
+     ============================================ */
+
+  .text-doc-filename {
+    color: var(--color-doc-filename);
+  }
+
+  .text-doc-view-link {
+    color: var(--color-doc-view-link);
+  }
+
+  .text-doc-similarity-label {
+    color: var(--color-doc-similarity-label);
+  }
+
+  .text-doc-similarity-value {
+    color: var(--color-doc-similarity-value);
+  }
+
+  /* ============================================
+     Badge Icon Utilities (Mockup v2.0)
+     ============================================ */
+
+  .text-badge-active-icon {
+    color: var(--color-badge-active-icon);
+  }
+
+  /* Section Header Typography */
+  .section-header {
+    font-size: var(--font-size-section-header);
+    font-weight: var(--font-weight-section-header);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 }

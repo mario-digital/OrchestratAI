@@ -35,6 +35,6 @@
     /* Common App Layouts */
     --token-grid-cols-sidebar-main: 280px 1fr; /* Fixed sidebar + flexible main */
     --token-grid-cols-sidebar-main-panel: 280px 1fr 320px; /* 3-panel layout */
-    --token-grid-cols-three-panel-chat: 250px 1fr 300px; /* Chat interface: agent pipeline | chat | retrieval log */
+    --token-grid-cols-three-panel-chat: 300px 1fr 300px; /* Chat interface: agent pipeline | chat | retrieval log */
   }
 }

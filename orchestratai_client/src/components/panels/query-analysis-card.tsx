@@ -63,61 +63,65 @@ export function QueryAnalysisCard({
   targetAgent,
   reasoning,
 }: QueryAnalysisCardProps): JSX.Element {
-  const confidencePercent = Math.round(confidence * 100);
-  const agentBadgeClass = getAgentBadgeClass(targetAgent);
+  const confidencePercent = (confidence * 100).toFixed(0);
+
+  // Parse reasoning to extract keywords
+  // Format: "Keywords: word1, word2, word3" or just regular text
+  const renderReasoning = () => {
+    if (!reasoning) return null;
+
+    // Check if reasoning starts with "Keywords:"
+    if (reasoning.toLowerCase().startsWith("keywords:")) {
+      const keywordText = reasoning.substring("keywords:".length).trim();
+      const keywords = keywordText.split(",").map((k) => k.trim());
+
+      return (
+        <div>
+          <span className="text-xs text-text-tertiary">Reasoning:</span>
+          <p className="text-text-secondary">
+            <span className="text-text-tertiary">Keywords: </span>
+            {keywords.map((keyword, idx) => (
+              <span key={idx}>
+                <span className="text-agent-card-text-cyan">{keyword}</span>
+                {idx < keywords.length - 1 && ", "}
+              </span>
+            ))}
+          </p>
+        </div>
+      );
+    }
+
+    // Regular reasoning text
+    return (
+      <div>
+        <span className="text-xs text-text-tertiary">Reasoning:</span>
+        <p className="text-text-secondary">{reasoning}</p>
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-text-primary">
-          Query Analysis
-        </h4>
+    <div className="space-y-2 text-sm">
+      {/* Intent */}
+      <div>
+        <span className="text-xs text-text-tertiary">Intent:</span>
+        <p className="text-text-primary">{intent}</p>
       </div>
 
-      <div className="space-y-2">
-        {/* Intent */}
-        <div>
-          <span className="text-xs font-medium text-text-secondary">
-            Detected Intent:
-          </span>
-          <p className="text-sm text-text-primary mt-1">{intent}</p>
-        </div>
-
-        {/* Confidence */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-text-secondary">
-              Confidence:
-            </span>
-            <span className="text-xs text-text-secondary">
-              {confidencePercent}%
-            </span>
-          </div>
-          <Progress value={confidencePercent} className="h-2" />
-        </div>
-
-        {/* Target Agent */}
-        <div>
-          <span className="text-xs font-medium text-text-secondary">
-            Target Agent:
-          </span>
-          <div className="mt-1">
-            <Badge className={agentBadgeClass}>{targetAgent}</Badge>
-          </div>
-        </div>
-
-        {/* Reasoning (optional) */}
-        {reasoning && (
-          <div>
-            <span className="text-xs font-medium text-text-secondary">
-              Reasoning:
-            </span>
-            <p className="text-xs text-text-tertiary mt-1 leading-relaxed">
-              {reasoning}
-            </p>
-          </div>
-        )}
+      {/* Confidence */}
+      <div>
+        <span className="text-xs text-text-tertiary">Confidence:</span>
+        <p className="text-text-primary">{confidence.toFixed(2)}</p>
       </div>
+
+      {/* Target Agent */}
+      <div>
+        <span className="text-xs text-text-tertiary">Target:</span>
+        <p className="text-agent-card-text-green">{targetAgent}</p>
+      </div>
+
+      {/* Reasoning (optional) - with keyword highlighting */}
+      {renderReasoning()}
     </div>
   );
 }
