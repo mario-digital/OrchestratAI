@@ -22,6 +22,30 @@ interface DocumentChunk {
 }
 
 /**
+ * Type guard to validate DocumentChunk objects
+ */
+function isDocumentChunk(value: unknown): value is DocumentChunk {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "source" in value &&
+    typeof (value as DocumentChunk).source === "string" &&
+    "content" in value &&
+    typeof (value as DocumentChunk).content === "string" &&
+    "similarity" in value &&
+    typeof (value as DocumentChunk).similarity === "number"
+  );
+}
+
+/**
+ * Safely parse chunks data with runtime validation
+ */
+function parseDocumentChunks(data: unknown): DocumentChunk[] {
+  if (!Array.isArray(data)) return [];
+  return data.filter(isDocumentChunk);
+}
+
+/**
  * Get section header color and label based on log type (Mockup v2.0)
  */
 function getLogSectionConfig(logType: LogType): {
@@ -83,7 +107,7 @@ function renderLogCard(
       return (
         <VectorSearchCard
           collectionName={data["collection_name"] as string}
-          chunks={(data["chunks"] as unknown[] as DocumentChunk[]) || []}
+          chunks={parseDocumentChunks(data["chunks"])}
           latencyMs={data["latency_ms"] as number}
           onViewDocument={
             onViewDocument
@@ -109,7 +133,7 @@ function renderLogCard(
       return (
         <VectorSearchCard
           collectionName={data["collection_name"] as string}
-          chunks={(data["chunks"] as unknown[] as DocumentChunk[]) || []}
+          chunks={parseDocumentChunks(data["chunks"])}
           latencyMs={data["latency_ms"] as number}
           onViewDocument={
             onViewDocument
