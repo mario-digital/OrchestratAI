@@ -1,6 +1,8 @@
 "use client";
 
 import type { JSX } from "react";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, XCircle } from "lucide-react";
 
 /**
  * CacheOperationCard Props
@@ -37,7 +39,7 @@ interface CacheOperationCardProps {
  * ```
  */
 export function CacheOperationCard({
-  _isHit: _,
+  _isHit: isHit,
   hitRate,
   cacheSize,
   cacheKey,
@@ -46,6 +48,27 @@ export function CacheOperationCard({
 
   return (
     <div className="space-y-2 text-sm">
+      {/* Hit/Miss Status Badge */}
+      <div className="flex items-center gap-2">
+        {isHit ? (
+          <Badge
+            variant="outline"
+            className="bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20"
+          >
+            <CheckCircle className="w-3 h-3 mr-1" />
+            HIT
+          </Badge>
+        ) : (
+          <Badge
+            variant="outline"
+            className="bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20"
+          >
+            <XCircle className="w-3 h-3 mr-1" />
+            MISS
+          </Badge>
+        )}
+      </div>
+
       {/* Message/Description */}
       <div>
         <p className="text-text-primary">
@@ -53,7 +76,7 @@ export function CacheOperationCard({
         </p>
       </div>
 
-      {/* Size */}
+      {/* Size & Hit Rate */}
       <div className="grid grid-cols-2 gap-2">
         <div>
           <span className="text-xs text-text-tertiary">Size:</span>
