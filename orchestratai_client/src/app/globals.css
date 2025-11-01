@@ -226,7 +226,7 @@
 
   /* === Status Badge Colors === */
   --color-badge-idle-bg: transparent; /* Transparent background */
-  --color-badge-idle-text: var(--token-color-gray-300); /* #d1d5db - Lighter for better contrast */
+  --color-badge-idle-text: var(--token-color-gray-400); /* Softer gray for idle badges */
   --color-badge-active-bg: transparent; /* Transparent background */
   --color-badge-active-text: var(--token-color-green-400); /* #4ade80 - Brighter green */
   --color-badge-active-icon: var(--token-color-green-400); /* #4ade80 - Sparkle icon */
