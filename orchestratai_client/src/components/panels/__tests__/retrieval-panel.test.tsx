@@ -331,8 +331,7 @@ describe("RetrievalPanel - Log Rendering", () => {
     expect(timestamps.length).toBeGreaterThan(0);
   });
 
-  it("handles console log when viewing document", async () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  it("opens document modal when viewing document", async () => {
     const user = userEvent.setup();
 
     const mockLogs: RetrievalLog[] = [
@@ -367,11 +366,13 @@ describe("RetrievalPanel - Log Rendering", () => {
     const viewButton = screen.getByRole("button", { name: /view full/i });
     await user.click(viewButton);
 
+    // Modal should open (Story 3.7)
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith("View document:", "test.md");
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
 
-    consoleSpy.mockRestore();
+    // Modal should show document source
+    expect(screen.getAllByText("test.md").length).toBeGreaterThan(0);
   });
 });
 

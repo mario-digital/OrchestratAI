@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import type { JSX } from "react";
+import { DocumentModal } from "./document-modal";
 
 /**
  * DocumentPreview Props
@@ -13,8 +15,6 @@ interface DocumentPreviewProps {
   content: string;
   /** Similarity score from vector search (0.0 to 1.0) */
   similarity: number;
-  /** Callback when "View Full" button is clicked (opens modal in Story 3.7) */
-  onViewFull: () => void;
 }
 
 /**
@@ -43,7 +43,6 @@ function truncateContent(content: string, maxLength: number = 200): string {
  *   source="docs/architecture.md"
  *   content="This is the architecture document..."
  *   similarity={0.92}
- *   onViewFull={() => setModalOpen(true)}
  * />
  * ```
  */
@@ -51,8 +50,8 @@ export function DocumentPreview({
   source,
   content,
   similarity,
-  onViewFull,
 }: DocumentPreviewProps): JSX.Element {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const truncatedContent = truncateContent(content, 200);
 
   return (
@@ -77,7 +76,7 @@ export function DocumentPreview({
 
       {/* View Full link - Mockup v2.0: Cyan with eye icon */}
       <button
-        onClick={onViewFull}
+        onClick={() => setIsModalOpen(true)}
         className="flex items-center gap-1.5 text-doc-view-link text-xs hover:underline"
       >
         <svg
@@ -101,6 +100,13 @@ export function DocumentPreview({
         </svg>
         View Full
       </button>
+
+      {/* Document Modal - Story 3.7 */}
+      <DocumentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        document={{ source, content, similarity }}
+      />
     </div>
   );
 }
