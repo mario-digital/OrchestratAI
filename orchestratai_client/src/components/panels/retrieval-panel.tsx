@@ -46,6 +46,107 @@ function parseDocumentChunks(data: unknown): DocumentChunk[] {
 }
 
 /**
+ * Validate and parse query analysis log data
+ */
+interface QueryAnalysisData {
+  intent: string;
+  confidence: number;
+  target_agent: AgentId;
+  reasoning?: string;
+}
+
+function parseQueryAnalysisData(data: unknown): QueryAnalysisData {
+  if (typeof data !== "object" || data === null) {
+    return {
+      intent: "unknown",
+      confidence: 0,
+      target_agent: AgentId.ORCHESTRATOR,
+    };
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  // Validate required fields
+  const intent = typeof obj["intent"] === "string" ? obj["intent"] : "unknown";
+  const confidence =
+    typeof obj["confidence"] === "number" ? obj["confidence"] : 0;
+  const targetAgent =
+    typeof obj["target_agent"] === "string" &&
+    Object.values(AgentId).includes(obj["target_agent"] as AgentId)
+      ? (obj["target_agent"] as AgentId)
+      : AgentId.ORCHESTRATOR;
+  const reasoning =
+    typeof obj["reasoning"] === "string" ? obj["reasoning"] : undefined;
+
+  return {
+    intent,
+    confidence,
+    target_agent: targetAgent,
+    reasoning,
+  };
+}
+
+/**
+ * Validate and parse vector search log data
+ */
+interface VectorSearchData {
+  collection_name: string;
+  chunks: DocumentChunk[];
+  latency_ms: number;
+}
+
+function parseVectorSearchData(data: unknown): VectorSearchData {
+  if (typeof data !== "object" || data === null) {
+    return {
+      collection_name: "unknown",
+      chunks: [],
+      latency_ms: 0,
+    };
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  return {
+    collection_name:
+      typeof obj["collection_name"] === "string"
+        ? obj["collection_name"]
+        : "unknown",
+    chunks: parseDocumentChunks(obj["chunks"]),
+    latency_ms: typeof obj["latency_ms"] === "number" ? obj["latency_ms"] : 0,
+  };
+}
+
+/**
+ * Validate and parse cache operation log data
+ */
+interface CacheOperationData {
+  is_hit: boolean;
+  hit_rate: number;
+  cache_size: number;
+  cache_key?: string;
+}
+
+function parseCacheOperationData(data: unknown): CacheOperationData {
+  if (typeof data !== "object" || data === null) {
+    return {
+      is_hit: false,
+      hit_rate: 0,
+      cache_size: 0,
+    };
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  return {
+    is_hit: typeof obj["is_hit"] === "boolean" ? obj["is_hit"] : false,
+    hit_rate: typeof obj["hit_rate"] === "number" ? obj["hit_rate"] : 0,
+    cache_size: typeof obj["cache_size"] === "number" ? obj["cache_size"] : 0,
+    cache_key:
+      typeof obj["cache_key"] === "string" ? obj["cache_key"] : undefined,
+  };
+}
+
+/**
  * Get section header color and label based on log type (Mockup v2.0)
  */
 function getLogSectionConfig(logType: LogType): {
@@ -91,24 +192,27 @@ function renderLogCard(
   const data = log.data;
 
   switch (log.type) {
-    case LogType.ROUTING:
-      // Query analysis data structure
+    case LogType.ROUTING: {
+      // Query analysis data structure with validation
+      const queryData = parseQueryAnalysisData(data);
       return (
         <QueryAnalysisCard
-          intent={data["intent"] as string}
-          confidence={data["confidence"] as number}
-          targetAgent={data["target_agent"] as AgentId}
-          reasoning={data["reasoning"] as string | undefined}
+          intent={queryData.intent}
+          confidence={queryData.confidence}
+          targetAgent={queryData.target_agent}
+          reasoning={queryData.reasoning}
         />
       );
+    }
 
-    case LogType.VECTOR_SEARCH:
-      // Vector search data structure
+    case LogType.VECTOR_SEARCH: {
+      // Vector search data structure with validation
+      const vectorData = parseVectorSearchData(data);
       return (
         <VectorSearchCard
-          collectionName={data["collection_name"] as string}
-          chunks={parseDocumentChunks(data["chunks"])}
-          latencyMs={data["latency_ms"] as number}
+          collectionName={vectorData.collection_name}
+          chunks={vectorData.chunks}
+          latencyMs={vectorData.latency_ms}
           onViewDocument={
             onViewDocument
               ? (chunk) => onViewDocument(chunk.source, chunk.content)
@@ -116,25 +220,29 @@ function renderLogCard(
           }
         />
       );
+    }
 
-    case LogType.CACHE:
-      // Cache operation data structure
+    case LogType.CACHE: {
+      // Cache operation data structure with validation
+      const cacheData = parseCacheOperationData(data);
       return (
         <CacheOperationCard
-          _isHit={data["is_hit"] as boolean}
-          hitRate={data["hit_rate"] as number}
-          cacheSize={data["cache_size"] as number}
-          cacheKey={data["cache_key"] as string | undefined}
+          _isHit={cacheData.is_hit}
+          hitRate={cacheData.hit_rate}
+          cacheSize={cacheData.cache_size}
+          cacheKey={cacheData.cache_key}
         />
       );
+    }
 
-    case LogType.DOCUMENTS:
-      // Document retrieval - similar to vector search
+    case LogType.DOCUMENTS: {
+      // Document retrieval - similar to vector search with validation
+      const docsData = parseVectorSearchData(data);
       return (
         <VectorSearchCard
-          collectionName={data["collection_name"] as string}
-          chunks={parseDocumentChunks(data["chunks"])}
-          latencyMs={data["latency_ms"] as number}
+          collectionName={docsData.collection_name}
+          chunks={docsData.chunks}
+          latencyMs={docsData.latency_ms}
           onViewDocument={
             onViewDocument
               ? (chunk) => onViewDocument(chunk.source, chunk.content)
@@ -142,6 +250,7 @@ function renderLogCard(
           }
         />
       );
+    }
 
     default:
       // Error or unknown log type
