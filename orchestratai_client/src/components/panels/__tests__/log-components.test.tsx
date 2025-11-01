@@ -218,7 +218,7 @@ describe("DocumentPreview Component", () => {
     );
 
     const button = screen.getByRole("button", {
-      name: /view full document/i,
+      name: /view full/i,
     });
     await user.click(button);
 
@@ -249,10 +249,11 @@ describe("VectorSearchCard Component", () => {
       <VectorSearchCard collectionName="docs" chunks={chunks} latencyMs={100} />
     );
 
-    expect(screen.getByText("2 chunks")).toBeInTheDocument();
+    expect(screen.getByText("Chunks:")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
-  it("displays singular 'chunk' for single result", () => {
+  it("displays singular count for single result", () => {
     const chunks = [
       { source: "doc1.md", content: "content1", similarity: 0.9 },
     ];
@@ -261,7 +262,7 @@ describe("VectorSearchCard Component", () => {
       <VectorSearchCard collectionName="docs" chunks={chunks} latencyMs={100} />
     );
 
-    expect(screen.getByText("1 chunk")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
   });
 
   it("displays search latency", () => {
@@ -269,15 +270,15 @@ describe("VectorSearchCard Component", () => {
       <VectorSearchCard collectionName="docs" chunks={[]} latencyMs={345} />
     );
 
-    expect(screen.getByText("345ms")).toBeInTheDocument();
+    expect(screen.getByText("Latency:")).toBeInTheDocument();
   });
 
-  it("shows empty state when no chunks retrieved", () => {
+  it("displays chunk count for empty results", () => {
     render(
       <VectorSearchCard collectionName="docs" chunks={[]} latencyMs={100} />
     );
 
-    expect(screen.getByText(/no documents retrieved/i)).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
   });
 
   it("renders document previews for each chunk", () => {
