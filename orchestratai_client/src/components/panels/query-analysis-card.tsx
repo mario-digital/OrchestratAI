@@ -67,7 +67,7 @@ export function QueryAnalysisCard({
 
   // Parse reasoning to extract keywords
   // Format: "Keywords: word1, word2, word3" or just regular text
-  const renderReasoning = () => {
+  const renderReasoning = (): JSX.Element | null => {
     if (!reasoning) return null;
 
     // Check if reasoning starts with "Keywords:"
