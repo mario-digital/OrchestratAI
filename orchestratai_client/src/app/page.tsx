@@ -6,6 +6,8 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { CollapsiblePanel } from "@/components/panels/collapsible-panel";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChatErrorBoundary } from "@/components/chat/chat-error-boundary";
+import { RetrievalPanel } from "@/components/panels/retrieval-panel";
+import { AgentPanel } from "@/components/panels/agent-panel";
 
 export default function Home(): ReactElement {
   // Chat interface with full state management wrapped in error boundary
@@ -15,15 +17,17 @@ export default function Home(): ReactElement {
     </ChatErrorBoundary>
   );
 
-  // Placeholder panels (to be replaced with real components in Epic 3+)
+  // Left panel: Agent Pipeline (Story 3.5)
   const agentsPanel = (
     <CollapsiblePanel side="left">
-      <p className="text-text-secondary">Agent Pipeline (Epic 3)</p>
+      <AgentPanel />
     </CollapsiblePanel>
   );
+
+  // Right panel: Retrieval Logs (Story 3.6)
   const logsPanel = (
     <CollapsiblePanel side="right">
-      <p className="text-text-secondary">Retrieval Log (Epic 3)</p>
+      <RetrievalPanel />
     </CollapsiblePanel>
   );
 
@@ -34,7 +38,9 @@ export default function Home(): ReactElement {
 
       {/* Desktop Layout (>=768px) */}
       <div className="hidden md:flex md:flex-1 overflow-hidden">
-        <ThreePanelLayout>{chatPanel}</ThreePanelLayout>
+        <ThreePanelLayout leftPanel={agentsPanel} rightPanel={logsPanel}>
+          {chatPanel}
+        </ThreePanelLayout>
       </div>
 
       {/* Mobile Layout (<768px) */}

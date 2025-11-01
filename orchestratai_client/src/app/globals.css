@@ -480,6 +480,23 @@
 
   --color-status-badge-complete-bg: var(--color-success-bg);
   --color-status-badge-complete-text: var(--color-success);
+
+  /* === Retrieval Log Entry Component Tokens === */
+  --color-log-entry-query-bg: var(--color-bg-tertiary);
+  --color-log-entry-query-border: var(--token-color-blue-600);
+  --color-log-entry-query-text: var(--color-log-text-vector);
+
+  --color-log-entry-vector-bg: var(--color-bg-tertiary);
+  --color-log-entry-vector-border: var(--token-color-purple-600);
+  --color-log-entry-vector-text: var(--color-log-text-routing);
+
+  --color-log-entry-cache-bg: var(--color-bg-tertiary);
+  --color-log-entry-cache-border: var(--token-color-green-600);
+  --color-log-entry-cache-text: var(--color-log-text-cache);
+
+  --color-log-entry-error-bg: var(--color-bg-tertiary);
+  --color-log-entry-error-border: var(--color-log-border-error);
+  --color-log-entry-error-text: var(--token-color-red-400);
 }
 
 /* ============================================
@@ -627,5 +644,49 @@
   }
   .text-status-badge-complete-text {
     color: var(--color-status-badge-complete-text);
+  }
+
+  /* ============================================
+     Retrieval Log Entry Utilities
+     ============================================ */
+
+  .bg-log-query {
+    background-color: var(--color-log-entry-query-bg);
+  }
+  .border-l-log-query {
+    border-left-color: var(--color-log-entry-query-border);
+  }
+  .text-log-query {
+    color: var(--color-log-entry-query-text);
+  }
+
+  .bg-log-vector {
+    background-color: var(--color-log-entry-vector-bg);
+  }
+  .border-l-log-vector {
+    border-left-color: var(--color-log-entry-vector-border);
+  }
+  .text-log-vector {
+    color: var(--color-log-entry-vector-text);
+  }
+
+  .bg-log-cache {
+    background-color: var(--color-log-entry-cache-bg);
+  }
+  .border-l-log-cache {
+    border-left-color: var(--color-log-entry-cache-border);
+  }
+  .text-log-cache {
+    color: var(--color-log-entry-cache-text);
+  }
+
+  .bg-log-error {
+    background-color: var(--color-log-entry-error-bg);
+  }
+  .border-l-log-error {
+    border-left-color: var(--color-log-entry-error-border);
+  }
+  .text-log-error {
+    color: var(--color-log-entry-error-text);
   }
 }

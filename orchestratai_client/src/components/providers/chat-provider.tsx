@@ -27,6 +27,7 @@ import {
   RetrievalStrategy,
 } from "@/lib/enums";
 import { getUserFriendlyMessage } from "@/lib/utils/error-messages";
+import type { RetrievalLog } from "@/lib/types";
 
 // =============================================================================
 // Types
@@ -74,6 +75,7 @@ export interface ChatState {
   typingAgent: AgentId | null;
   failedMessage: string | null;
   agents: Record<AgentId, AgentState>;
+  retrievalLogs: RetrievalLog[];
 }
 
 /**
@@ -100,7 +102,9 @@ export type ChatAction =
         cacheStatus?: string;
       };
     }
-  | { type: "SET_ALL_AGENT_STATUS"; payload: Record<AgentId, AgentStatus> };
+  | { type: "SET_ALL_AGENT_STATUS"; payload: Record<AgentId, AgentStatus> }
+  | { type: "ADD_LOG_ENTRIES"; payload: RetrievalLog[] }
+  | { type: "CLEAR_LOGS" };
 
 /**
  * ChatContextValue - Complete context value with state and methods
@@ -116,6 +120,8 @@ export interface ChatContextValue extends ChatState {
     metrics: Partial<AgentState["metrics"]>,
     cacheStatus?: string
   ) => void;
+  addLogEntries: (logs: RetrievalLog[]) => void;
+  clearLogs: () => void;
 }
 
 /**
@@ -304,6 +310,18 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       };
     }
 
+    case "ADD_LOG_ENTRIES":
+      return {
+        ...state,
+        retrievalLogs: [...state.retrievalLogs, ...action.payload],
+      };
+
+    case "CLEAR_LOGS":
+      return {
+        ...state,
+        retrievalLogs: [],
+      };
+
     default:
       return state;
   }
@@ -363,6 +381,7 @@ export function ChatProvider({
     typingAgent: null,
     failedMessage: null,
     agents: INITIAL_AGENTS,
+    retrievalLogs: [],
   });
 
   // Ref to track orchestrator animation timeout for cleanup
@@ -482,6 +501,14 @@ export function ChatProvider({
         });
       }
 
+      // Step 5.5: Add retrieval logs from API response
+      if (response.logs && response.logs.length > 0) {
+        dispatch({
+          type: "ADD_LOG_ENTRIES",
+          payload: response.logs,
+        });
+      }
+
       // Step 6: Increment metrics for the selected agent
       if (response.metrics) {
         dispatch({
@@ -598,6 +625,20 @@ export function ChatProvider({
     });
   };
 
+  /**
+   * Add retrieval log entries to the state
+   */
+  const addLogEntries = (logs: RetrievalLog[]): void => {
+    dispatch({ type: "ADD_LOG_ENTRIES", payload: logs });
+  };
+
+  /**
+   * Clear all retrieval logs
+   */
+  const clearLogs = (): void => {
+    dispatch({ type: "CLEAR_LOGS" });
+  };
+
   const value: ChatContextValue = {
     ...state,
     sendMessage,
@@ -606,6 +647,8 @@ export function ChatProvider({
     clearError,
     updateAgentStatus,
     incrementAgentMetrics,
+    addLogEntries,
+    clearLogs,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
