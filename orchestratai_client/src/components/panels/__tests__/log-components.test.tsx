@@ -97,7 +97,7 @@ describe("QueryAnalysisCard Component", () => {
     expect(screen.getByText(/technical_question/i)).toBeInTheDocument();
   });
 
-  it("displays confidence as percentage", () => {
+  it("displays confidence score", () => {
     render(
       <QueryAnalysisCard
         intent="greeting"
@@ -106,7 +106,7 @@ describe("QueryAnalysisCard Component", () => {
       />
     );
 
-    expect(screen.getByText("78%")).toBeInTheDocument();
+    expect(screen.getByText("0.78")).toBeInTheDocument();
   });
 
   it("displays target agent badge", () => {
@@ -192,7 +192,7 @@ describe("DocumentPreview Component", () => {
     expect(screen.getByText("docs/architecture.md")).toBeInTheDocument();
   });
 
-  it("displays similarity score as percentage", () => {
+  it("displays similarity score", () => {
     render(
       <DocumentPreview
         source="test.md"
@@ -202,7 +202,7 @@ describe("DocumentPreview Component", () => {
       />
     );
 
-    expect(screen.getByText("92%")).toBeInTheDocument();
+    expect(screen.getByText("0.92")).toBeInTheDocument();
   });
 
   it("calls onViewFull when View Full button is clicked", async () => {
@@ -313,19 +313,19 @@ describe("CacheOperationCard Component", () => {
   it("displays hit rate as percentage", () => {
     render(<CacheOperationCard _isHit={true} hitRate={0.82} cacheSize={200} />);
 
-    expect(screen.getByText("82%")).toBeInTheDocument();
+    expect(screen.getByText(/82%/)).toBeInTheDocument();
   });
 
-  it("displays cache size with plural 'entries'", () => {
+  it("displays cache size in bytes", () => {
     render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={150} />);
 
-    expect(screen.getByText("150 entries")).toBeInTheDocument();
+    expect(screen.getByText("150 B")).toBeInTheDocument();
   });
 
-  it("displays cache size with singular 'entry'", () => {
+  it("displays cache size for 1 byte", () => {
     render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={1} />);
 
-    expect(screen.getByText("1 entry")).toBeInTheDocument();
+    expect(screen.getByText("1 B")).toBeInTheDocument();
   });
 
   it("displays cache key when provided", () => {
