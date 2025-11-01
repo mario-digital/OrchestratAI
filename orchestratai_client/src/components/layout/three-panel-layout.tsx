@@ -1,6 +1,12 @@
 "use client";
 
-import { ReactNode, ReactElement, useState, createContext, useContext } from "react";
+import {
+  ReactNode,
+  ReactElement,
+  useState,
+  createContext,
+  useContext,
+} from "react";
 
 interface ThreePanelLayoutProps {
   children?: ReactNode;
@@ -15,12 +21,23 @@ interface PanelCollapseContextType {
   toggleLeftPanel: () => void;
 }
 
-const PanelCollapseContext = createContext<PanelCollapseContextType | null>(null);
+const noop = (): void => {};
+
+const PanelCollapseContext = createContext<PanelCollapseContextType | null>(
+  null
+);
+
+const defaultPanelContext: PanelCollapseContextType = {
+  isLeftPanelCollapsed: false,
+  toggleLeftPanel: noop,
+  isRightPanelCollapsed: false,
+  toggleRightPanel: noop,
+};
 
 export function usePanelCollapse(): PanelCollapseContextType {
   const context = useContext(PanelCollapseContext);
   if (!context) {
-    throw new Error("usePanelCollapse must be used within ThreePanelLayout");
+    return defaultPanelContext;
   }
   return context;
 }
@@ -65,7 +82,9 @@ export function ThreePanelLayout({
       }}
     >
       <div className="relative flex-1 overflow-hidden">
-        <div className={`h-full grid transition-all duration-300 ${getGridLayout()}`}>
+        <div
+          className={`h-full grid transition-all duration-300 ${getGridLayout()}`}
+        >
           {/* Left Panel - Agent Pipeline (collapsible) */}
           {!isLeftPanelCollapsed && (
             <aside

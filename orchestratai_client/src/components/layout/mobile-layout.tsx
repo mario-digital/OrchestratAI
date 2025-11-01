@@ -14,7 +14,6 @@ export function MobileLayout({
   agentsPanel,
   logsPanel,
 }: MobileLayoutProps): ReactElement {
-  // Initialize with URL hash if available, otherwise default to "chat"
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.replace("#", "");
@@ -25,10 +24,11 @@ export function MobileLayout({
     return "chat";
   });
 
-  // Update URL hash when tab changes
   const handleTabChange = (value: string): void => {
     setActiveTab(value);
-    window.location.hash = `#${value}`;
+    if (typeof window !== "undefined") {
+      window.location.hash = `#${value}`;
+    }
   };
 
   return (

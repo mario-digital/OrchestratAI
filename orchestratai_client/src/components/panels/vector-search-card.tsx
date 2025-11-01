@@ -78,7 +78,9 @@ export function VectorSearchCard({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <span className="text-xs text-text-tertiary">TopSimilarity:</span>
-            <p className="text-text-primary">{chunks[0].similarity.toFixed(2)}</p>
+            <p className="text-text-primary">
+              {chunks[0]!.similarity.toFixed(2)}
+            </p>
           </div>
           <div className="text-right">
             <span className="text-xs text-text-tertiary">Method:</span>

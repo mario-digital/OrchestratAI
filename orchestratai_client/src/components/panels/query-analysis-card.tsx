@@ -1,8 +1,6 @@
 "use client";
 
 import type { JSX } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { AgentId } from "@/lib/enums";
 
 /**
@@ -39,23 +37,6 @@ interface QueryAnalysisCardProps {
  * />
  * ```
  */
-/**
- * Get simple badge color for agent
- */
-function getAgentBadgeClass(agent: AgentId): string {
-  switch (agent) {
-    case AgentId.ORCHESTRATOR:
-      return "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
-    case AgentId.BILLING:
-      return "bg-green-500/10 text-green-400 border-green-500/20";
-    case AgentId.TECHNICAL:
-      return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-    case AgentId.POLICY:
-      return "bg-purple-500/10 text-purple-400 border-purple-500/20";
-    default:
-      return "bg-gray-500/10 text-gray-400 border-gray-500/20";
-  }
-}
 
 export function QueryAnalysisCard({
   intent,
@@ -63,8 +44,6 @@ export function QueryAnalysisCard({
   targetAgent,
   reasoning,
 }: QueryAnalysisCardProps): JSX.Element {
-  const confidencePercent = (confidence * 100).toFixed(0);
-
   // Parse reasoning to extract keywords
   // Format: "Keywords: word1, word2, word3" or just regular text
   const renderReasoning = (): JSX.Element | null => {

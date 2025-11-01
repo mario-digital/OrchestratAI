@@ -56,7 +56,11 @@ export function AgentPanel(): JSX.Element {
         <button
           onClick={toggleLeftPanel}
           className="text-text-tertiary hover:text-text-primary transition-colors"
-          aria-label={isLeftPanelCollapsed ? "Expand agent pipeline" : "Collapse agent pipeline"}
+          aria-label={
+            isLeftPanelCollapsed
+              ? "Expand agent pipeline"
+              : "Collapse agent pipeline"
+          }
         >
           <svg
             className="w-4 h-4 transition-transform duration-200"
@@ -64,7 +68,9 @@ export function AgentPanel(): JSX.Element {
             stroke="currentColor"
             viewBox="0 0 24 24"
             style={{
-              transform: isLeftPanelCollapsed ? "rotate(180deg)" : "rotate(0deg)",
+              transform: isLeftPanelCollapsed
+                ? "rotate(180deg)"
+                : "rotate(0deg)",
             }}
           >
             <path

@@ -1,10 +1,9 @@
 "use client";
 
 import { type JSX, memo } from "react";
-import { AgentId, AgentStatus } from "@/lib/enums";
+import { AgentId, AgentStatus, RetrievalStrategy } from "@/lib/enums";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { AgentStatusBadge } from "./agent-status-badge";
-import { getAgentBorderColor } from "@/lib/utils/agent-colors";
 
 interface AgentCardProps {
   agentId: AgentId;
@@ -23,11 +22,7 @@ interface AgentCardProps {
 /**
  * AgentIcon - Icon representing the agent type (Mockup v2.0)
  */
-function AgentIcon({
-  agentId,
-}: {
-  agentId: AgentId;
-}): JSX.Element {
+function AgentIcon({ agentId }: { agentId: AgentId }): JSX.Element {
   const iconConfig = {
     [AgentId.ORCHESTRATOR]: {
       icon: "M8 9l3-3 3 3m-3-3v12M3 3h18M3 21h18", // Network/nodes icon
@@ -88,7 +83,6 @@ export const AgentCard = memo(
     metrics,
     cacheStatus: _cacheStatus,
   }: AgentCardProps): JSX.Element {
-    const _borderColor = getAgentBorderColor(agentId);
     const isActive = status === AgentStatus.ACTIVE;
 
     // Get subtle border color for IDLE state
@@ -132,15 +126,15 @@ export const AgentCard = memo(
     return (
       <Card
         className={`transition-all duration-200 ${
-          isActive
-            ? "bg-agent-active"
-            : "bg-bg-primary"
+          isActive ? "bg-agent-active" : "bg-bg-primary"
         } ${getBorderClass()}`}
       >
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="flex items-center gap-2">
             <AgentIcon agentId={agentId} />
-            <h3 className={`font-semibold uppercase text-xs tracking-wide ${getNameColorClass()}`}>
+            <h3
+              className={`font-semibold uppercase text-xs tracking-wide ${getNameColorClass()}`}
+            >
               {name}
             </h3>
           </div>
@@ -152,9 +146,11 @@ export const AgentCard = memo(
         </CardHeader>
         <CardContent className="space-y-2">
           {/* Model name */}
-          <p className={`text-xs ${
-            isActive ? "text-agent-active-label" : "text-text-secondary"
-          }`}>
+          <p
+            className={`text-xs ${
+              isActive ? "text-agent-active-label" : "text-text-secondary"
+            }`}
+          >
             {model}
           </p>
 
@@ -163,13 +159,19 @@ export const AgentCard = memo(
             <>
               {strategy && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-agent-active-label">Strategy:</span>
-                  <span className="text-xs text-agent-active-value">{strategy}</span>
+                  <span className="text-xs text-agent-active-label">
+                    Strategy:
+                  </span>
+                  <span className="text-xs text-agent-active-value">
+                    {strategy}
+                  </span>
                 </div>
               )}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-agent-active-label">Cache:</span>
-                <span className="text-xs text-agent-active-value">Initialized</span>
+                <span className="text-xs text-agent-active-value">
+                  Initialized
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-agent-active-label">Tokens:</span>
@@ -188,9 +190,7 @@ export const AgentCard = memo(
             strategy && (
               <div className="flex items-center justify-between">
                 <span className="text-xs text-text-tertiary">Strategy:</span>
-                <span className="text-xs text-text-secondary">
-                  {strategy}
-                </span>
+                <span className="text-xs text-text-secondary">{strategy}</span>
               </div>
             )
           )}
