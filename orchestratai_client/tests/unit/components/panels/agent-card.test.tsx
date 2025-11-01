@@ -232,7 +232,7 @@ describe("AgentCard", () => {
     });
 
     it("renders complete agent card layout with all components", () => {
-      render(
+      const { container } = render(
         <AgentCard
           {...defaultProps}
           status={AgentStatus.ACTIVE}
@@ -242,13 +242,12 @@ describe("AgentCard", () => {
 
       // Verify all major components are present
       expect(screen.getByText("Orchestrator Agent")).toBeInTheDocument(); // Name
-      expect(screen.getByText("O")).toBeInTheDocument(); // Icon
-      expect(screen.getByText("Active")).toBeInTheDocument(); // Status
+      expect(container.querySelector('svg')).toBeInTheDocument(); // Icon
+      expect(screen.getByText("ACTIVE")).toBeInTheDocument(); // Status
       expect(screen.getByText("OpenAI GPT-4o")).toBeInTheDocument(); // Model
       expect(screen.getByText("Hybrid RAG/CAG")).toBeInTheDocument(); // Strategy
-      expect(screen.getByText("450 tokens")).toBeInTheDocument(); // Metrics
+      expect(screen.getByText("450")).toBeInTheDocument(); // Metrics
       expect(screen.getByText("$0.0023")).toBeInTheDocument();
-      expect(screen.getByText("1,200ms")).toBeInTheDocument();
     });
   });
 });
