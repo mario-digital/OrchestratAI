@@ -61,7 +61,7 @@ describe("RetrievalPanel Integration", () => {
     const { container } = renderWithProvider();
 
     // Verify ScrollArea is present
-    const scrollArea = container.querySelector("[data-radix-scroll-area]");
+    const scrollArea = container.querySelector('[data-slot="scroll-area"]');
     expect(scrollArea).toBeInTheDocument();
   });
 
