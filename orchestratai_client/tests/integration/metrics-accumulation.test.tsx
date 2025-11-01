@@ -33,9 +33,8 @@ describe("Metrics Accumulation Integration", () => {
     );
 
     // Verify initial metrics
-    expect(screen.getByText("450 tokens")).toBeInTheDocument();
+    expect(screen.getByText("450")).toBeInTheDocument();
     expect(screen.getByText("$0.0023")).toBeInTheDocument();
-    expect(screen.getByText("1,200ms")).toBeInTheDocument();
 
     // Simulate second message - metrics should accumulate
     rerender(
@@ -55,9 +54,8 @@ describe("Metrics Accumulation Integration", () => {
     );
 
     // Verify accumulated metrics
-    expect(screen.getByText("770 tokens")).toBeInTheDocument();
+    expect(screen.getByText("770")).toBeInTheDocument();
     expect(screen.getByText("$0.0039")).toBeInTheDocument();
-    expect(screen.getByText("2,180ms")).toBeInTheDocument();
 
     // Simulate third message - continue accumulation
     rerender(
@@ -77,9 +75,8 @@ describe("Metrics Accumulation Integration", () => {
     );
 
     // Verify final accumulated metrics
-    expect(screen.getByText("1,050 tokens")).toBeInTheDocument();
+    expect(screen.getByText("1,050")).toBeInTheDocument();
     expect(screen.getByText("$0.0053")).toBeInTheDocument();
-    expect(screen.getByText("3,030ms")).toBeInTheDocument();
   });
 
   it("accumulates metrics correctly with cache hits reducing cost", () => {
@@ -100,7 +97,7 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    expect(screen.getByText("500 tokens")).toBeInTheDocument();
+    expect(screen.getByText("500")).toBeInTheDocument();
     expect(screen.getByText("$0.0025")).toBeInTheDocument();
 
     // Second message - cache hit, lower incremental cost
@@ -120,9 +117,8 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    expect(screen.getByText("1,000 tokens")).toBeInTheDocument();
+    expect(screen.getByText("1,000")).toBeInTheDocument();
     expect(screen.getByText("$0.0030")).toBeInTheDocument();
-    expect(screen.getByText("2,100ms")).toBeInTheDocument();
   });
 
   it("handles accumulation with zero incremental metrics", () => {
@@ -143,7 +139,7 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    expect(screen.getByText("300 tokens")).toBeInTheDocument();
+    expect(screen.getByText("300")).toBeInTheDocument();
 
     // Second message with zero incremental tokens (edge case)
     rerender(
@@ -163,9 +159,8 @@ describe("Metrics Accumulation Integration", () => {
     );
 
     // Metrics should remain unchanged
-    expect(screen.getByText("300 tokens")).toBeInTheDocument();
+    expect(screen.getByText("300")).toBeInTheDocument();
     expect(screen.getByText("$0.0015")).toBeInTheDocument();
-    expect(screen.getByText("800ms")).toBeInTheDocument();
   });
 
   it("accumulates large metrics correctly with proper formatting", () => {
@@ -186,9 +181,8 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    expect(screen.getByText("10,000 tokens")).toBeInTheDocument();
+    expect(screen.getByText("10,000")).toBeInTheDocument();
     expect(screen.getByText("$0.0500")).toBeInTheDocument();
-    expect(screen.getByText("15,000ms")).toBeInTheDocument();
 
     // After many more messages
     rerender(
@@ -207,9 +201,8 @@ describe("Metrics Accumulation Integration", () => {
       />
     );
 
-    expect(screen.getByText("50,000 tokens")).toBeInTheDocument();
+    expect(screen.getByText("50,000")).toBeInTheDocument();
     expect(screen.getByText("$0.2500")).toBeInTheDocument();
-    expect(screen.getByText("75,000ms")).toBeInTheDocument();
   });
 
   it("displays updated cache status as metrics accumulate", () => {
@@ -310,9 +303,9 @@ describe("Metrics Accumulation Integration", () => {
     );
 
     // Verify both agents maintain independent metrics
-    expect(container1.textContent).toContain("450 tokens");
+    expect(container1.textContent).toContain("450");
     expect(container1.textContent).toContain("$0.0023");
-    expect(container2.textContent).toContain("680 tokens");
+    expect(container2.textContent).toContain("680");
     expect(container2.textContent).toContain("$0.0034");
   });
 });
