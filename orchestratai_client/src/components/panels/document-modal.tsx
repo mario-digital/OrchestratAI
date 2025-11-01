@@ -93,8 +93,8 @@ export function DocumentModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-3xl overflow-y-auto"
-        style={{ maxHeight: "80vh" }}
+        className="max-w-modal overflow-y-auto"
+        style={{ maxHeight: "var(--size-modal-max-height)" }}
       >
         <DialogHeader>
           <div className="flex items-center justify-between gap-4">
