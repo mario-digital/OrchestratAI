@@ -370,6 +370,10 @@
   --color-scrollbar-thumb: var(--color-bg-elevated); /* #334155 */
   --color-scrollbar-thumb-hover: var(--token-color-gray-600); /* #4b5563 */
 
+  /* === Modal/Dialog (Story 3.7) === */
+  --size-modal-max-width: 48rem; /* 3xl = 768px */
+  --size-modal-max-height: 80vh; /* 80% viewport height */
+
   /* ============================================
      SHADCN/UI COMPONENT TOKENS
      Maps shadcn expectations to OrchestratAI system
