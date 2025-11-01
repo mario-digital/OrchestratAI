@@ -300,6 +300,7 @@ describe("CacheOperationCard Component", () => {
   it("displays cache information when cache hit", () => {
     render(<CacheOperationCard _isHit={true} hitRate={0.78} cacheSize={156} />);
 
+    expect(screen.getByText("HIT")).toBeInTheDocument();
     expect(screen.getByText(/78%/)).toBeInTheDocument();
     expect(screen.getByText("156 B")).toBeInTheDocument();
   });
@@ -309,6 +310,7 @@ describe("CacheOperationCard Component", () => {
       <CacheOperationCard _isHit={false} hitRate={0.65} cacheSize={120} />
     );
 
+    expect(screen.getByText("MISS")).toBeInTheDocument();
     expect(screen.getByText(/65%/)).toBeInTheDocument();
     expect(screen.getByText("120 B")).toBeInTheDocument();
   });
@@ -348,5 +350,49 @@ describe("CacheOperationCard Component", () => {
     render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={100} />);
 
     expect(screen.queryByText("Cache Key:")).not.toBeInTheDocument();
+  });
+
+  it("displays HIT badge with green styling for cache hits", () => {
+    render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={100} />);
+
+    const hitBadge = screen.getByText("HIT");
+    expect(hitBadge).toBeInTheDocument();
+
+    // Check for green styling classes
+    const badge = hitBadge.closest("span");
+    expect(badge?.className).toContain("text-green-400");
+  });
+
+  it("displays MISS badge with orange styling for cache misses", () => {
+    render(
+      <CacheOperationCard _isHit={false} hitRate={0.65} cacheSize={120} />
+    );
+
+    const missBadge = screen.getByText("MISS");
+    expect(missBadge).toBeInTheDocument();
+
+    // Check for orange styling classes
+    const badge = missBadge.closest("span");
+    expect(badge?.className).toContain("text-orange-400");
+  });
+
+  it("renders CheckCircle icon for cache hits", () => {
+    render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={100} />);
+
+    // Look for SVG icon next to HIT text
+    const badge = screen.getByText("HIT").closest("span");
+    const icon = badge?.querySelector("svg");
+    expect(icon).toBeInTheDocument();
+  });
+
+  it("renders XCircle icon for cache misses", () => {
+    render(
+      <CacheOperationCard _isHit={false} hitRate={0.65} cacheSize={120} />
+    );
+
+    // Look for SVG icon next to MISS text
+    const badge = screen.getByText("MISS").closest("span");
+    const icon = badge?.querySelector("svg");
+    expect(icon).toBeInTheDocument();
   });
 });
