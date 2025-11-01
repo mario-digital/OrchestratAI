@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { JSX } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChatLogs } from "@/hooks/use-chat-logs";
@@ -184,11 +183,9 @@ function getLogSectionConfig(logType: LogType): {
 
 /**
  * Render the appropriate card component based on log type
+ * Document modals are now managed locally within DocumentPreview (Story 3.7)
  */
-function renderLogCard(
-  log: RetrievalLog,
-  onViewDocument?: (source: string, content: string) => void
-): JSX.Element {
+function renderLogCard(log: RetrievalLog): JSX.Element {
   const data = log.data;
 
   switch (log.type) {
@@ -213,11 +210,6 @@ function renderLogCard(
           collectionName={vectorData.collection_name}
           chunks={vectorData.chunks}
           latencyMs={vectorData.latency_ms}
-          onViewDocument={
-            onViewDocument
-              ? (chunk) => onViewDocument(chunk.source, chunk.content)
-              : undefined
-          }
         />
       );
     }
@@ -243,11 +235,6 @@ function renderLogCard(
           collectionName={docsData.collection_name}
           chunks={docsData.chunks}
           latencyMs={docsData.latency_ms}
-          onViewDocument={
-            onViewDocument
-              ? (chunk) => onViewDocument(chunk.source, chunk.content)
-              : undefined
-          }
         />
       );
     }
@@ -286,10 +273,6 @@ function renderLogCard(
 export function RetrievalPanel(): JSX.Element {
   const { logs } = useChatLogs();
   const { isRightPanelCollapsed, toggleRightPanel } = usePanelCollapse();
-  const [_selectedDocument, setSelectedDocument] = useState<{
-    source: string;
-    content: string;
-  } | null>(null);
 
   // Sort logs by timestamp (newest first)
   const sortedLogs = [...logs].sort((a, b) => {
@@ -297,13 +280,6 @@ export function RetrievalPanel(): JSX.Element {
     const timeB = new Date(b.timestamp).getTime();
     return timeB - timeA;
   });
-
-  // Handle document preview click (will connect to modal in Story 3.7)
-  const handleViewDocument = (source: string, content: string): void => {
-    setSelectedDocument({ source, content });
-    // TODO: Story 3.7 - Open document modal
-    console.log("View document:", source);
-  };
 
   return (
     <div className="flex flex-col h-full bg-bg-secondary">
@@ -396,7 +372,7 @@ export function RetrievalPanel(): JSX.Element {
 
                   {/* Log Content Card - DARKER background, no thick border */}
                   <div className="bg-bg-primary border border-border-default rounded-md p-3">
-                    {renderLogCard(log, handleViewDocument)}
+                    {renderLogCard(log)}
                   </div>
                 </div>
               );

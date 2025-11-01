@@ -3,9 +3,8 @@
  * Tests for Story 3.6 log entry components
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { LogEntry } from "../log-entry";
 import { QueryAnalysisCard } from "../query-analysis-card";
 import { VectorSearchCard } from "../vector-search-card";
@@ -156,7 +155,6 @@ describe("DocumentPreview Component", () => {
         source="test.md"
         content={longContent}
         similarity={0.9}
-        onViewFull={vi.fn()}
       />
     );
 
@@ -172,7 +170,6 @@ describe("DocumentPreview Component", () => {
         source="test.md"
         content={shortContent}
         similarity={0.9}
-        onViewFull={vi.fn()}
       />
     );
 
@@ -185,7 +182,6 @@ describe("DocumentPreview Component", () => {
         source="docs/architecture.md"
         content="test content"
         similarity={0.85}
-        onViewFull={vi.fn()}
       />
     );
 
@@ -194,35 +190,21 @@ describe("DocumentPreview Component", () => {
 
   it("displays similarity score", () => {
     render(
-      <DocumentPreview
-        source="test.md"
-        content="test"
-        similarity={0.92}
-        onViewFull={vi.fn()}
-      />
+      <DocumentPreview source="test.md" content="test" similarity={0.92} />
     );
 
     expect(screen.getByText("0.92")).toBeInTheDocument();
   });
 
-  it("calls onViewFull when View Full button is clicked", async () => {
-    const handleViewFull = vi.fn();
-    const user = userEvent.setup();
+  it("renders View Full button", () => {
     render(
-      <DocumentPreview
-        source="test.md"
-        content="test"
-        similarity={0.9}
-        onViewFull={handleViewFull}
-      />
+      <DocumentPreview source="test.md" content="test" similarity={0.9} />
     );
 
     const button = screen.getByRole("button", {
       name: /view full/i,
     });
-    await user.click(button);
-
-    expect(handleViewFull).toHaveBeenCalledTimes(1);
+    expect(button).toBeInTheDocument();
   });
 });
 

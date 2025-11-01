@@ -28,8 +28,6 @@ interface VectorSearchCardProps {
   chunks: DocumentChunk[];
   /** Search operation latency in milliseconds */
   latencyMs: number;
-  /** Callback when document preview "View Full" is clicked */
-  onViewDocument?: (chunk: DocumentChunk) => void;
 }
 
 /**
@@ -39,6 +37,7 @@ interface VectorSearchCardProps {
  * - Collection name and number of chunks retrieved
  * - Search latency for performance monitoring
  * - List of document previews with similarity scores
+ * - Each preview has its own modal (Story 3.7)
  *
  * Usage:
  * ```tsx
@@ -49,7 +48,6 @@ interface VectorSearchCardProps {
  *     { source: "docs/guide.md", content: "...", similarity: 0.85 }
  *   ]}
  *   latencyMs={245}
- *   onViewDocument={(chunk) => openModal(chunk)}
  * />
  * ```
  */
@@ -57,7 +55,6 @@ export function VectorSearchCard({
   collectionName,
   chunks,
   latencyMs,
-  onViewDocument,
 }: VectorSearchCardProps): JSX.Element {
   return (
     <div className="space-y-2 text-sm">
@@ -105,7 +102,6 @@ export function VectorSearchCard({
                 source={chunk.source}
                 content={chunk.content}
                 similarity={chunk.similarity}
-                onViewFull={() => onViewDocument?.(chunk)}
               />
             ))}
           </div>
