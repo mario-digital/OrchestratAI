@@ -17,7 +17,7 @@ interface PanelCollapseContextType {
 
 const PanelCollapseContext = createContext<PanelCollapseContextType | null>(null);
 
-export function usePanelCollapse() {
+export function usePanelCollapse(): PanelCollapseContextType {
   const context = useContext(PanelCollapseContext);
   if (!context) {
     throw new Error("usePanelCollapse must be used within ThreePanelLayout");
@@ -33,16 +33,16 @@ export function ThreePanelLayout({
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
 
-  const toggleRightPanel = () => {
+  const toggleRightPanel = (): void => {
     setIsRightPanelCollapsed((prev) => !prev);
   };
 
-  const toggleLeftPanel = () => {
+  const toggleLeftPanel = (): void => {
     setIsLeftPanelCollapsed((prev) => !prev);
   };
 
   // Determine grid layout based on collapsed states
-  const getGridLayout = () => {
+  const getGridLayout = (): string => {
     if (isLeftPanelCollapsed && isRightPanelCollapsed) {
       return "grid-cols-[1fr]"; // Only center panel
     }
