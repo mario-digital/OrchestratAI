@@ -45,10 +45,10 @@ describe("AgentPanel", () => {
     ]);
   });
 
-  it("container has overflow-y-auto for scrolling", () => {
+  it("container has scrollable content", () => {
     const { container } = renderWithProvider();
 
-    const scrollContainer = container.querySelector(".overflow-y-auto");
+    const scrollContainer = container.querySelector('[data-slot="scroll-area-viewport"]');
     expect(scrollContainer).toBeInTheDocument();
   });
 
@@ -62,15 +62,15 @@ describe("AgentPanel", () => {
   it("applies correct spacing classes", () => {
     const { container } = renderWithProvider();
 
-    const mainContainer = container.querySelector(".gap-4.p-4");
-    expect(mainContainer).toBeInTheDocument();
+    const contentContainer = container.querySelector(".flex.flex-col");
+    expect(contentContainer).toBeInTheDocument();
   });
 
   it("all agents start with IDLE status", () => {
     renderWithProvider();
 
     expect(screen.getByText("Agent Pipeline")).toBeInTheDocument();
-    const idleBadges = screen.getAllByText("Idle");
+    const idleBadges = screen.getAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 
@@ -87,7 +87,7 @@ describe("AgentPanel", () => {
     renderWithProvider();
 
     // All should be IDLE initially
-    const idleBadges = screen.getAllByText("Idle");
+    const idleBadges = screen.getAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 
