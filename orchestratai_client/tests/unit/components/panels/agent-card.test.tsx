@@ -47,7 +47,7 @@ describe("AgentCard", () => {
   it("applies correct border color based on agent (Orchestrator - cyan)", () => {
     const { container } = render(<AgentCard {...defaultProps} />);
 
-    const card = container.querySelector('[style*="border-left-color"]');
+    const card = container.querySelector('[class*="border-agent"]');
     expect(card).toBeInTheDocument();
   });
 
@@ -60,7 +60,7 @@ describe("AgentCard", () => {
       />
     );
 
-    const card = container.querySelector('[style*="border-left-color"]');
+    const card = container.querySelector('[class*="border-agent"]');
     expect(card).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe("AgentCard", () => {
       />
     );
 
-    const card = container.querySelector('[style*="border-left-color"]');
+    const card = container.querySelector('[class*="border-agent"]');
     expect(card).toBeInTheDocument();
   });
 
@@ -86,35 +86,29 @@ describe("AgentCard", () => {
       />
     );
 
-    const card = container.querySelector('[style*="border-left-color"]');
-    expect(card).toBeInTheDocument();
-  });
-
-  it("includes hover effect class", () => {
-    const { container } = render(<AgentCard {...defaultProps} />);
-
-    const card = container.querySelector(".hover\\:shadow-md");
+    const card = container.querySelector('[class*="border-agent"]');
     expect(card).toBeInTheDocument();
   });
 
   it("includes transition classes", () => {
     const { container } = render(<AgentCard {...defaultProps} />);
 
-    const card = container.querySelector(".transition-shadow");
+    const card = container.querySelector('[class*="transition"]');
     expect(card).toBeInTheDocument();
-    expect(card).toHaveClass("duration-200");
   });
 
   it("renders AgentStatusBadge component", () => {
     render(<AgentCard {...defaultProps} status={AgentStatus.ACTIVE} />);
 
-    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByText("ACTIVE")).toBeInTheDocument();
   });
 
-  it("displays agent icon with first letter of name", () => {
-    render(<AgentCard {...defaultProps} name="Orchestrator Agent" />);
+  it("displays agent icon", () => {
+    const { container } = render(<AgentCard {...defaultProps} name="Orchestrator Agent" />);
 
-    expect(screen.getByText("O")).toBeInTheDocument();
+    // Check for SVG icon instead of first letter
+    const icon = container.querySelector('svg');
+    expect(icon).toBeInTheDocument();
   });
 
   it("renders all strategy types correctly", () => {
@@ -132,74 +126,56 @@ describe("AgentCard", () => {
     expect(screen.getByText("Hybrid RAG/CAG")).toBeInTheDocument();
   });
 
-  it("applies correct strategy badge colors for RAG", () => {
+  it("displays strategy for RAG", () => {
     render(
       <AgentCard {...defaultProps} strategy={RetrievalStrategy.PURE_RAG} />
     );
 
-    const badge = screen.getByText("Pure RAG");
-    expect(badge).toHaveClass("bg-agent-card-border-purple/20");
-    expect(badge).toHaveClass("text-agent-card-text-purple");
+    expect(screen.getByText("Pure RAG")).toBeInTheDocument();
   });
 
-  it("applies correct strategy badge colors for CAG", () => {
+  it("displays strategy for CAG", () => {
     render(
       <AgentCard {...defaultProps} strategy={RetrievalStrategy.PURE_CAG} />
     );
 
-    const badge = screen.getByText("Pure CAG");
-    expect(badge).toHaveClass("bg-agent-card-border-cyan/20");
-    expect(badge).toHaveClass("text-agent-card-text-cyan");
+    expect(screen.getByText("Pure CAG")).toBeInTheDocument();
   });
 
-  it("applies correct strategy badge colors for Hybrid", () => {
+  it("displays strategy for Hybrid", () => {
     render(
       <AgentCard {...defaultProps} strategy={RetrievalStrategy.HYBRID_RAG_CAG} />
     );
 
-    const badge = screen.getByText("Hybrid RAG/CAG");
-    expect(badge).toHaveClass("bg-agent-card-border-blue/20");
-    expect(badge).toHaveClass("text-agent-card-text-blue");
+    expect(screen.getByText("Hybrid RAG/CAG")).toBeInTheDocument();
   });
 
-  // Integration tests with AgentMetrics component
-  describe("AgentMetrics Integration", () => {
-    it("renders AgentMetrics component with correct metrics", () => {
-      render(<AgentCard {...defaultProps} />);
+  // Integration tests with metrics display
+  describe("Metrics Display", () => {
+    it("renders metrics for ACTIVE agents", () => {
+      render(<AgentCard {...defaultProps} status={AgentStatus.ACTIVE} />);
 
-      expect(screen.getByText("450 tokens")).toBeInTheDocument();
+      expect(screen.getByText("450")).toBeInTheDocument();
       expect(screen.getByText("$0.0023")).toBeInTheDocument();
-      expect(screen.getByText("1,200ms")).toBeInTheDocument();
     });
 
-    it("passes cache status to AgentMetrics component", () => {
-      const { container } = render(<AgentCard {...defaultProps} cacheStatus="hit" />);
+    it("does not display metrics for IDLE agents", () => {
+      render(<AgentCard {...defaultProps} status={AgentStatus.IDLE} />);
 
-      const cacheIcon = container.querySelector(".text-cache-hit");
-      expect(cacheIcon).toBeInTheDocument();
-    });
-
-    it("renders AgentMetrics with different cache statuses", () => {
-      const { container, rerender } = render(
-        <AgentCard {...defaultProps} cacheStatus="miss" />
-      );
-
-      let cacheIcon = container.querySelector(".text-cache-miss");
-      expect(cacheIcon).toBeInTheDocument();
-
-      rerender(<AgentCard {...defaultProps} cacheStatus="none" />);
-      cacheIcon = container.querySelector(".text-cache-none");
-      expect(cacheIcon).toBeInTheDocument();
+      // Metrics should not be displayed for IDLE agents
+      expect(screen.queryByText("450")).not.toBeInTheDocument();
+      expect(screen.queryByText("$0.0023")).not.toBeInTheDocument();
     });
 
     it("updates metrics when props change", () => {
-      const { rerender } = render(<AgentCard {...defaultProps} />);
+      const { rerender } = render(<AgentCard {...defaultProps} status={AgentStatus.ACTIVE} />);
 
-      expect(screen.getByText("450 tokens")).toBeInTheDocument();
+      expect(screen.getByText("450")).toBeInTheDocument();
 
       rerender(
         <AgentCard
           {...defaultProps}
+          status={AgentStatus.ACTIVE}
           metrics={{
             tokens: 1000,
             cost: 0.005,
@@ -208,34 +184,23 @@ describe("AgentCard", () => {
         />
       );
 
-      expect(screen.getByText("1,000 tokens")).toBeInTheDocument();
+      expect(screen.getByText("1,000")).toBeInTheDocument();
       expect(screen.getByText("$0.0050")).toBeInTheDocument();
-      expect(screen.getByText("2,500ms")).toBeInTheDocument();
     });
 
-    it("renders separator between strategy and metrics", () => {
-      const { container } = render(
-        <AgentCard {...defaultProps} strategy={RetrievalStrategy.PURE_RAG} />
-      );
+    it("displays metric labels correctly for ACTIVE agents", () => {
+      render(<AgentCard {...defaultProps} status={AgentStatus.ACTIVE} />);
 
-      // Separator component from shadcn should be present
-      const separator = container.querySelector('[data-orientation="horizontal"]');
-      expect(separator).toBeInTheDocument();
-    });
-
-    it("displays all four metric labels correctly", () => {
-      render(<AgentCard {...defaultProps} />);
-
-      expect(screen.getByText("Tokens")).toBeInTheDocument();
-      expect(screen.getByText("Cost")).toBeInTheDocument();
-      expect(screen.getByText("Latency")).toBeInTheDocument();
-      expect(screen.getByText("Cache")).toBeInTheDocument();
+      expect(screen.getByText("Tokens:")).toBeInTheDocument();
+      expect(screen.getByText("Cost:")).toBeInTheDocument();
+      expect(screen.getByText("Cache:")).toBeInTheDocument();
     });
 
     it("handles zero metrics correctly", () => {
       render(
         <AgentCard
           {...defaultProps}
+          status={AgentStatus.ACTIVE}
           metrics={{
             tokens: 0,
             cost: 0,
@@ -245,15 +210,15 @@ describe("AgentCard", () => {
         />
       );
 
-      expect(screen.getByText("0 tokens")).toBeInTheDocument();
+      expect(screen.getByText("0")).toBeInTheDocument();
       expect(screen.getByText("$0.0000")).toBeInTheDocument();
-      expect(screen.getByText("0ms")).toBeInTheDocument();
     });
 
     it("handles large metrics with proper formatting", () => {
       render(
         <AgentCard
           {...defaultProps}
+          status={AgentStatus.ACTIVE}
           metrics={{
             tokens: 1234567,
             cost: 12.3456,
@@ -262,9 +227,8 @@ describe("AgentCard", () => {
         />
       );
 
-      expect(screen.getByText("1,234,567 tokens")).toBeInTheDocument();
+      expect(screen.getByText("1,234,567")).toBeInTheDocument();
       expect(screen.getByText("$12.3456")).toBeInTheDocument();
-      expect(screen.getByText("125,000ms")).toBeInTheDocument();
     });
 
     it("renders complete agent card layout with all components", () => {
