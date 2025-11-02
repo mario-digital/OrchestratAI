@@ -335,7 +335,7 @@ export function RetrievalPanel(): JSX.Element {
       </div>
 
       {/* Log entries with colored section headers (Mockup v2.0) */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 min-h-0 p-4">
         {sortedLogs.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-sm text-text-tertiary italic">

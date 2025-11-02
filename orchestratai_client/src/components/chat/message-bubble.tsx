@@ -17,7 +17,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { MessageRole, AgentId } from "@/lib/enums";
 import { getAgentTextColor } from "@/lib/utils/agent-colors";
-import { fadeSlideUp } from "@/lib/animations";
+import { fadeSlideUp, bounceAnimation } from "@/lib/animations";
 
 export interface MessageBubbleProps {
   /** Message sender role (user or assistant) */
@@ -32,6 +32,8 @@ export interface MessageBubbleProps {
   timestamp?: Date;
   /** Unique message ID for AnimatePresence key */
   id?: string;
+  /** Whether this is a typing indicator message */
+  isTyping?: boolean;
 }
 
 /**
@@ -51,6 +53,7 @@ export function MessageBubble({
   confidence,
   timestamp,
   id,
+  isTyping = false,
 }: MessageBubbleProps): JSX.Element {
   const isUser = role === MessageRole.USER;
   const isAssistant = role === MessageRole.ASSISTANT;
@@ -96,8 +99,28 @@ export function MessageBubble({
           </div>
         )}
 
-        {/* Message Content */}
-        <p className="whitespace-pre-wrap break-words">{content}</p>
+        {/* Message Content or Typing Indicator */}
+        {isTyping ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm opacity-70">{agent} is typing</span>
+            <div className="flex gap-1" aria-hidden="true">
+              {[0, 1, 2].map((i) => (
+                <motion.span
+                  key={i}
+                  className="inline-block h-2 w-2 rounded-full bg-current opacity-70"
+                  variants={bounceAnimation}
+                  initial="initial"
+                  animate="animate"
+                  transition={{
+                    delay: i * 0.15,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="whitespace-pre-wrap break-words">{content}</p>
+        )}
 
         {/* Confidence Score (Assistant Messages Only) */}
         {isAssistant && confidence !== undefined && (

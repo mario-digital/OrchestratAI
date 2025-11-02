@@ -7,7 +7,7 @@ import {
   createContext,
   useContext,
 } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { staggerContainer, fadeSlideUp } from "@/lib/animations";
 
 interface ThreePanelLayoutProps {
@@ -60,20 +60,6 @@ export function ThreePanelLayout({
     setIsLeftPanelCollapsed((prev) => !prev);
   };
 
-  // Determine grid layout based on collapsed states
-  const getGridLayout = (): string => {
-    if (isLeftPanelCollapsed && isRightPanelCollapsed) {
-      return "grid-cols-[1fr]"; // Only center panel
-    }
-    if (isLeftPanelCollapsed) {
-      return "grid-cols-[1fr_300px]"; // Center + Right
-    }
-    if (isRightPanelCollapsed) {
-      return "grid-cols-[300px_1fr]"; // Left + Center
-    }
-    return "grid-cols-three-panel-chat"; // All 3 panels (300px 1fr 300px)
-  };
-
   return (
     <PanelCollapseContext.Provider
       value={{
@@ -85,30 +71,40 @@ export function ThreePanelLayout({
     >
       <div className="relative flex-1 overflow-hidden">
         <motion.div
-          className={`h-full grid transition-all duration-300 ${getGridLayout()}`}
+          className="h-full grid grid-cols-three-panel-chat grid-rows-1 transition-all duration-300"
           variants={staggerContainer}
           initial="initial"
           animate="animate"
         >
           {/* Left Panel - Agent Pipeline (collapsible) */}
-          {!isLeftPanelCollapsed && (
-            <motion.aside
-              variants={fadeSlideUp}
-              aria-label="Agent Pipeline"
-              className="bg-bg-secondary border-r border-border-default overflow-y-auto"
-              tabIndex={0}
-            >
-              {leftPanel || (
-                <p className="text-text-secondary">Agent Pipeline (Epic 3)</p>
+          <div className="relative h-full">
+            <AnimatePresence initial={false}>
+              {!isLeftPanelCollapsed && (
+                <motion.aside
+                  key="left-panel"
+                  variants={fadeSlideUp}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  aria-label="Agent Pipeline"
+                  className="flex h-full flex-col bg-bg-secondary border-r border-border-default overflow-hidden"
+                  tabIndex={0}
+                >
+                  {leftPanel || (
+                    <p className="text-text-secondary">
+                      Agent Pipeline (Epic 3)
+                    </p>
+                  )}
+                </motion.aside>
               )}
-            </motion.aside>
-          )}
+            </AnimatePresence>
+          </div>
 
           {/* Center Panel - Chat Interface */}
           <motion.main
             variants={fadeSlideUp}
             aria-label="Chat Interface"
-            className="bg-bg-primary overflow-hidden"
+            className="bg-bg-primary h-full flex flex-col overflow-hidden"
             tabIndex={0}
           >
             {children || (
@@ -117,18 +113,28 @@ export function ThreePanelLayout({
           </motion.main>
 
           {/* Right Panel - Retrieval Log (collapsible) */}
-          {!isRightPanelCollapsed && (
-            <motion.aside
-              variants={fadeSlideUp}
-              aria-label="Retrieval Log"
-              className="bg-bg-secondary border-l border-border-default overflow-y-auto"
-              tabIndex={0}
-            >
-              {rightPanel || (
-                <p className="text-text-secondary">Retrieval Log (Epic 3)</p>
+          <div className="relative h-full">
+            <AnimatePresence initial={false}>
+              {!isRightPanelCollapsed && (
+                <motion.aside
+                  key="right-panel"
+                  variants={fadeSlideUp}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  aria-label="Retrieval Log"
+                  className="flex h-full flex-col bg-bg-secondary border-l border-border-default overflow-hidden"
+                  tabIndex={0}
+                >
+                  {rightPanel || (
+                    <p className="text-text-secondary">
+                      Retrieval Log (Epic 3)
+                    </p>
+                  )}
+                </motion.aside>
               )}
-            </motion.aside>
-          )}
+            </AnimatePresence>
+          </div>
         </motion.div>
 
         {/* Left Expand Button - Shows when left panel is collapsed */}

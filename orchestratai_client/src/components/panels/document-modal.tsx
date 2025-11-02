@@ -94,19 +94,21 @@ export function DocumentModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-modal overflow-y-auto"
+        className="max-w-modal overflow-y-auto text-text-primary"
         style={{ maxHeight: "var(--size-modal-max-height)" }}
       >
         <DialogHeader>
-          <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="truncate">{source}</DialogTitle>
+          <div className="flex items-center justify-between gap-4 pr-8">
+            <DialogTitle className="truncate text-text-primary">
+              {source}
+            </DialogTitle>
             <Badge className={badgeColor}>{similarityPercentage}%</Badge>
           </div>
           <DialogDescription className="sr-only">
             Detailed view of {source}. Similarity score {similarityPercentage}%.
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4 p-4 bg-background-secondary rounded-md">
+        <div className="mt-4 p-4 bg-bg-secondary rounded-md">
           <pre className="whitespace-pre-wrap font-mono text-sm text-text-primary">
             {content}
           </pre>
