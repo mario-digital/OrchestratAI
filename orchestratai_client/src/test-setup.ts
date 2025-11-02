@@ -20,6 +20,21 @@ global.ResizeObserver = class ResizeObserver {
 if (typeof window !== "undefined") {
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
   window.HTMLElement.prototype.scrollTo = vi.fn();
+
+  // Mock matchMedia for touch device detection
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: query === "(hover: hover) and (pointer: fine)", // Default: non-touch device
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // deprecated
+      removeListener: vi.fn(), // deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
 }
 
 // Mock framer-motion to avoid animation issues in tests
