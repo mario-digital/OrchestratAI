@@ -17,6 +17,7 @@ import { ChatProvider } from "@/components/providers/chat-provider";
 import { useStreaming } from "@/hooks/use-streaming";
 import { AgentId, AgentStatus } from "@/lib/enums";
 import type { RetrievalLog, ChatMetrics } from "@/lib/types";
+import { StreamError, StreamErrorCode } from "@/lib/errors";
 
 // Type for streaming callbacks (matching useStreaming hook interface)
 interface StreamingCallbacks {
@@ -24,7 +25,7 @@ interface StreamingCallbacks {
   onAgentUpdate: (agent: AgentId, status: AgentStatus) => void;
   onLog: (log: RetrievalLog) => void;
   onComplete: (metadata: ChatMetrics) => void;
-  onError?: (error: Error) => void;
+  onError?: (error: StreamError) => void;
 }
 
 // Mock the useStreaming hook
@@ -43,6 +44,7 @@ HTMLElement.prototype.scrollIntoView = vi.fn();
 describe("ChatInterface Integration - Optimistic Updates", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear(); // Clear fallback mode preference
     // Don't set up default mock here - let each test set up its own mock before rendering
   });
 
@@ -103,13 +105,19 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
     );
   });
 
-  it("removes optimistic message on error", async () => {
+  it("handles streaming error with fallback to non-streaming", async () => {
     const user = userEvent.setup();
 
     const mockSendStream = vi.fn(async (_message, _sessionId, callbacks) => {
-      // Simulate error
+      // Simulate non-retryable error that triggers fallback
       setTimeout(() => {
-        callbacks?.onError?.(new Error("Network error"));
+        callbacks?.onError?.(
+          new StreamError(
+            "Network error",
+            StreamErrorCode.TIMEOUT,
+            false // Not retryable - triggers fallback
+          )
+        );
       }, 100);
     });
 
@@ -133,10 +141,10 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
       expect(screen.getByText("Hello")).toBeInTheDocument();
     });
 
-    // After error, message is removed
+    // After error with fallback, fallback mode indicator should appear
     await waitFor(
       () => {
-        expect(screen.queryByText("Hello")).not.toBeInTheDocument();
+        expect(screen.getByText("Standard Mode")).toBeInTheDocument();
       },
       { timeout: 3000 }
     );
