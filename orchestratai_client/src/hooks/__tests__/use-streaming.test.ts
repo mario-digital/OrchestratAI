@@ -21,7 +21,7 @@ class MockEventSource {
   public readonly url: string;
   public readonly readyState: number = 1; // OPEN
   public onerror: ((error: Event) => void) | null = null;
-  private listeners: Map<string, ((e: MessageEvent) => void)[]> = new Map();
+  public listeners: Map<string, ((e: MessageEvent) => void)[]> = new Map();
 
   static readonly CONNECTING = 0;
   static readonly OPEN = 1;
@@ -346,6 +346,106 @@ describe("useStreaming", () => {
       expect(onChunk).toHaveBeenNthCalledWith(1, "Hello ");
       expect(onChunk).toHaveBeenNthCalledWith(2, "Hello beautiful ");
       expect(onChunk).toHaveBeenNthCalledWith(3, "Hello beautiful world!");
+    });
+  });
+
+  describe("Error Handling", () => {
+    let mockEventSource: MockEventSource;
+
+    beforeEach(() => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({ stream_id: "test-stream" }),
+      });
+
+      const OriginalEventSource = EventSourceMock;
+      global.EventSource = vi.fn((url: string) => {
+        mockEventSource = new OriginalEventSource(url) as MockEventSource;
+        return mockEventSource;
+      }) as unknown as typeof EventSource;
+    });
+
+    it("should handle JSON parsing errors gracefully", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useStreaming());
+      const callbacks = {
+        onChunk: vi.fn(),
+        onAgentUpdate: vi.fn(),
+        onLog: vi.fn(),
+        onComplete: vi.fn(),
+      };
+
+      await result.current.sendStreamingMessage(
+        "test",
+        "session-id",
+        callbacks
+      );
+      await waitFor(() => expect(mockEventSource).toBeDefined());
+
+      // Simulate malformed JSON - pass invalid string
+      const handlers = mockEventSource.listeners.get("message_chunk");
+      if (handlers && handlers[0]) {
+        handlers[0]({ data: "invalid json" } as MessageEvent);
+      }
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should handle connection errors with CLOSED state", async () => {
+      const { result } = renderHook(() => useStreaming());
+      const onError = vi.fn();
+      const callbacks = {
+        onChunk: vi.fn(),
+        onAgentUpdate: vi.fn(),
+        onLog: vi.fn(),
+        onComplete: vi.fn(),
+        onError,
+      };
+
+      await result.current.sendStreamingMessage(
+        "test",
+        "session-id",
+        callbacks
+      );
+      await waitFor(() => expect(mockEventSource).toBeDefined());
+
+      // Simulate permanent connection failure
+      Object.defineProperty(mockEventSource, "readyState", {
+        value: EventSourceMock.CLOSED,
+        writable: true,
+      });
+      if (mockEventSource.onerror) {
+        mockEventSource.onerror(new Event("error"));
+      }
+
+      expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it("should handle missing stream_id from server", async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({}), // No stream_id
+      });
+
+      const { result } = renderHook(() => useStreaming());
+      const onError = vi.fn();
+      const callbacks = {
+        onChunk: vi.fn(),
+        onAgentUpdate: vi.fn(),
+        onLog: vi.fn(),
+        onComplete: vi.fn(),
+        onError,
+      };
+
+      await expect(
+        result.current.sendStreamingMessage("test", "session-id", callbacks)
+      ).rejects.toThrow("No stream_id received from server");
+
+      expect(onError).toHaveBeenCalled();
     });
   });
 
