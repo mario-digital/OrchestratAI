@@ -12,6 +12,8 @@ import {
   NetworkError,
   TimeoutError,
   ValidationError,
+  StreamError,
+  StreamErrorCode,
 } from "../errors";
 
 /**
@@ -68,6 +70,46 @@ export function getUserFriendlyMessage(error: Error): string {
     return "An error occurred. Please try again.";
   }
 
+  // Stream errors - SSE connection issues
+  if (error instanceof StreamError) {
+    return getStreamErrorMessage(error.code);
+  }
+
   // Generic fallback for unknown errors
   return "An unexpected error occurred. Please try again.";
+}
+
+/**
+ * Get user-friendly error message for streaming errors
+ *
+ * Maps streaming error codes to user-friendly messages with retry count if provided.
+ *
+ * @param code - Stream error code
+ * @param retryCount - Optional current retry count for display
+ * @returns User-friendly error message string
+ *
+ * @example
+ * ```typescript
+ * const message = getStreamErrorMessage(StreamErrorCode.NETWORK_ERROR, 2);
+ * // Returns: "Connection lost. Retrying (2/3)..."
+ * ```
+ */
+export function getStreamErrorMessage(
+  code: StreamErrorCode,
+  retryCount?: number
+): string {
+  const messages: Record<StreamErrorCode, string> = {
+    [StreamErrorCode.NETWORK_ERROR]: retryCount
+      ? `Connection lost. Retrying (${retryCount}/3)...`
+      : "Connection lost. Switching to standard mode.",
+    [StreamErrorCode.SERVER_ERROR]:
+      "Server temporarily unavailable. Using standard mode.",
+    [StreamErrorCode.TIMEOUT]: "Request timed out. Using standard mode.",
+    [StreamErrorCode.PARSE_ERROR]:
+      "Received invalid data. Using standard mode.",
+    [StreamErrorCode.CONNECTION_CLOSED]:
+      "Connection closed. Using standard mode.",
+  };
+
+  return messages[code] || "Streaming unavailable. Using standard mode.";
 }

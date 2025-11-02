@@ -24,6 +24,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import type { AgentId, AgentStatus } from "@/lib/enums";
 import type { RetrievalLog, ChatMetrics } from "@/lib/types";
+import { StreamError, StreamErrorCode } from "@/lib/errors";
 
 /**
  * Callback type definitions for streaming events
@@ -32,7 +33,7 @@ type OnChunk = (accumulatedText: string) => void;
 type OnAgentUpdate = (agent: AgentId, status: AgentStatus) => void;
 type OnLog = (log: RetrievalLog) => void;
 type OnComplete = (metadata: ChatMetrics) => void;
-type OnError = (error: Error) => void;
+type OnError = (error: StreamError) => void;
 
 /**
  * Callbacks interface for streaming events
@@ -88,20 +89,46 @@ interface UseStreamingReturn {
  * };
  * ```
  */
+/**
+ * Constants for retry logic and timeout detection
+ */
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000; // 1 second
+const TIMEOUT_MS = 30000; // 30 seconds
+const MAX_PARSE_ERRORS = 5;
+
 export function useStreaming(): UseStreamingReturn {
   const [isStreaming, setIsStreaming] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
+  const consecutiveParseErrorsRef = useRef(0);
+
+  /**
+   * Clear timeout
+   */
+  const clearStreamTimeout = useCallback(() => {
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+  }, []);
 
   /**
    * Cleanup function to close EventSource connection
    */
   const cleanup = useCallback(() => {
+    clearStreamTimeout();
     if (eventSourceRef.current) {
-      eventSourceRef.current.close();
+      // Remove event listeners before closing to prevent error logs
+      const eventSource = eventSourceRef.current;
+      eventSource.onopen = null;
+      eventSource.onerror = null;
+      eventSource.close();
       eventSourceRef.current = null;
       setIsStreaming(false);
     }
-  }, []);
+  }, [clearStreamTimeout]);
 
   /**
    * Cleanup on component unmount
@@ -113,10 +140,80 @@ export function useStreaming(): UseStreamingReturn {
   }, [cleanup]);
 
   /**
-   * Send streaming message using two-step secure approach
+   * Reset timeout on each received event
+   */
+  const resetTimeout = useCallback(
+    (callbacks: UseStreamingCallbacks) => {
+      clearStreamTimeout();
+      timeoutIdRef.current = setTimeout(() => {
+        console.error("SSE stream timeout");
+        const error = new StreamError(
+          "Stream timeout - no data received for 30 seconds",
+          StreamErrorCode.TIMEOUT,
+          false
+        );
+        callbacks.onError?.(error);
+        cleanup();
+      }, TIMEOUT_MS);
+    },
+    [clearStreamTimeout, cleanup]
+  );
+
+  /**
+   * Categorize error and create appropriate StreamError
+   */
+  const categorizeError = useCallback(
+    (eventSource: EventSource, originalError?: Error): StreamError => {
+      // Network offline
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        return new StreamError(
+          "Network connection lost",
+          StreamErrorCode.NETWORK_ERROR,
+          true,
+          originalError
+        );
+      }
+
+      // Server closed connection
+      if (eventSource.readyState === EventSource.CLOSED) {
+        return new StreamError(
+          "Server closed connection",
+          StreamErrorCode.CONNECTION_CLOSED,
+          true,
+          originalError
+        );
+      }
+
+      // Unknown error
+      return new StreamError(
+        "Streaming connection failed",
+        StreamErrorCode.SERVER_ERROR,
+        false,
+        originalError
+      );
+    },
+    []
+  );
+
+  /**
+   * Retry connection with exponential backoff
+   * Note: This is defined as a ref callback to avoid circular dependencies
+   */
+  const retryConnectionRef = useRef<
+    | ((
+        message: string,
+        sessionId: string,
+        callbacks: UseStreamingCallbacks,
+        attemptNumber: number
+      ) => Promise<void>)
+    | null
+  >(null);
+
+  /**
+   * Send streaming message using two-step secure approach with retry logic
    *
    * Step 1: POST message to initiate endpoint (secure!)
-   * Step 2: EventSource connects with stream_id (auto-reconnect!)
+   * Step 2: EventSource connects with stream_id (with retry and timeout!)
    */
   const sendStreamingMessage = useCallback(
     async (
@@ -126,6 +223,11 @@ export function useStreaming(): UseStreamingReturn {
     ): Promise<void> => {
       // Close any existing connection
       cleanup();
+
+      // Reset retry count at start of new message
+      if (retryCountRef.current === 0) {
+        consecutiveParseErrorsRef.current = 0;
+      }
 
       try {
         // Step 1: POST to initiate stream (message in body - secure!)
@@ -144,8 +246,10 @@ export function useStreaming(): UseStreamingReturn {
           const errorData = (await initiateResponse
             .json()
             .catch(() => ({}))) as { error?: string };
-          throw new Error(
-            errorData.error || `HTTP error! status: ${initiateResponse.status}`
+          throw new StreamError(
+            errorData.error || `HTTP error! status: ${initiateResponse.status}`,
+            StreamErrorCode.SERVER_ERROR,
+            false
           );
         }
 
@@ -153,10 +257,14 @@ export function useStreaming(): UseStreamingReturn {
         const { stream_id } = data;
 
         if (!stream_id) {
-          throw new Error("No stream_id received from server");
+          throw new StreamError(
+            "No stream_id received from server",
+            StreamErrorCode.SERVER_ERROR,
+            false
+          );
         }
 
-        // Step 2: EventSource with stream_id (native reconnection!)
+        // Step 2: EventSource with stream_id (with enhanced error handling!)
         const eventSource = new EventSource(`/api/chat/stream/${stream_id}`);
         eventSourceRef.current = eventSource;
         setIsStreaming(true);
@@ -164,48 +272,90 @@ export function useStreaming(): UseStreamingReturn {
         // Track accumulated message for chunk accumulation
         let accumulatedMessage = "";
 
+        // Start timeout detection
+        resetTimeout(callbacks);
+
         /**
-         * Handle message_chunk events
+         * Handle message_chunk events with malformed event protection
          * Accumulates chunks and calls onChunk with total accumulated text
          */
         eventSource.addEventListener("message_chunk", (e: MessageEvent) => {
+          resetTimeout(callbacks); // Reset timeout on each event
+
           try {
             const data = JSON.parse(e.data as string) as { content: string };
+            consecutiveParseErrorsRef.current = 0; // Reset on success
             accumulatedMessage += data.content;
             callbacks.onChunk(accumulatedMessage);
           } catch (error) {
-            console.error("Failed to parse message_chunk:", error);
-            // Continue stream despite parsing error
+            console.error(
+              "Failed to parse message_chunk:",
+              error,
+              "Raw data:",
+              e.data
+            );
+
+            consecutiveParseErrorsRef.current++;
+
+            if (consecutiveParseErrorsRef.current >= MAX_PARSE_ERRORS) {
+              console.error("Too many parse errors, closing stream");
+              const streamError = new StreamError(
+                "Too many malformed events received",
+                StreamErrorCode.PARSE_ERROR,
+                false,
+                error instanceof Error ? error : undefined
+              );
+              callbacks.onError?.(streamError);
+              cleanup();
+            }
+
+            // Continue stream (skip this event)
           }
         });
 
         /**
-         * Handle agent_status events
+         * Handle agent_status events with error protection
          * Updates agent status in real-time
          */
         eventSource.addEventListener("agent_status", (e: MessageEvent) => {
+          resetTimeout(callbacks); // Reset timeout on each event
+
           try {
             const data = JSON.parse(e.data as string) as {
               agent: AgentId;
               status: AgentStatus;
             };
+            consecutiveParseErrorsRef.current = 0; // Reset on success
             callbacks.onAgentUpdate(data.agent, data.status);
           } catch (error) {
-            console.error("Failed to parse agent_status:", error);
+            console.error(
+              "Failed to parse agent_status:",
+              error,
+              "Raw data:",
+              e.data
+            );
             // Continue stream despite parsing error
           }
         });
 
         /**
-         * Handle retrieval_log events
+         * Handle retrieval_log events with error protection
          * Processes log entries as they arrive
          */
         eventSource.addEventListener("retrieval_log", (e: MessageEvent) => {
+          resetTimeout(callbacks); // Reset timeout on each event
+
           try {
             const data = JSON.parse(e.data as string) as RetrievalLog;
+            consecutiveParseErrorsRef.current = 0; // Reset on success
             callbacks.onLog(data);
           } catch (error) {
-            console.error("Failed to parse retrieval_log:", error);
+            console.error(
+              "Failed to parse retrieval_log:",
+              error,
+              "Raw data:",
+              e.data
+            );
             // Continue stream despite parsing error
           }
         });
@@ -215,58 +365,122 @@ export function useStreaming(): UseStreamingReturn {
          * Finalizes stream with metadata and closes connection
          */
         eventSource.addEventListener("done", (e: MessageEvent) => {
+          clearStreamTimeout(); // Clear timeout on completion
+
           try {
             const data = JSON.parse(e.data as string) as {
               metadata: ChatMetrics;
             };
             callbacks.onComplete(data.metadata);
+            retryCountRef.current = 0; // Reset retry count on success
           } catch (error) {
             console.error("Failed to parse done event:", error);
           } finally {
             // Always close connection on done event
-            eventSource.close();
-            setIsStreaming(false);
-            eventSourceRef.current = null;
+            cleanup();
           }
         });
 
         /**
-         * Handle connection errors
-         * EventSource automatically reconnects, we just log the state
+         * Handle connection errors with retry logic
+         * Categorizes errors and retries if appropriate
          */
-        eventSource.onerror = (error) => {
+        eventSource.onerror = () => {
+          // Clear timeout to prevent duplicate error handling
+          clearStreamTimeout();
+
           // Check connection state to distinguish error types
           if (eventSource.readyState === EventSource.CONNECTING) {
-            // Connection is reconnecting (normal behavior - automatic!)
-            console.log("SSE reconnecting... (automatic)");
-          } else if (eventSource.readyState === EventSource.CLOSED) {
-            // Connection failed permanently
-            console.error("SSE connection closed");
-            callbacks.onError?.(new Error("SSE connection failed"));
-            eventSource.close();
-            setIsStreaming(false);
-            eventSourceRef.current = null;
-          } else {
-            // Other error state
-            console.error("SSE connection error:", error);
-            callbacks.onError?.(new Error("SSE connection error"));
-            eventSource.close();
-            setIsStreaming(false);
-            eventSourceRef.current = null;
+            // Connection is reconnecting (browser auto-retry)
+            console.log("SSE reconnecting... (browser automatic retry)");
+            return; // Let browser handle reconnection
           }
+
+          // Categorize the error
+          const streamError = categorizeError(eventSource);
+
+          // Check if retryable and under max retries
+          if (streamError.retryable && retryCountRef.current < MAX_RETRIES) {
+            console.warn(
+              `SSE connection failed, retrying (${retryCountRef.current + 1}/${MAX_RETRIES})...`
+            );
+            retryCountRef.current++;
+            cleanup();
+
+            // Use retry function via ref
+            if (retryConnectionRef.current) {
+              void retryConnectionRef.current(
+                message,
+                sessionId,
+                callbacks,
+                retryCountRef.current - 1
+              );
+            }
+          } else {
+            // Not retryable or max retries exceeded
+            console.error("SSE connection failed permanently");
+            retryCountRef.current = 0; // Reset for next attempt
+            callbacks.onError?.(streamError);
+            cleanup();
+          }
+        };
+
+        // Reset retry count on successful connection
+        eventSource.onopen = () => {
+          console.log("SSE connection established");
+          retryCountRef.current = 0;
         };
       } catch (error) {
         // Handle initiation errors
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error";
-        const err = new Error(`Failed to initiate stream: ${errorMessage}`);
-        callbacks.onError?.(err);
+        if (error instanceof StreamError) {
+          callbacks.onError?.(error);
+          setIsStreaming(false);
+          throw error;
+        }
+
+        const streamError = new StreamError(
+          error instanceof Error
+            ? `Failed to initiate stream: ${error.message}`
+            : "Failed to initiate stream: Unknown error",
+          StreamErrorCode.SERVER_ERROR,
+          false,
+          error instanceof Error ? error : undefined
+        );
+        callbacks.onError?.(streamError);
         setIsStreaming(false);
-        throw err;
+        throw streamError;
       }
     },
-    [cleanup]
+    [cleanup, clearStreamTimeout, resetTimeout, categorizeError]
   );
+
+  // Set up retry connection function ref to avoid circular dependency
+  retryConnectionRef.current = async (
+    message: string,
+    sessionId: string,
+    callbacks: UseStreamingCallbacks,
+    attemptNumber: number
+  ): Promise<void> => {
+    if (attemptNumber >= MAX_RETRIES) {
+      const error = new StreamError(
+        "Max retry attempts exceeded",
+        StreamErrorCode.NETWORK_ERROR,
+        false
+      );
+      callbacks.onError?.(error);
+      return;
+    }
+
+    const delay = Math.min(BASE_DELAY_MS * 2 ** attemptNumber, 4000);
+    console.log(
+      `Retry attempt ${attemptNumber + 1} of ${MAX_RETRIES} after ${delay}ms`
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    // Call sendStreamingMessage with incremented retry count
+    return sendStreamingMessage(message, sessionId, callbacks);
+  };
 
   return { sendStreamingMessage, isStreaming };
 }
