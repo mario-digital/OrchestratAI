@@ -54,34 +54,30 @@ export function MessageList({
   isProcessing: _isProcessing = false,
   streamingMessageId,
 }: MessageListProps): JSX.Element {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   /**
    * Auto-scroll to bottom when messages change
    */
   useEffect(() => {
-    const viewport = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]"
-    );
+    const viewport = viewportRef.current;
     if (!viewport) return;
 
-    // Always auto-scroll to bottom for new messages
-    // Use setTimeout to ensure content is fully rendered (including animations)
+    // Wait for fadeSlideUp animation to complete (300ms) plus small buffer
+    // This ensures scroll happens after message is fully rendered and animated
     const scrollTimeout = setTimeout(() => {
-      if (viewport) {
-        viewport.scrollTo({
-          top: viewport.scrollHeight,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
+        behavior: "smooth",
+      });
+    }, 350);
 
     return () => clearTimeout(scrollTimeout);
   }, [messages]);
 
   return (
     <ScrollArea
-      ref={scrollAreaRef}
+      viewportRef={viewportRef}
       className="h-full w-full px-4 scroll-smooth"
       aria-label="Chat message history"
       aria-live="polite"
@@ -92,7 +88,7 @@ export function MessageList({
             <p>No messages yet. Start a conversation!</p>
           </div>
         ) : (
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="popLayout" initial={false}>
             {messages.map((message) => (
               <MessageBubble
                 key={message.id}

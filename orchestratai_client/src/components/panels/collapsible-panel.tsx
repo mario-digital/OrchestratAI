@@ -64,7 +64,7 @@ export function CollapsiblePanel({
         </CollapsibleTrigger>
 
         <CollapsibleContent className="overflow-hidden">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             {isOpen && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}

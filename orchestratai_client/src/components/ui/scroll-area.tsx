@@ -1,33 +1,40 @@
 "use client";
 
-import { type ComponentProps, type JSX } from "react";
+import { type ComponentProps, type JSX, forwardRef } from "react";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 
 import { cn } from "@/lib/utils";
 
-function ScrollArea({
-  className,
-  children,
-  ...props
-}: ComponentProps<typeof ScrollAreaPrimitive.Root>): JSX.Element {
-  return (
-    <ScrollAreaPrimitive.Root
-      data-slot="scroll-area"
-      className={cn("relative overflow-hidden", className)}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport
-        data-slot="scroll-area-viewport"
-        className="focus-visible:ring-ring-focus-subtle size-full rounded-inherit transition-interactive outline-none focus-visible:ring-offset-2"
-        style={{ height: "100%" }}
-      >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
-  );
+interface ScrollAreaProps
+  extends ComponentProps<typeof ScrollAreaPrimitive.Root> {
+  viewportRef?: React.RefObject<HTMLDivElement | null>;
 }
+
+const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
+  ({ className, children, viewportRef, ...props }, ref) => {
+    return (
+      <ScrollAreaPrimitive.Root
+        ref={ref}
+        data-slot="scroll-area"
+        className={cn("relative overflow-hidden", className)}
+        {...props}
+      >
+        <ScrollAreaPrimitive.Viewport
+          ref={viewportRef}
+          data-slot="scroll-area-viewport"
+          className="focus-visible:ring-ring-focus-subtle size-full rounded-inherit transition-interactive outline-none focus-visible:ring-offset-2"
+          style={{ height: "100%" }}
+        >
+          {children}
+        </ScrollAreaPrimitive.Viewport>
+        <ScrollBar />
+        <ScrollAreaPrimitive.Corner />
+      </ScrollAreaPrimitive.Root>
+    );
+  }
+);
+
+ScrollArea.displayName = "ScrollArea";
 
 function ScrollBar({
   className,

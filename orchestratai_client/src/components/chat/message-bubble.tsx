@@ -52,7 +52,7 @@ export function MessageBubble({
   agent,
   confidence,
   timestamp,
-  id,
+  id: _id,
   isTyping = false,
 }: MessageBubbleProps): JSX.Element {
   const isUser = role === MessageRole.USER;
@@ -64,7 +64,6 @@ export function MessageBubble({
 
   return (
     <motion.div
-      key={id}
       variants={fadeSlideUp}
       initial="initial"
       animate="animate"
@@ -104,18 +103,20 @@ export function MessageBubble({
           <div className="flex items-center gap-2">
             <span className="text-sm opacity-70">{agent} is typing</span>
             <div className="flex gap-1" aria-hidden="true">
-              {[0, 1, 2].map((i) => (
-                <motion.span
-                  key={i}
-                  className="inline-block h-2 w-2 rounded-full bg-current opacity-70"
-                  variants={bounceAnimation}
-                  initial="initial"
-                  animate="animate"
-                  transition={{
-                    delay: i * 0.15,
-                  }}
-                />
-              ))}
+              {["bubble-dot-1", "bubble-dot-2", "bubble-dot-3"].map(
+                (dotId, i) => (
+                  <motion.span
+                    key={dotId}
+                    className="inline-block h-2 w-2 rounded-full bg-current opacity-70"
+                    variants={bounceAnimation}
+                    initial="initial"
+                    animate="animate"
+                    transition={{
+                      delay: i * 0.15,
+                    }}
+                  />
+                )
+              )}
             </div>
           </div>
         ) : (
