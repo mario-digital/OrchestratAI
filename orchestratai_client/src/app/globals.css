@@ -974,4 +974,18 @@
   .scroll-smooth {
     scroll-behavior: smooth;
   }
+
+  /* Shimmer animation for skeleton loading states */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
 }

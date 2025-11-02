@@ -1,9 +1,12 @@
 "use client";
 
 import { type JSX, memo } from "react";
+import { motion } from "framer-motion";
 import { AgentId, AgentStatus, RetrievalStrategy } from "@/lib/enums";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { AgentStatusBadge } from "./agent-status-badge";
+import { cardHover } from "@/lib/animations";
+import { useIsTouchDevice } from "@/hooks/use-is-touch-device";
 
 interface AgentCardProps {
   agentId: AgentId;
@@ -84,6 +87,7 @@ export const AgentCard = memo(
     cacheStatus: _cacheStatus,
   }: AgentCardProps): JSX.Element {
     const isActive = status === AgentStatus.ACTIVE;
+    const isTouch = useIsTouchDevice();
 
     // Get subtle border color for IDLE state
     const getBorderClass = (): string => {
@@ -124,86 +128,93 @@ export const AgentCard = memo(
     };
 
     return (
-      <Card
-        className={`transition-all duration-200 ${
-          isActive ? "bg-agent-active" : "bg-bg-primary"
-        } ${getBorderClass()}`}
+      <motion.div
+        whileHover={!isTouch ? "hover" : undefined}
+        variants={cardHover}
       >
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div className="flex items-center gap-2">
-            <AgentIcon agentId={agentId} />
-            <h3
-              className={`font-semibold uppercase text-small tracking-wide ${getNameColorClass()}`}
+        <Card
+          className={`transition-all duration-200 ${
+            isActive ? "bg-agent-active" : "bg-bg-primary"
+          } ${getBorderClass()}`}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="flex items-center gap-2">
+              <AgentIcon agentId={agentId} />
+              <h3
+                className={`font-semibold uppercase text-small tracking-wide ${getNameColorClass()}`}
+              >
+                {name}
+              </h3>
+            </div>
+            <AgentStatusBadge
+              status={status}
+              agentName={name}
+              isOnGreenBackground={isActive}
+            />
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {/* Model name */}
+            <p
+              className={`text-small ${
+                isActive ? "text-agent-active-label" : "text-text-secondary"
+              }`}
             >
-              {name}
-            </h3>
-          </div>
-          <AgentStatusBadge
-            status={status}
-            agentName={name}
-            isOnGreenBackground={isActive}
-          />
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {/* Model name */}
-          <p
-            className={`text-small ${
-              isActive ? "text-agent-active-label" : "text-text-secondary"
-            }`}
-          >
-            {model}
-          </p>
+              {model}
+            </p>
 
-          {/* Show full metrics only when ACTIVE */}
-          {isActive ? (
-            <>
-              {strategy && (
+            {/* Show full metrics only when ACTIVE */}
+            {isActive ? (
+              <>
+                {strategy && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-small text-agent-active-label">
+                      Strategy:
+                    </span>
+                    <span className="text-small text-agent-active-value">
+                      {strategy}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-small text-agent-active-label">
-                    Strategy:
+                    Cache:
                   </span>
                   <span className="text-small text-agent-active-value">
+                    Initialized
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-small text-agent-active-label">
+                    Tokens:
+                  </span>
+                  <span className="text-small text-agent-active-value">
+                    {metrics.tokens.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-small text-agent-active-label">
+                    Cost:
+                  </span>
+                  <span className="text-small text-agent-active-cost">
+                    ${metrics.cost.toFixed(4)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              strategy && (
+                <div className="flex items-center justify-between">
+                  <span className="text-small text-text-tertiary">
+                    Strategy:
+                  </span>
+                  <span className="text-small text-text-secondary">
                     {strategy}
                   </span>
                 </div>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-small text-agent-active-label">
-                  Cache:
-                </span>
-                <span className="text-small text-agent-active-value">
-                  Initialized
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-small text-agent-active-label">
-                  Tokens:
-                </span>
-                <span className="text-small text-agent-active-value">
-                  {metrics.tokens.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-small text-agent-active-label">
-                  Cost:
-                </span>
-                <span className="text-small text-agent-active-cost">
-                  ${metrics.cost.toFixed(4)}
-                </span>
-              </div>
-            </>
-          ) : (
-            strategy && (
-              <div className="flex items-center justify-between">
-                <span className="text-small text-text-tertiary">Strategy:</span>
-                <span className="text-small text-text-secondary">
-                  {strategy}
-                </span>
-              </div>
-            )
-          )}
-        </CardContent>
-      </Card>
+              )
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   },
   (prevProps, nextProps) => {
