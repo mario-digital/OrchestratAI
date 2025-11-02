@@ -21,20 +21,19 @@ describe("AgentPanel", () => {
     expect(screen.getByText("Agent Pipeline")).toBeInTheDocument();
   });
 
-  it("renders all 4 agent cards", () => {
+  it("renders all 4 agent cards", async () => {
     renderWithProvider();
 
-    expect(screen.getByText("Orchestrator")).toBeInTheDocument();
-    expect(screen.getByText("Billing Agent")).toBeInTheDocument();
-    expect(screen.getByText("Technical Agent")).toBeInTheDocument();
-    expect(screen.getByText("Policy Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Orchestrator")).toBeInTheDocument();
+    expect(await screen.findByText("Billing Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Technical Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Policy Agent")).toBeInTheDocument();
   });
 
-  it("renders agents in the correct order", () => {
+  it("renders agents in the correct order", async () => {
     renderWithProvider();
 
-    const agentNames = screen
-      .getAllByRole("heading", { level: 3 })
+    const agentNames = (await screen.findAllByRole("heading", { level: 3 }))
       .map((heading) => heading.textContent);
 
     expect(agentNames).toEqual([
@@ -66,35 +65,35 @@ describe("AgentPanel", () => {
     expect(contentContainer).toBeInTheDocument();
   });
 
-  it("all agents start with IDLE status", () => {
+  it("all agents start with IDLE status", async () => {
     renderWithProvider();
 
-    expect(screen.getByText("Agent Pipeline")).toBeInTheDocument();
-    const idleBadges = screen.getAllByText("IDLE");
+    expect(await screen.findByText("Agent Pipeline")).toBeInTheDocument();
+    const idleBadges = await screen.findAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 
-  it("displays all 4 agents from context", () => {
+  it("displays all 4 agents from context", async () => {
     renderWithProvider();
 
-    expect(screen.getByText("Orchestrator")).toBeInTheDocument();
-    expect(screen.getByText("Billing Agent")).toBeInTheDocument();
-    expect(screen.getByText("Technical Agent")).toBeInTheDocument();
-    expect(screen.getByText("Policy Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Orchestrator")).toBeInTheDocument();
+    expect(await screen.findByText("Billing Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Technical Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Policy Agent")).toBeInTheDocument();
   });
 
-  it("displays agent status badges for all agents", () => {
+  it("displays agent status badges for all agents", async () => {
     renderWithProvider();
 
     // All should be IDLE initially
-    const idleBadges = screen.getAllByText("IDLE");
+    const idleBadges = await screen.findAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 
-  it("displays agent models for all agents", () => {
+  it("displays agent models for all agents", async () => {
     renderWithProvider();
 
-    const modelTexts = screen.getAllByText("OpenAI GPT-4o");
+    const modelTexts = await screen.findAllByText("OpenAI GPT-4o");
     expect(modelTexts).toHaveLength(4);
   });
 });

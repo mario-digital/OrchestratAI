@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { ChatProvider } from "@/components/providers/chat-provider";
 import { AgentPanel } from "@/components/panels/agent-panel";
 import { AgentId, AgentStatus } from "@/lib/enums";
@@ -23,15 +23,28 @@ vi.mock("sonner", () => ({
 }));
 
 describe("AgentPanel with ChatProvider integration", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+beforeEach(() => {
+  vi.clearAllMocks();
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: query === "(hover: hover) and (pointer: fine)",
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
   });
+});
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders all agents with initial IDLE status", () => {
+  it("renders all agents with initial IDLE status", async () => {
     render(
       <ChatProvider>
         <AgentPanel />
@@ -39,17 +52,17 @@ describe("AgentPanel with ChatProvider integration", () => {
     );
 
     // Check that all 4 agents are rendered
-    expect(screen.getByText("Orchestrator")).toBeInTheDocument();
-    expect(screen.getByText("Billing Agent")).toBeInTheDocument();
-    expect(screen.getByText("Technical Agent")).toBeInTheDocument();
-    expect(screen.getByText("Policy Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Orchestrator")).toBeInTheDocument();
+    expect(await screen.findByText("Billing Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Technical Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Policy Agent")).toBeInTheDocument();
 
     // Check that all have IDLE status initially
-    const idleBadges = screen.getAllByText("IDLE");
+    const idleBadges = await screen.findAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 
-  it("displays initial metrics as zero", () => {
+  it("displays initial metrics as zero", async () => {
     const { container } = render(
       <ChatProvider>
         <AgentPanel />
@@ -57,8 +70,8 @@ describe("AgentPanel with ChatProvider integration", () => {
     );
 
     // Verify that agent panel renders without errors
-    expect(screen.getByText("Agent Pipeline")).toBeInTheDocument();
-    expect(screen.getByText("Orchestrator")).toBeInTheDocument();
+    expect(await screen.findByText("Agent Pipeline")).toBeInTheDocument();
+    expect(await screen.findByText("Orchestrator")).toBeInTheDocument();
 
     // All agents should have zero metrics initially
     // This is verified through the component rendering without errors
@@ -97,12 +110,10 @@ describe("AgentPanel with ChatProvider integration", () => {
     // Note: In real usage, this would be triggered by user interaction in ChatInterface
 
     // Wait for initial render
-    await waitFor(() => {
-      expect(screen.getByText("Orchestrator")).toBeInTheDocument();
-    });
+    await screen.findByText("Orchestrator");
 
     // Verify initial state
-    const idleBadges = screen.getAllByText("IDLE");
+    const idleBadges = await screen.findAllByText("IDLE");
     expect(idleBadges).toHaveLength(4);
   });
 
@@ -114,24 +125,21 @@ describe("AgentPanel with ChatProvider integration", () => {
     );
 
     // Initial state should show zero tokens
-    await waitFor(() => {
-      expect(screen.getByText("Orchestrator")).toBeInTheDocument();
-    });
+    await screen.findByText("Orchestrator");
 
     // Note: Full integration test with sendMessage would require
     // more complex setup with user interaction simulation
     // This test verifies the component renders correctly with context
   });
 
-  it("renders agents in correct order", () => {
+  it("renders agents in correct order", async () => {
     render(
       <ChatProvider>
         <AgentPanel />
       </ChatProvider>
     );
 
-    const agentNames = screen
-      .getAllByRole("heading", { level: 3 })
+    const agentNames = (await screen.findAllByRole("heading", { level: 3 }))
       .map((el) => el.textContent);
 
     expect(agentNames).toEqual([
@@ -142,7 +150,7 @@ describe("AgentPanel with ChatProvider integration", () => {
     ]);
   });
 
-  it("displays agent panel header", () => {
+  it("displays agent panel header", async () => {
     render(
       <ChatProvider>
         <AgentPanel />
@@ -150,11 +158,11 @@ describe("AgentPanel with ChatProvider integration", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Agent Pipeline", level: 2 })
+      await screen.findByRole("heading", { name: "Agent Pipeline", level: 2 })
     ).toBeInTheDocument();
   });
 
-  it("all agents display model information", () => {
+  it("all agents display model information", async () => {
     render(
       <ChatProvider>
         <AgentPanel />
@@ -162,7 +170,7 @@ describe("AgentPanel with ChatProvider integration", () => {
     );
 
     // All agents should show "OpenAI GPT-4o" model
-    const modelTexts = screen.getAllByText("OpenAI GPT-4o");
+    const modelTexts = await screen.findAllByText("OpenAI GPT-4o");
     expect(modelTexts).toHaveLength(4);
   });
 

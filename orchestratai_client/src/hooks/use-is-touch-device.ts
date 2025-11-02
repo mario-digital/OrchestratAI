@@ -23,17 +23,46 @@ import { useState, useEffect } from "react";
 export function useIsTouchDevice(): boolean {
   // Initialize with matchMedia check (runs before first render)
   const [isTouch, setIsTouch] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return false;
+    }
+
+    try {
+      return !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    } catch {
+      return false;
+    }
   });
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+
     // Check if device supports hover and has fine pointer (mouse/trackpad)
     const query = window.matchMedia("(hover: hover) and (pointer: fine)");
+    if (!query) {
+      return;
+    }
 
     const handleChange = (): void => setIsTouch(!query.matches);
-    query.addEventListener("change", handleChange);
-    return () => query.removeEventListener("change", handleChange);
+    if (typeof query.addEventListener === "function") {
+      query.addEventListener("change", handleChange);
+      return () => query.removeEventListener("change", handleChange);
+    }
+
+    if (typeof query.addListener === "function") {
+      query.addListener(handleChange);
+      return () => query.removeListener(handleChange);
+    }
+
+    return () => {};
   }, []);
 
   return isTouch;

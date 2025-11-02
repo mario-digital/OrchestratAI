@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { ThreePanelLayout } from '@/components/layout/three-panel-layout';
 import { AgentPanel } from '@/components/panels/agent-panel';
 import { RetrievalPanel } from '@/components/panels/retrieval-panel';
@@ -16,11 +16,14 @@ function renderLayout() {
 }
 
 describe('ThreePanelLayout collapse', () => {
-  it('restores panel content after collapsing and expanding', () => {
+  it('restores panel content after collapsing and expanding', async () => {
     renderLayout();
 
     const leftPanel = screen.getByLabelText('Agent Pipeline');
-    expect(within(leftPanel).getByText('Orchestrator')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(within(leftPanel).getByText('Orchestrator')).toBeInTheDocument();
+    });
 
     const collapseButton = within(leftPanel).getByRole('button', { name: /collapse agent pipeline/i });
     fireEvent.click(collapseButton);
@@ -29,6 +32,9 @@ describe('ThreePanelLayout collapse', () => {
     fireEvent.click(expandButton);
 
     const reopenedPanel = screen.getByLabelText('Agent Pipeline');
-    expect(within(reopenedPanel).getByText('Orchestrator')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(within(reopenedPanel).getByText('Orchestrator')).toBeInTheDocument();
+    });
   });
 });
