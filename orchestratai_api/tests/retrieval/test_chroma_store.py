@@ -23,7 +23,10 @@ def sample_documents() -> list[Document]:
     """Create sample documents for testing."""
     return [
         Document(
-            page_content="Retrieval-Augmented Generation (RAG) improves LLM responses by fetching relevant context.",
+            page_content=(
+                "Retrieval-Augmented Generation (RAG) improves LLM responses "
+                "by fetching relevant context."
+            ),
             metadata={"source": "rag_guide.md", "page": 1, "category": "technical"},
         ),
         Document(
@@ -35,11 +38,17 @@ def sample_documents() -> list[Document]:
             metadata={"source": "chroma.md", "page": 1, "category": "tools"},
         ),
         Document(
-            page_content="Semantic search finds documents by meaning rather than exact keyword matches.",
+            page_content=(
+                "Semantic search finds documents by meaning rather than "
+                "exact keyword matches."
+            ),
             metadata={"source": "search.md", "page": 1, "category": "concepts"},
         ),
         Document(
-            page_content="LangChain provides a framework for building LLM applications with retrieval.",
+            page_content=(
+                "LangChain provides a framework for building LLM applications "
+                "with retrieval."
+            ),
             metadata={"source": "langchain.md", "page": 1, "category": "frameworks"},
         ),
     ]

@@ -79,14 +79,14 @@ class DocumentRepository:
     async def delete_by_id(self, document_id: UUID) -> bool:
         """Delete a document by ID."""
         result = await self.session.execute(delete(Document).where(Document.id == document_id))
-        return result.rowcount > 0
+        return bool(result.rowcount and result.rowcount > 0)  # type: ignore[attr-defined]
 
     async def delete_by_collection(self, collection_name: str) -> int:
         """Delete all documents in a collection."""
         result = await self.session.execute(
             delete(Document).where(Document.collection_name == collection_name)
         )
-        return result.rowcount
+        return result.rowcount or 0  # type: ignore[attr-defined]
 
     async def delete_by_source(
         self, source: str, collection_name: str = "knowledge_base_v1"
@@ -97,4 +97,4 @@ class DocumentRepository:
                 Document.source == source, Document.collection_name == collection_name
             )
         )
-        return result.rowcount
+        return result.rowcount or 0  # type: ignore[attr-defined]

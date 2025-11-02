@@ -33,11 +33,20 @@ services:
       postgres:
         condition: service_healthy
       chromadb:
-        condition: service_healthy
+        condition: service_started
     networks:
       - orchestratai-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import sys, urllib.request;\
+          import contextlib;\
+          try:\
+              with contextlib.closing(urllib.request.urlopen('http://localhost:8000/api/health', timeout=2)) as resp:\
+                  sys.exit(0 if resp.status == 200 else 1)\
+          except Exception:\
+              sys.exit(1)"
       interval: 10s
       timeout: 3s
       retries: 3
@@ -52,7 +61,8 @@ services:
     environment:
       # CRITICAL: Use service name 'backend' for container-to-container communication
       # NOT 'localhost' - that's the container's own network namespace!
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - BACKEND_API_URL=http://backend:8000
       - NEXT_PUBLIC_BASE_URL=http://localhost:3000
     volumes:
       - ./orchestratai_client/src:/app/orchestratai_client/src
@@ -89,11 +99,6 @@ services:
       - ANONYMIZED_TELEMETRY=FALSE
     networks:
       - orchestratai-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   postgres:
     image: postgres:16-alpine
