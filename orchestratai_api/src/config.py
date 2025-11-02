@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "orchestratai"
 
+    # SSE Streaming Configuration
+    STREAM_DELAY_MS: int = 50  # Milliseconds between message chunks
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
