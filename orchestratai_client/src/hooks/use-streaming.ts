@@ -1,16 +1,20 @@
 /**
- * useStreaming Hook
+ * useStreaming Hook - Two-Step Secure Streaming with Auto-Reconnection
  *
- * Custom React hook for connecting to Server-Sent Events (SSE) endpoint
- * and receiving real-time message chunks, agent updates, and logs progressively.
+ * Custom React hook for secure Server-Sent Events (SSE) streaming.
+ *
+ * Security Architecture:
+ * 1. POST message to /api/chat/stream/initiate (secure - body not URL)
+ * 2. Receive stream_id (contains no sensitive data)
+ * 3. EventSource connects to /api/chat/stream/{stream_id}
+ * 4. Message retrieved server-side (never in URLs or logs)
  *
  * Features:
- * - Establishes EventSource connection to /api/chat/stream endpoint
- * - Accumulates message chunks for progressive text display
- * - Handles agent status updates in real-time
- * - Processes retrieval logs as they arrive
- * - Manages connection lifecycle and cleanup
- * - Includes EventSource polyfill for older browsers
+ * - ✅ Complete security (messages never in URLs/logs)
+ * - ✅ Native EventSource reconnection (automatic, browser-handled)
+ * - ✅ Real-time message chunks, agent updates, and logs
+ * - ✅ Proper cleanup on unmount
+ * - ✅ No URL length limitations
  *
  * @module hooks/use-streaming
  */
@@ -20,12 +24,6 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import type { AgentId, AgentStatus } from "@/lib/enums";
 import type { RetrievalLog, ChatMetrics } from "@/lib/types";
-
-// Import polyfill for older browsers (Safari < 12)
-if (typeof window !== "undefined" && !window.EventSource) {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require("eventsource-polyfill");
-}
 
 /**
  * Callback type definitions for streaming events
@@ -67,9 +65,13 @@ interface UseStreamingReturn {
 }
 
 /**
- * Custom hook for managing SSE streaming connections
+ * Custom hook for secure SSE streaming with automatic reconnection
  *
- * @returns {UseStreamingReturn} Hook return value with sendStreamingMessage function and isStreaming state
+ * Uses two-step approach:
+ * 1. POST to initiate (message in body)
+ * 2. EventSource with stream_id (native reconnection)
+ *
+ * @returns {UseStreamingReturn} Hook with sendStreamingMessage function and isStreaming state
  *
  * @example
  * ```tsx
@@ -78,7 +80,7 @@ interface UseStreamingReturn {
  * const handleSend = async () => {
  *   await sendStreamingMessage('Hello', 'session-id', {
  *     onChunk: (text) => console.log('Accumulated:', text),
- *     onAgentUpdate: (agent, status) => console.log('Agent update:', agent, status),
+ *     onAgentUpdate: (agent, status) => console.log('Agent:', agent, status),
  *     onLog: (log) => console.log('Log:', log),
  *     onComplete: (metadata) => console.log('Complete:', metadata),
  *     onError: (error) => console.error('Error:', error),
@@ -111,7 +113,10 @@ export function useStreaming(): UseStreamingReturn {
   }, [cleanup]);
 
   /**
-   * Send streaming message and establish SSE connection
+   * Send streaming message using two-step secure approach
+   *
+   * Step 1: POST message to initiate endpoint (secure!)
+   * Step 2: EventSource connects with stream_id (auto-reconnect!)
    */
   const sendStreamingMessage = useCallback(
     async (
@@ -122,24 +127,37 @@ export function useStreaming(): UseStreamingReturn {
       // Close any existing connection
       cleanup();
 
-      // Get API URL from environment
-      const apiUrl = process.env["NEXT_PUBLIC_API_URL"];
-      if (!apiUrl) {
-        const error = new Error(
-          "NEXT_PUBLIC_API_URL environment variable not set"
-        );
-        callbacks.onError?.(error);
-        throw error;
-      }
-
-      // Construct SSE endpoint URL with query parameters
-      // Using GET with query params for MVP simplicity (EventSource only supports GET)
-      const encodedMessage = encodeURIComponent(message);
-      const url = `${apiUrl}/api/chat/stream?message=${encodedMessage}&session_id=${sessionId}`;
-
       try {
-        // Create EventSource instance
-        const eventSource = new EventSource(url);
+        // Step 1: POST to initiate stream (message in body - secure!)
+        const initiateResponse = await fetch("/api/chat/stream/initiate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message,
+            session_id: sessionId,
+          }),
+        });
+
+        if (!initiateResponse.ok) {
+          const errorData = (await initiateResponse
+            .json()
+            .catch(() => ({}))) as { error?: string };
+          throw new Error(
+            errorData.error || `HTTP error! status: ${initiateResponse.status}`
+          );
+        }
+
+        const data = (await initiateResponse.json()) as { stream_id?: string };
+        const { stream_id } = data;
+
+        if (!stream_id) {
+          throw new Error("No stream_id received from server");
+        }
+
+        // Step 2: EventSource with stream_id (native reconnection!)
+        const eventSource = new EventSource(`/api/chat/stream/${stream_id}`);
         eventSourceRef.current = eventSource;
         setIsStreaming(true);
 
@@ -214,13 +232,13 @@ export function useStreaming(): UseStreamingReturn {
 
         /**
          * Handle connection errors
-         * Distinguishes between reconnection attempts and permanent failures
+         * EventSource automatically reconnects, we just log the state
          */
         eventSource.onerror = (error) => {
           // Check connection state to distinguish error types
           if (eventSource.readyState === EventSource.CONNECTING) {
-            // Connection is reconnecting (normal behavior)
-            console.log("SSE reconnecting...");
+            // Connection is reconnecting (normal behavior - automatic!)
+            console.log("SSE reconnecting... (automatic)");
           } else if (eventSource.readyState === EventSource.CLOSED) {
             // Connection failed permanently
             console.error("SSE connection closed");
@@ -238,10 +256,10 @@ export function useStreaming(): UseStreamingReturn {
           }
         };
       } catch (error) {
-        // Handle EventSource creation errors
+        // Handle initiation errors
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        const err = new Error(`Failed to create EventSource: ${errorMessage}`);
+        const err = new Error(`Failed to initiate stream: ${errorMessage}`);
         callbacks.onError?.(err);
         setIsStreaming(false);
         throw err;
