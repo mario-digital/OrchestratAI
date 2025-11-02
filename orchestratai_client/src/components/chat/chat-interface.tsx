@@ -53,10 +53,16 @@ function getAgentName(agentId: AgentId): string {
 }
 
 export function ChatInterface(): JSX.Element {
-  const { messages, isProcessing, typingAgent, sendMessage } = useChatContext();
+  const {
+    messages,
+    isProcessing,
+    isStreaming,
+    typingAgent,
+    sendStreamingMessage,
+  } = useChatContext();
 
   const handleSendMessage = (message: string): void => {
-    void sendMessage(message);
+    void sendStreamingMessage(message);
   };
 
   return (
@@ -79,7 +85,7 @@ export function ChatInterface(): JSX.Element {
       {/* Input Area */}
       <InputArea
         onSendMessage={handleSendMessage}
-        isProcessing={isProcessing}
+        isProcessing={isProcessing || isStreaming}
       />
     </div>
   );
