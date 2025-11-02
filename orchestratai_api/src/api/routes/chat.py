@@ -10,6 +10,7 @@ import logging
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # In-memory stream session storage
 # Production: Use Redis with TTL for distributed systems
-stream_sessions: dict[str, dict] = {}
+stream_sessions: dict[str, dict[str, Any]] = {}
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -164,7 +165,7 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
 
 
 @router.post("/chat/stream/initiate")
-async def initiate_stream(request: ChatRequest) -> dict:
+async def initiate_stream(request: ChatRequest) -> dict[str, str]:
     """
     Initiate a streaming session (Step 1 of two-step streaming).
 
