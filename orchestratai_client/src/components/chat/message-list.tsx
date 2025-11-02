@@ -1,8 +1,8 @@
 /**
  * MessageList Component
  *
- * Scrollable container for chat messages with auto-scroll functionality.
- * Automatically scrolls to bottom when new messages are added.
+ * Scrollable container for chat messages with smart auto-scroll functionality.
+ * Automatically scrolls to bottom when new messages are added (only if user is near bottom).
  *
  * @module components/chat/message-list
  */
@@ -10,6 +10,7 @@
 "use client";
 
 import { useEffect, useRef, type JSX } from "react";
+import { AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./message-bubble";
 import { MessageRole, AgentId } from "@/lib/enums";
@@ -37,33 +38,52 @@ export interface MessageListProps {
 }
 
 /**
- * MessageList - Scrollable message container with auto-scroll
+ * MessageList - Scrollable message container with smart auto-scroll
  *
  * Features:
  * - Auto-scrolls to bottom when new messages arrive
- * - Only auto-scrolls if user is near bottom (prevents scroll hijacking)
- * - Smooth scroll behavior
+ * - Only auto-scrolls if user is near bottom (within 100px) - prevents scroll hijacking
+ * - Smooth scroll behavior with ease-out curve
+ * - AnimatePresence for smooth message exit animations
  * - Accessible with ARIA labels and live regions
  */
 export function MessageList({
   messages,
   isProcessing: _isProcessing = false,
 }: MessageListProps): JSX.Element {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   /**
+   * Check if user is near bottom of scroll area
+   * @returns true if within 100px of bottom
+   */
+  const isNearBottom = (): boolean => {
+    const scrollArea = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]"
+    );
+    if (!scrollArea) return true;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+    return distanceFromBottom < 100; // Within 100px of bottom
+  };
+
+  /**
    * Auto-scroll to bottom when messages change
-   * Always scrolls for new messages to ensure user sees latest content
+   * Only scrolls if user is near bottom (prevents interrupting manual scroll)
    */
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    if (bottomRef.current && isNearBottom()) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages.length]);
 
   return (
     <ScrollArea
-      className="h-full w-full px-4"
+      ref={scrollAreaRef}
+      className="h-full w-full px-4 scroll-smooth"
       aria-label="Chat message history"
       aria-live="polite"
     >
@@ -73,16 +93,19 @@ export function MessageList({
             <p>No messages yet. Start a conversation!</p>
           </div>
         ) : (
-          messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              role={message.role}
-              content={message.content}
-              agent={message.agent}
-              confidence={message.confidence}
-              timestamp={message.timestamp}
-            />
-          ))
+          <AnimatePresence mode="popLayout">
+            {messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                id={message.id}
+                role={message.role}
+                content={message.content}
+                agent={message.agent}
+                confidence={message.confidence}
+                timestamp={message.timestamp}
+              />
+            ))}
+          </AnimatePresence>
         )}
 
         {/* Invisible anchor for auto-scroll */}

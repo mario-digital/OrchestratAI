@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MessageList, MessageListMessage } from "../message-list";
 import { MessageRole, AgentId } from "@/lib/enums";
 
@@ -22,7 +22,12 @@ Object.defineProperty(window, "IntersectionObserver", {
 });
 
 // Mock scrollIntoView
-Element.prototype.scrollIntoView = vi.fn();
+const scrollIntoViewMock = vi.fn();
+
+Object.defineProperty(window.HTMLElement.prototype, "scrollIntoView", {
+  configurable: true,
+  value: scrollIntoViewMock,
+});
 
 describe("MessageList", () => {
   const mockMessages: MessageListMessage[] = [
@@ -54,6 +59,7 @@ describe("MessageList", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    scrollIntoViewMock.mockClear();
   });
 
   describe("Message Rendering", () => {
@@ -113,12 +119,9 @@ describe("MessageList", () => {
   });
 
   describe("Auto-scroll Behavior", () => {
-    it("calls scrollIntoView when messages are added", () => {
+    it("calls scrollIntoView when messages are added", async () => {
       const { rerender } = render(<MessageList messages={mockMessages} />);
 
-      const scrollIntoViewMock = Element.prototype.scrollIntoView as ReturnType<
-        typeof vi.fn
-      >;
       const initialCallCount = scrollIntoViewMock.mock.calls.length;
 
       // Add a new message
@@ -133,24 +136,22 @@ describe("MessageList", () => {
 
       rerender(<MessageList messages={newMessages} />);
 
-      // Should have called scrollIntoView with smooth behavior
-      expect(scrollIntoViewMock.mock.calls.length).toBeGreaterThan(
-        initialCallCount
+      await waitFor(() =>
+        expect(scrollIntoViewMock.mock.calls.length).toBeGreaterThan(
+          initialCallCount
+        )
       );
     });
 
-    it("uses smooth scroll behavior", () => {
+    it("uses smooth scroll behavior", async () => {
       render(<MessageList messages={mockMessages} />);
 
-      const scrollIntoViewMock = Element.prototype.scrollIntoView as ReturnType<
-        typeof vi.fn
-      >;
-
-      // Check that at least one call used smooth behavior
-      const smoothCalls = scrollIntoViewMock.mock.calls.filter(
-        (call) => call[0]?.behavior === "smooth"
-      );
-      expect(smoothCalls.length).toBeGreaterThan(0);
+      await waitFor(() => {
+        const smoothCalls = scrollIntoViewMock.mock.calls.filter(
+          (call) => call[0]?.behavior === "smooth"
+        );
+        expect(smoothCalls.length).toBeGreaterThan(0);
+      });
     });
   });
 

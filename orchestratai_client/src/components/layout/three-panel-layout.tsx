@@ -7,6 +7,8 @@ import {
   createContext,
   useContext,
 } from "react";
+import { motion } from "framer-motion";
+import { staggerContainer, fadeSlideUp } from "@/lib/animations";
 
 interface ThreePanelLayoutProps {
   children?: ReactNode;
@@ -82,12 +84,16 @@ export function ThreePanelLayout({
       }}
     >
       <div className="relative flex-1 overflow-hidden">
-        <div
+        <motion.div
           className={`h-full grid transition-all duration-300 ${getGridLayout()}`}
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
         >
           {/* Left Panel - Agent Pipeline (collapsible) */}
           {!isLeftPanelCollapsed && (
-            <aside
+            <motion.aside
+              variants={fadeSlideUp}
               aria-label="Agent Pipeline"
               className="bg-bg-secondary border-r border-border-default overflow-y-auto"
               tabIndex={0}
@@ -95,11 +101,12 @@ export function ThreePanelLayout({
               {leftPanel || (
                 <p className="text-text-secondary">Agent Pipeline (Epic 3)</p>
               )}
-            </aside>
+            </motion.aside>
           )}
 
           {/* Center Panel - Chat Interface */}
-          <main
+          <motion.main
+            variants={fadeSlideUp}
             aria-label="Chat Interface"
             className="bg-bg-primary overflow-hidden"
             tabIndex={0}
@@ -107,11 +114,12 @@ export function ThreePanelLayout({
             {children || (
               <p className="text-text-secondary">Chat Interface (Epic 2)</p>
             )}
-          </main>
+          </motion.main>
 
           {/* Right Panel - Retrieval Log (collapsible) */}
           {!isRightPanelCollapsed && (
-            <aside
+            <motion.aside
+              variants={fadeSlideUp}
               aria-label="Retrieval Log"
               className="bg-bg-secondary border-l border-border-default overflow-y-auto"
               tabIndex={0}
@@ -119,9 +127,9 @@ export function ThreePanelLayout({
               {rightPanel || (
                 <p className="text-text-secondary">Retrieval Log (Epic 3)</p>
               )}
-            </aside>
+            </motion.aside>
           )}
-        </div>
+        </motion.div>
 
         {/* Left Expand Button - Shows when left panel is collapsed */}
         {isLeftPanelCollapsed && (

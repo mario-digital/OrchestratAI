@@ -5,15 +5,19 @@
  * User messages appear right-aligned in blue, assistant messages left-aligned
  * with agent badges and optional confidence scores.
  *
+ * Features fade-slide animation on message appearance for polished UX.
+ *
  * @module components/chat/message-bubble
  */
 
 "use client";
 
 import { type JSX } from "react";
+import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { MessageRole, AgentId } from "@/lib/enums";
 import { getAgentTextColor } from "@/lib/utils/agent-colors";
+import { fadeSlideUp } from "@/lib/animations";
 
 export interface MessageBubbleProps {
   /** Message sender role (user or assistant) */
@@ -26,6 +30,8 @@ export interface MessageBubbleProps {
   confidence?: number;
   /** Optional timestamp for message */
   timestamp?: Date;
+  /** Unique message ID for AnimatePresence key */
+  id?: string;
 }
 
 /**
@@ -35,6 +41,7 @@ export interface MessageBubbleProps {
  * - User messages: right-aligned, blue background
  * - Assistant messages: left-aligned, dark background with agent badge
  *
+ * Animates with fade-slide-up motion (300ms) for smooth appearance.
  * Uses Layer 3 component tokens for all styling.
  */
 export function MessageBubble({
@@ -43,6 +50,7 @@ export function MessageBubble({
   agent,
   confidence,
   timestamp,
+  id,
 }: MessageBubbleProps): JSX.Element {
   const isUser = role === MessageRole.USER;
   const isAssistant = role === MessageRole.ASSISTANT;
@@ -52,7 +60,12 @@ export function MessageBubble({
     : undefined;
 
   return (
-    <div
+    <motion.div
+      key={id}
+      variants={fadeSlideUp}
+      initial="initial"
+      animate="animate"
+      exit="exit"
       className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}
       aria-label={`Message from ${isUser ? "user" : agent || "assistant"}`}
     >
@@ -103,6 +116,6 @@ export function MessageBubble({
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
