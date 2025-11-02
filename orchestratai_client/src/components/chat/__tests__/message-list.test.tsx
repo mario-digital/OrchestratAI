@@ -21,12 +21,18 @@ Object.defineProperty(window, "IntersectionObserver", {
   value: IntersectionObserverMock,
 });
 
-// Mock scrollIntoView
+// Mock scrollIntoView and scrollTo
 const scrollIntoViewMock = vi.fn();
+const scrollToMock = vi.fn();
 
 Object.defineProperty(window.HTMLElement.prototype, "scrollIntoView", {
   configurable: true,
   value: scrollIntoViewMock,
+});
+
+Object.defineProperty(window.HTMLElement.prototype, "scrollTo", {
+  configurable: true,
+  value: scrollToMock,
 });
 
 describe("MessageList", () => {
@@ -119,10 +125,10 @@ describe("MessageList", () => {
   });
 
   describe("Auto-scroll Behavior", () => {
-    it("calls scrollIntoView when messages are added", async () => {
+    it("calls scrollTo when messages are added", async () => {
       const { rerender } = render(<MessageList messages={mockMessages} />);
 
-      const initialCallCount = scrollIntoViewMock.mock.calls.length;
+      const initialCallCount = scrollToMock.mock.calls.length;
 
       // Add a new message
       const newMessages = [
@@ -137,9 +143,7 @@ describe("MessageList", () => {
       rerender(<MessageList messages={newMessages} />);
 
       await waitFor(() =>
-        expect(scrollIntoViewMock.mock.calls.length).toBeGreaterThan(
-          initialCallCount
-        )
+        expect(scrollToMock.mock.calls.length).toBeGreaterThan(initialCallCount)
       );
     });
 
@@ -147,7 +151,7 @@ describe("MessageList", () => {
       render(<MessageList messages={mockMessages} />);
 
       await waitFor(() => {
-        const smoothCalls = scrollIntoViewMock.mock.calls.filter(
+        const smoothCalls = scrollToMock.mock.calls.filter(
           (call) => call[0]?.behavior === "smooth"
         );
         expect(smoothCalls.length).toBeGreaterThan(0);
