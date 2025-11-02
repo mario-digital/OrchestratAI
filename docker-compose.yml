@@ -9,10 +9,30 @@ services:
       - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379
+      # LLM Provider Credentials (1Password auto-resolves op:// references)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      # Vector DB Configuration
+      - VECTOR_DB_BACKEND=${VECTOR_DB_BACKEND:-chromadb}
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      # PostgreSQL Configuration
+      - DATABASE_URL=postgresql://orchestratai:orchestratai_dev_password@postgres:5432/orchestratai
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=orchestratai
+      - POSTGRES_USER=orchestratai
+      - POSTGRES_PASSWORD=orchestratai_dev_password
     volumes:
       - ./orchestratai_api/src:/app/src
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      chromadb:
         condition: service_healthy
     networks:
       - orchestratai-network
@@ -57,8 +77,49 @@ services:
       retries: 5
     command: redis-server --appendonly yes
 
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: orchestratai-chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - orchestratai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: orchestratai-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=orchestratai
+      - POSTGRES_USER=orchestratai
+      - POSTGRES_PASSWORD=orchestratai_dev_password
+    networks:
+      - orchestratai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchestratai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   redis_data:
+    driver: local
+  chroma_data:
+    driver: local
+  postgres_data:
     driver: local
 
 networks:
