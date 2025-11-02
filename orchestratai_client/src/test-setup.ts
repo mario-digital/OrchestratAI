@@ -16,9 +16,10 @@ global.ResizeObserver = class ResizeObserver {
   disconnect(): void {}
 };
 
-// Mock scrollIntoView for auto-scroll functionality
+// Mock scrollIntoView and scrollTo for auto-scroll functionality
 if (typeof window !== "undefined") {
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  window.HTMLElement.prototype.scrollTo = vi.fn();
 }
 
 // Mock framer-motion to avoid animation issues in tests
