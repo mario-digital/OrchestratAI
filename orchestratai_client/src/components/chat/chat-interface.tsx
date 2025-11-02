@@ -13,6 +13,7 @@ import { useChatContext } from "@/components/providers/chat-provider";
 import { MessageList } from "./message-list";
 import { InputArea } from "./input-area";
 import { TypingIndicator } from "./typing-indicator";
+import { Badge } from "@/components/ui/badge";
 import { AgentId } from "@/lib/enums";
 import type { JSX } from "react";
 
@@ -58,6 +59,7 @@ export function ChatInterface(): JSX.Element {
     isProcessing,
     isStreaming,
     typingAgent,
+    useFallbackMode,
     sendStreamingMessage,
   } = useChatContext();
 
@@ -79,6 +81,18 @@ export function ChatInterface(): JSX.Element {
             agentName={getAgentName(typingAgent)}
             agentId={typingAgent}
           />
+        </div>
+      )}
+
+      {/* Fallback Mode Indicator */}
+      {useFallbackMode && (
+        <div className="px-4 py-2 border-t border-input-border bg-surface-secondary/50 flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            Standard Mode
+          </Badge>
+          <span className="text-xs text-text-tertiary">
+            Streaming unavailable
+          </span>
         </div>
       )}
 

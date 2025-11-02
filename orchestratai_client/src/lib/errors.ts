@@ -86,3 +86,41 @@ export class TimeoutError extends Error {
     }
   }
 }
+
+/**
+ * Stream error codes for SSE connection failures
+ */
+export enum StreamErrorCode {
+  NETWORK_ERROR = "NETWORK_ERROR",
+  SERVER_ERROR = "SERVER_ERROR",
+  TIMEOUT = "TIMEOUT",
+  PARSE_ERROR = "PARSE_ERROR",
+  CONNECTION_CLOSED = "CONNECTION_CLOSED",
+}
+
+/**
+ * Stream error for Server-Sent Events (SSE) failures
+ * Provides error categorization and retry logic guidance
+ */
+export class StreamError extends Error {
+  /**
+   * Creates a new StreamError
+   *
+   * @param message - Human-readable error message
+   * @param code - Error code for categorization
+   * @param retryable - Whether this error can be retried
+   * @param originalError - Original error that caused this StreamError
+   */
+  constructor(
+    message: string,
+    public code: StreamErrorCode,
+    public retryable: boolean = true,
+    public originalError?: Error
+  ) {
+    super(message);
+    this.name = "StreamError";
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, StreamError);
+    }
+  }
+}

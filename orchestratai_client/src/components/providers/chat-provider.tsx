@@ -27,9 +27,13 @@ import {
   MessageRole,
   RetrievalStrategy,
 } from "@/lib/enums";
-import { getUserFriendlyMessage } from "@/lib/utils/error-messages";
+import {
+  getUserFriendlyMessage,
+  getStreamErrorMessage,
+} from "@/lib/utils/error-messages";
 import type { RetrievalLog } from "@/lib/types";
 import { useStreaming } from "@/hooks/use-streaming";
+import { StreamError } from "@/lib/errors";
 
 // =============================================================================
 // Types
@@ -80,6 +84,7 @@ export interface ChatState {
   retrievalLogs: RetrievalLog[];
   isStreaming: boolean;
   streamingMessageId: string | null;
+  useFallbackMode: boolean;
 }
 
 /**
@@ -124,7 +129,8 @@ export type ChatAction =
         finalMessage: Message;
       };
     }
-  | { type: "STREAMING_ERROR"; payload: { messageId: string; error: string } };
+  | { type: "STREAMING_ERROR"; payload: { messageId: string; error: string } }
+  | { type: "SET_FALLBACK_MODE"; payload: boolean };
 
 /**
  * ChatContextValue - Complete context value with state and methods
@@ -161,6 +167,11 @@ export interface ChatProviderProps {
  * localStorage key for session ID persistence
  */
 const SESSION_ID_KEY = "orchestratai_session_id";
+
+/**
+ * sessionStorage key for fallback mode persistence
+ */
+const FALLBACK_MODE_KEY = "orch_use_fallback";
 
 /**
  * Duration in milliseconds for orchestrator routing animation
@@ -385,6 +396,20 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ),
       };
 
+    case "SET_FALLBACK_MODE":
+      // Persist to sessionStorage
+      if (typeof window !== "undefined") {
+        if (action.payload) {
+          sessionStorage.setItem(FALLBACK_MODE_KEY, "true");
+        } else {
+          sessionStorage.removeItem(FALLBACK_MODE_KEY);
+        }
+      }
+      return {
+        ...state,
+        useFallbackMode: action.payload,
+      };
+
     default:
       return state;
   }
@@ -436,6 +461,12 @@ export function ChatProvider({
   children,
   initialSessionId,
 }: ChatProviderProps): React.JSX.Element {
+  // Check sessionStorage for fallback mode preference
+  const initialUseFallback =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem(FALLBACK_MODE_KEY) === "true"
+      : false;
+
   const [state, dispatch] = useReducer(chatReducer, {
     messages: [],
     isProcessing: false,
@@ -447,6 +478,7 @@ export function ChatProvider({
     retrievalLogs: [],
     isStreaming: false,
     streamingMessageId: null,
+    useFallbackMode: initialUseFallback,
   });
 
   // Ref to track orchestrator animation timeout for cleanup
@@ -523,113 +555,117 @@ export function ChatProvider({
    *
    * @param message - User message text
    */
-  const sendMessage = async (message: string): Promise<void> => {
-    if (!state.sessionId) {
-      const error = new Error("Session ID not initialized");
-      dispatch({ type: "SET_ERROR", payload: error });
-      return;
-    }
-
-    // Step 1: Optimistic update - add user message BEFORE API call
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: MessageRole.USER,
-      content: message,
-      timestamp: new Date(),
-    };
-    dispatch({ type: "ADD_MESSAGE", payload: userMessage });
-
-    // Step 2: Set processing state and typing indicator
-    dispatch({ type: "SET_PROCESSING", payload: true });
-    dispatch({ type: "SET_TYPING_AGENT", payload: AgentId.ORCHESTRATOR });
-
-    // Step 3: Orchestrator routing animation
-    // Clear any existing timeout to prevent race conditions
-    if (orchestratorTimeoutRef.current) {
-      clearTimeout(orchestratorTimeoutRef.current);
-    }
-
-    dispatch({
-      type: "UPDATE_AGENT_STATUS",
-      payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.ROUTING },
-    });
-
-    orchestratorTimeoutRef.current = setTimeout(() => {
-      dispatch({
-        type: "UPDATE_AGENT_STATUS",
-        payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.IDLE },
-      });
-      orchestratorTimeoutRef.current = null;
-    }, ORCHESTRATOR_ROUTING_ANIMATION_MS);
-
-    try {
-      // Step 4: Call API
-      const response = await sendMessageAPI(message, state.sessionId);
-
-      // Step 5: Update agent statuses from API response
-      if (response.agent_status) {
-        dispatch({
-          type: "SET_ALL_AGENT_STATUS",
-          payload: response.agent_status,
-        });
+  const sendMessage = useCallback(
+    async (message: string): Promise<void> => {
+      if (!state.sessionId) {
+        const error = new Error("Session ID not initialized");
+        dispatch({ type: "SET_ERROR", payload: error });
+        return;
       }
 
-      // Step 5.5: Add retrieval logs from API response
-      if (response.logs && response.logs.length > 0) {
-        dispatch({
-          type: "ADD_LOG_ENTRIES",
-          payload: response.logs,
-        });
-      }
-
-      // Step 6: Increment metrics for the selected agent
-      if (response.metrics) {
-        dispatch({
-          type: "INCREMENT_AGENT_METRICS",
-          payload: {
-            agent: response.agent,
-            metrics: {
-              tokens: response.metrics.tokensUsed,
-              cost: response.metrics.cost,
-              latency: response.metrics.latency,
-            },
-            cacheStatus: response.metrics.cache_status,
-          },
-        });
-      }
-
-      // Step 7: Add AI response
-      const assistantMessage: Message = {
+      // Step 1: Optimistic update - add user message BEFORE API call
+      const userMessage: Message = {
         id: crypto.randomUUID(),
-        role: MessageRole.ASSISTANT,
-        content: response.message,
-        agent: response.agent,
-        confidence: response.confidence,
+        role: MessageRole.USER,
+        content: message,
         timestamp: new Date(),
       };
-      dispatch({ type: "ADD_MESSAGE", payload: assistantMessage });
-    } catch (error) {
-      // Step 5: Remove optimistic user message on error
-      dispatch({ type: "REMOVE_MESSAGE", payload: userMessage.id });
-      dispatch({ type: "SET_ERROR", payload: error as Error });
-      dispatch({ type: "SET_FAILED_MESSAGE", payload: message });
+      dispatch({ type: "ADD_MESSAGE", payload: userMessage });
 
-      // Show user-friendly error toast with retry button
-      const errorMessage = getUserFriendlyMessage(error as Error);
-      toast.error(errorMessage, {
-        action: {
-          label: "Retry",
-          onClick: () => {
-            void retryMessage();
-          },
-        },
+      // Step 2: Set processing state and typing indicator
+      dispatch({ type: "SET_PROCESSING", payload: true });
+      dispatch({ type: "SET_TYPING_AGENT", payload: AgentId.ORCHESTRATOR });
+
+      // Step 3: Orchestrator routing animation
+      // Clear any existing timeout to prevent race conditions
+      if (orchestratorTimeoutRef.current) {
+        clearTimeout(orchestratorTimeoutRef.current);
+      }
+
+      dispatch({
+        type: "UPDATE_AGENT_STATUS",
+        payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.ROUTING },
       });
-    } finally {
-      // Step 6: Clear processing state and typing indicator
-      dispatch({ type: "SET_PROCESSING", payload: false });
-      dispatch({ type: "SET_TYPING_AGENT", payload: null });
-    }
-  };
+
+      orchestratorTimeoutRef.current = setTimeout(() => {
+        dispatch({
+          type: "UPDATE_AGENT_STATUS",
+          payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.IDLE },
+        });
+        orchestratorTimeoutRef.current = null;
+      }, ORCHESTRATOR_ROUTING_ANIMATION_MS);
+
+      try {
+        // Step 4: Call API
+        const response = await sendMessageAPI(message, state.sessionId);
+
+        // Step 5: Update agent statuses from API response
+        if (response.agent_status) {
+          dispatch({
+            type: "SET_ALL_AGENT_STATUS",
+            payload: response.agent_status,
+          });
+        }
+
+        // Step 5.5: Add retrieval logs from API response
+        if (response.logs && response.logs.length > 0) {
+          dispatch({
+            type: "ADD_LOG_ENTRIES",
+            payload: response.logs,
+          });
+        }
+
+        // Step 6: Increment metrics for the selected agent
+        if (response.metrics) {
+          dispatch({
+            type: "INCREMENT_AGENT_METRICS",
+            payload: {
+              agent: response.agent,
+              metrics: {
+                tokens: response.metrics.tokensUsed,
+                cost: response.metrics.cost,
+                latency: response.metrics.latency,
+              },
+              cacheStatus: response.metrics.cache_status,
+            },
+          });
+        }
+
+        // Step 7: Add AI response
+        const assistantMessage: Message = {
+          id: crypto.randomUUID(),
+          role: MessageRole.ASSISTANT,
+          content: response.message,
+          agent: response.agent,
+          confidence: response.confidence,
+          timestamp: new Date(),
+        };
+        dispatch({ type: "ADD_MESSAGE", payload: assistantMessage });
+      } catch (error) {
+        // Step 5: Remove optimistic user message on error
+        dispatch({ type: "REMOVE_MESSAGE", payload: userMessage.id });
+        dispatch({ type: "SET_ERROR", payload: error as Error });
+        dispatch({ type: "SET_FAILED_MESSAGE", payload: message });
+
+        // Show user-friendly error toast with retry button
+        const errorMessage = getUserFriendlyMessage(error as Error);
+        toast.error(errorMessage, {
+          action: {
+            label: "Retry",
+            onClick: () => {
+              // Use ref to avoid circular dependency
+              void sendMessageRef.current?.(message);
+            },
+          },
+        });
+      } finally {
+        // Step 6: Clear processing state and typing indicator
+        dispatch({ type: "SET_PROCESSING", payload: false });
+        dispatch({ type: "SET_TYPING_AGENT", payload: null });
+      }
+    },
+    [state.sessionId]
+  );
 
   // Update ref to latest sendMessage
   sendMessageRef.current = sendMessage;
@@ -716,9 +752,10 @@ export function ChatProvider({
   };
 
   /**
-   * sendStreamingMessage - Send message with streaming response
+   * sendStreamingMessage - Send message with streaming response or fallback
    *
    * Uses Server-Sent Events (SSE) to stream response in real-time.
+   * Falls back to non-streaming POST if SSE fails after retries.
    * Provides typewriter effect with progressive message updates.
    *
    * @param message - User message text
@@ -735,6 +772,12 @@ export function ChatProvider({
         const error = new Error("Session ID not initialized");
         dispatch({ type: "SET_ERROR", payload: error });
         return;
+      }
+
+      // Check if fallback mode is active (SSE previously failed)
+      if (state.useFallbackMode) {
+        console.log("Using fallback mode (non-streaming)");
+        return sendMessage(message);
       }
 
       // Generate unique IDs for messages
@@ -862,8 +905,8 @@ export function ChatProvider({
             }
           },
 
-          // Handle errors (will be enhanced in Story 4.6)
-          onError: (error) => {
+          // Handle errors with fallback logic
+          onError: (error: StreamError) => {
             dispatch({
               type: "STREAMING_ERROR",
               payload: {
@@ -872,21 +915,37 @@ export function ChatProvider({
               },
             });
 
-            // Remove optimistic user message on error
+            // Remove optimistic user message and placeholder assistant message
             dispatch({ type: "REMOVE_MESSAGE", payload: userMessageId });
             dispatch({ type: "SET_FAILED_MESSAGE", payload: message });
 
-            // Show user-friendly error toast with retry button
-            const errorMessage = getUserFriendlyMessage(error);
-            toast.error(errorMessage, {
-              action: {
-                label: "Retry",
-                onClick: () => {
-                  // Retry by calling sendStreamingMessage again
-                  void sendStreamingMessage(message);
+            // Check if error is retryable
+            if (!error.retryable) {
+              // Enable fallback mode for this session
+              console.warn(
+                "Streaming failed permanently, enabling fallback mode"
+              );
+              dispatch({ type: "SET_FALLBACK_MODE", payload: true });
+
+              // Show toast notification
+              const errorMessage = getStreamErrorMessage(error.code);
+              toast.error(errorMessage);
+
+              // Retry with non-streaming (fallback)
+              void sendMessage(message);
+            } else {
+              // Show retryable error with retry button
+              const errorMessage = getUserFriendlyMessage(error);
+              toast.error(errorMessage, {
+                action: {
+                  label: "Retry",
+                  onClick: () => {
+                    // Retry by calling sendStreamingMessage again
+                    void sendStreamingMessage(message);
+                  },
                 },
-              },
-            });
+              });
+            }
           },
         });
       } catch (error) {
@@ -901,12 +960,29 @@ export function ChatProvider({
                 : "Unknown streaming error",
           },
         });
+
+        // If it's a StreamError, handle fallback
+        if (error instanceof StreamError && !error.retryable) {
+          console.warn("Streaming initiation failed, enabling fallback mode");
+          dispatch({ type: "SET_FALLBACK_MODE", payload: true });
+
+          // Show toast and retry with fallback
+          const errorMessage = getStreamErrorMessage(error.code);
+          toast.error(errorMessage);
+          void sendMessage(message);
+        }
       } finally {
         // Clear typing indicator
         dispatch({ type: "SET_TYPING_AGENT", payload: null });
       }
     },
-    [state.isStreaming, state.sessionId, sendStream]
+    [
+      state.isStreaming,
+      state.sessionId,
+      state.useFallbackMode,
+      sendStream,
+      sendMessage,
+    ]
   );
 
   const value: ChatContextValue = {

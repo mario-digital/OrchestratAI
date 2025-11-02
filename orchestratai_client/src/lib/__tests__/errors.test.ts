@@ -8,6 +8,8 @@ import {
   ValidationError,
   NetworkError,
   TimeoutError,
+  StreamError,
+  StreamErrorCode,
 } from "../errors";
 import { z } from "zod";
 
@@ -167,12 +169,110 @@ describe("Custom Error Classes", () => {
     });
   });
 
+  describe("StreamError", () => {
+    it("should create StreamError with code and retryable flag", () => {
+      const error = new StreamError(
+        "Network connection lost",
+        StreamErrorCode.NETWORK_ERROR,
+        true
+      );
+
+      expect(error).toBeInstanceOf(Error);
+      expect(error).toBeInstanceOf(StreamError);
+      expect(error.name).toBe("StreamError");
+      expect(error.message).toBe("Network connection lost");
+      expect(error.code).toBe(StreamErrorCode.NETWORK_ERROR);
+      expect(error.retryable).toBe(true);
+      expect(error.originalError).toBeUndefined();
+    });
+
+    it("should default retryable to true", () => {
+      const error = new StreamError(
+        "Connection failed",
+        StreamErrorCode.CONNECTION_CLOSED
+      );
+
+      expect(error.retryable).toBe(true);
+    });
+
+    it("should allow non-retryable errors", () => {
+      const error = new StreamError(
+        "Parse error",
+        StreamErrorCode.PARSE_ERROR,
+        false
+      );
+
+      expect(error.retryable).toBe(false);
+    });
+
+    it("should include original error if provided", () => {
+      const originalError = new Error("Original fetch error");
+      const error = new StreamError(
+        "Stream failed",
+        StreamErrorCode.SERVER_ERROR,
+        true,
+        originalError
+      );
+
+      expect(error.originalError).toBe(originalError);
+      expect(error.originalError?.message).toBe("Original fetch error");
+    });
+
+    it("should have stack trace", () => {
+      const error = new StreamError("Timeout", StreamErrorCode.TIMEOUT, false);
+
+      expect(error.stack).toBeDefined();
+      expect(error.stack).toContain("StreamError");
+    });
+
+    it("should support all error codes", () => {
+      const codes = [
+        StreamErrorCode.NETWORK_ERROR,
+        StreamErrorCode.SERVER_ERROR,
+        StreamErrorCode.TIMEOUT,
+        StreamErrorCode.PARSE_ERROR,
+        StreamErrorCode.CONNECTION_CLOSED,
+      ];
+
+      codes.forEach((code) => {
+        const error = new StreamError("Test error", code);
+        expect(error.code).toBe(code);
+      });
+    });
+  });
+
+  describe("StreamErrorCode enum", () => {
+    it("should have all expected error codes", () => {
+      expect(StreamErrorCode.NETWORK_ERROR).toBe("NETWORK_ERROR");
+      expect(StreamErrorCode.SERVER_ERROR).toBe("SERVER_ERROR");
+      expect(StreamErrorCode.TIMEOUT).toBe("TIMEOUT");
+      expect(StreamErrorCode.PARSE_ERROR).toBe("PARSE_ERROR");
+      expect(StreamErrorCode.CONNECTION_CLOSED).toBe("CONNECTION_CLOSED");
+    });
+
+    it("should allow error code discrimination", () => {
+      const error = new StreamError(
+        "Test",
+        StreamErrorCode.NETWORK_ERROR,
+        true
+      );
+
+      if (error.code === StreamErrorCode.NETWORK_ERROR) {
+        expect(error.retryable).toBe(true);
+      }
+    });
+  });
+
   describe("Error instanceof checks", () => {
     it("should allow proper error type discrimination", () => {
       const apiError = new APIError(500, "Server error");
       const validationError = new ValidationError("Invalid", []);
       const networkError = new NetworkError("Connection failed");
       const timeoutError = new TimeoutError("Timeout");
+      const streamError = new StreamError(
+        "Stream failed",
+        StreamErrorCode.NETWORK_ERROR
+      );
 
       // Type guards work correctly
       if (apiError instanceof APIError) {
@@ -191,6 +291,11 @@ describe("Custom Error Classes", () => {
       if (timeoutError instanceof TimeoutError) {
         expect(timeoutError.name).toBe("TimeoutError");
       }
+
+      if (streamError instanceof StreamError) {
+        expect(streamError.code).toBe(StreamErrorCode.NETWORK_ERROR);
+        expect(streamError.retryable).toBe(true);
+      }
     });
 
     it("should support error catching with type checking", () => {
@@ -199,6 +304,7 @@ describe("Custom Error Classes", () => {
         new ValidationError("Invalid", []),
         new NetworkError("Failed"),
         new TimeoutError("Timeout"),
+        new StreamError("Stream failed", StreamErrorCode.TIMEOUT, false),
       ];
 
       errors.forEach((error) => {
@@ -213,6 +319,9 @@ describe("Custom Error Classes", () => {
           expect(error.name).toBe("NetworkError");
         } else if (error instanceof TimeoutError) {
           expect(error.name).toBe("TimeoutError");
+        } else if (error instanceof StreamError) {
+          expect(error.code).toBeDefined();
+          expect(typeof error.retryable).toBe("boolean");
         }
       });
     });
