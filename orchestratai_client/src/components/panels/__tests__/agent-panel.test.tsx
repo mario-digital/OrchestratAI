@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { AgentPanel } from "../agent-panel";
 import { ChatProvider } from "@/components/providers/chat-provider";
 
@@ -45,10 +45,11 @@ describe("AgentPanel - Loading State Integration", () => {
     expect(screen.getAllByLabelText("Loading agent card")).toHaveLength(4);
 
     // Fast-forward time to trigger loading completion (100ms)
-    vi.advanceTimersByTime(100);
-
-    // Wait for state update with runOnlyPendingTimers
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+      await vi.runOnlyPendingTimersAsync();
+    });
+    vi.useRealTimers();
 
     // Wait for state update
     await waitFor(
@@ -75,8 +76,11 @@ describe("AgentPanel - Loading State Integration", () => {
     const skeletonContainer = container.querySelector(".flex.flex-col.gap-3");
 
     // Fast-forward to show real content
-    vi.advanceTimersByTime(600);
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+      await vi.runOnlyPendingTimersAsync();
+    });
+    vi.useRealTimers();
 
     await waitFor(
       () => {
@@ -97,8 +101,11 @@ describe("AgentPanel - Loading State Integration", () => {
   it("should render all 4 agent cards after loading", async () => {
     renderAgentPanel();
 
-    vi.advanceTimersByTime(600);
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+      await vi.runOnlyPendingTimersAsync();
+    });
+    vi.useRealTimers();
 
     await waitFor(
       () => {
@@ -113,8 +120,11 @@ describe("AgentPanel - Loading State Integration", () => {
   it("should show correct agent order", async () => {
     renderAgentPanel();
 
-    vi.advanceTimersByTime(600);
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+      await vi.runOnlyPendingTimersAsync();
+    });
+    vi.useRealTimers();
 
     await waitFor(
       () => {
@@ -142,8 +152,11 @@ describe("AgentPanel - Loading State Integration", () => {
   it("should have panel header visible after loading", async () => {
     renderAgentPanel();
 
-    vi.advanceTimersByTime(600);
-    await vi.runOnlyPendingTimersAsync();
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+      await vi.runOnlyPendingTimersAsync();
+    });
+    vi.useRealTimers();
 
     await waitFor(
       () => {

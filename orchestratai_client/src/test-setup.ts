@@ -39,8 +39,8 @@ if (typeof window !== "undefined") {
 
 // Mock framer-motion to avoid animation issues in tests
 
-vi.mock("framer-motion", () => ({
-  motion: new Proxy(
+vi.mock("framer-motion", () => {
+  const passthrough = new Proxy(
     {},
     {
       get: (_target, prop: string) => {
@@ -50,10 +50,27 @@ vi.mock("framer-motion", () => ({
         }: {
           children?: ReactNode;
           [key: string]: unknown;
-        }) => createElement(prop, props, children);
+        }) => {
+          const {
+            initial: _initial,
+            animate: _animate,
+            exit: _exit,
+            variants: _variants,
+            transition: _transition,
+            whileHover: _whileHover,
+            whileTap: _whileTap,
+            layout: _layout,
+            ...rest
+          } = props;
+          return createElement(prop, rest, children);
+        };
       },
     }
-  ),
-  AnimatePresence: ({ children }: { children?: ReactNode }) =>
-    createElement(Fragment, null, children),
-}));
+  );
+
+  return {
+    motion: passthrough,
+    AnimatePresence: ({ children }: { children?: ReactNode }) =>
+      createElement(Fragment, null, children),
+  };
+});
