@@ -4,7 +4,7 @@ import os
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 # Get database URL from environment
 DATABASE_URL = os.getenv(
@@ -22,8 +22,12 @@ engine = create_async_engine(
 # Create session maker
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# Base class for models
-Base = declarative_base()
+
+# Base class for models using SQLAlchemy 2.0 style
+class Base(DeclarativeBase):
+    """Base class for all database models."""
+
+    pass
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:

@@ -1,5 +1,6 @@
 """Document repository for database operations."""
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import delete, select
@@ -20,7 +21,7 @@ class DocumentRepository:
         *,
         source: str,
         content: str,
-        doc_metadata: dict,
+        doc_metadata: dict[str, Any],
         page: int | None = None,
         chunk_index: int | None = None,
         collection_name: str = "knowledge_base_v1",
