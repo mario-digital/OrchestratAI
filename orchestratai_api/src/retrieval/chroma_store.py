@@ -4,6 +4,7 @@ import anyio
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
+from pydantic import SecretStr
 
 from src.llm.secrets import resolve_secret
 from src.retrieval.vector_store import VectorStore
@@ -26,7 +27,9 @@ class ChromaVectorStore(VectorStore):
         """
         # Resolve OpenAI API key using 1Password integration (respects USE_ONEPASSWORD)
         api_key = resolve_secret("OPENAI_API_KEY")
-        self._embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=api_key)
+        self._embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-large", api_key=SecretStr(api_key)
+        )
         self._persist_directory = persist_directory
         self._collection_name = collection_name
         self._client: Chroma | None = None
