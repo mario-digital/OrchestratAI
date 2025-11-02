@@ -6,6 +6,8 @@ import {
   useState,
   createContext,
   useContext,
+  useMemo,
+  useCallback,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { staggerContainer, fadeSlideUp } from "@/lib/animations";
@@ -52,26 +54,34 @@ export function ThreePanelLayout({
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
 
-  const toggleRightPanel = (): void => {
+  const toggleRightPanel = useCallback((): void => {
     setIsRightPanelCollapsed((prev) => !prev);
-  };
+  }, []);
 
-  const toggleLeftPanel = (): void => {
+  const toggleLeftPanel = useCallback((): void => {
     setIsLeftPanelCollapsed((prev) => !prev);
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      isRightPanelCollapsed,
+      toggleRightPanel,
+      isLeftPanelCollapsed,
+      toggleLeftPanel,
+    }),
+    [
+      isRightPanelCollapsed,
+      isLeftPanelCollapsed,
+      toggleRightPanel,
+      toggleLeftPanel,
+    ]
+  );
 
   return (
-    <PanelCollapseContext.Provider
-      value={{
-        isRightPanelCollapsed,
-        toggleRightPanel,
-        isLeftPanelCollapsed,
-        toggleLeftPanel,
-      }}
-    >
+    <PanelCollapseContext.Provider value={contextValue}>
       <div className="relative flex-1 overflow-hidden">
         <motion.div
-          className="h-full grid grid-cols-three-panel-chat grid-rows-1 transition-all duration-300"
+          className="h-full grid grid-cols-three-panel-chat grid-rows-1"
           variants={staggerContainer}
           initial="initial"
           animate="animate"

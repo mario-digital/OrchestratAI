@@ -48,12 +48,12 @@ export function TypingIndicator({
 
       {/* Animated Dots with Framer Motion */}
       <div className="flex gap-1" aria-hidden="true">
-        {[0, 1, 2].map((i) => {
+        {["dot-1", "dot-2", "dot-3"].map((dotId, i) => {
           const delayMs = Math.round(i * 150);
 
           return (
             <motion.span
-              key={i}
+              key={dotId}
               data-testid="typing-dot"
               data-delay={`${delayMs}ms`}
               className="inline-block h-2 w-2 rounded-full bg-current"
