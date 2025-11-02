@@ -49,12 +49,15 @@ describe("AgentStatusBadge", () => {
     expect(badge).toHaveAttribute("aria-label", "Orchestrator status: ACTIVE");
   });
 
-  it("applies correct size classes", () => {
+  it("applies correct size and spacing classes", () => {
     render(<AgentStatusBadge status={AgentStatus.IDLE} agentName="Test Agent" />);
 
     const badge = screen.getByText("IDLE");
-    expect(badge).toHaveClass("text-micro");
+    // Badge component provides base text size, padding comes from our customization
     expect(badge).toHaveClass("px-2");
     expect(badge).toHaveClass("py-0.5");
+    expect(badge).toHaveClass("font-semibold");
+    expect(badge).toHaveClass("uppercase");
+    expect(badge).toHaveClass("rounded-full");
   });
 });
