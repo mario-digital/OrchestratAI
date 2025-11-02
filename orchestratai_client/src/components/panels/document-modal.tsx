@@ -94,7 +94,7 @@ export function DocumentModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-modal overflow-y-auto text-text-primary"
+        className="max-w-modal overflow-y-auto text-text-primary bg-bg-tertiary"
         style={{ maxHeight: "var(--size-modal-max-height)" }}
       >
         <DialogHeader>
