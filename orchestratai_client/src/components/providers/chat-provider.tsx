@@ -16,6 +16,7 @@ import {
   useReducer,
   useEffect,
   useRef,
+  useCallback,
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ import {
 } from "@/lib/enums";
 import { getUserFriendlyMessage } from "@/lib/utils/error-messages";
 import type { RetrievalLog } from "@/lib/types";
+import { useStreaming } from "@/hooks/use-streaming";
 
 // =============================================================================
 // Types
@@ -76,6 +78,8 @@ export interface ChatState {
   failedMessage: string | null;
   agents: Record<AgentId, AgentState>;
   retrievalLogs: RetrievalLog[];
+  isStreaming: boolean;
+  streamingMessageId: string | null;
 }
 
 /**
@@ -104,13 +108,30 @@ export type ChatAction =
     }
   | { type: "SET_ALL_AGENT_STATUS"; payload: Record<AgentId, AgentStatus> }
   | { type: "ADD_LOG_ENTRIES"; payload: RetrievalLog[] }
-  | { type: "CLEAR_LOGS" };
+  | { type: "CLEAR_LOGS" }
+  | {
+      type: "START_STREAMING";
+      payload: { messageId: string; placeholderMessage: Message };
+    }
+  | {
+      type: "UPDATE_STREAMING_MESSAGE";
+      payload: { messageId: string; content: string };
+    }
+  | {
+      type: "END_STREAMING";
+      payload: {
+        messageId: string;
+        finalMessage: Message;
+      };
+    }
+  | { type: "STREAMING_ERROR"; payload: { messageId: string; error: string } };
 
 /**
  * ChatContextValue - Complete context value with state and methods
  */
 export interface ChatContextValue extends ChatState {
   sendMessage: (message: string) => Promise<void>;
+  sendStreamingMessage: (message: string) => Promise<void>;
   retryMessage: () => Promise<void>;
   clearMessages: () => void;
   clearError: () => void;
@@ -322,6 +343,48 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         retrievalLogs: [],
       };
 
+    case "START_STREAMING":
+      return {
+        ...state,
+        isStreaming: true,
+        streamingMessageId: action.payload.messageId,
+        messages: [...state.messages, action.payload.placeholderMessage],
+      };
+
+    case "UPDATE_STREAMING_MESSAGE":
+      return {
+        ...state,
+        messages: state.messages.map((msg) =>
+          msg.id === action.payload.messageId
+            ? { ...msg, content: action.payload.content }
+            : msg
+        ),
+      };
+
+    case "END_STREAMING":
+      return {
+        ...state,
+        isStreaming: false,
+        streamingMessageId: null,
+        messages: state.messages.map((msg) =>
+          msg.id === action.payload.messageId
+            ? action.payload.finalMessage
+            : msg
+        ),
+      };
+
+    case "STREAMING_ERROR":
+      return {
+        ...state,
+        isStreaming: false,
+        streamingMessageId: null,
+        error: new Error(action.payload.error),
+        // Remove the placeholder message on error
+        messages: state.messages.filter(
+          (msg) => msg.id !== action.payload.messageId
+        ),
+      };
+
     default:
       return state;
   }
@@ -382,10 +445,20 @@ export function ChatProvider({
     failedMessage: null,
     agents: INITIAL_AGENTS,
     retrievalLogs: [],
+    isStreaming: false,
+    streamingMessageId: null,
   });
 
   // Ref to track orchestrator animation timeout for cleanup
   const orchestratorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Ref to store the latest sendMessage function
+  const sendMessageRef = useRef<((message: string) => Promise<void>) | null>(
+    null
+  );
+
+  // Hook for streaming functionality
+  const { sendStreamingMessage: sendStream } = useStreaming();
 
   // Initialize sessionId from localStorage or generate new
   useEffect(() => {
@@ -558,13 +631,16 @@ export function ChatProvider({
     }
   };
 
+  // Update ref to latest sendMessage
+  sendMessageRef.current = sendMessage;
+
   /**
    * retryMessage - Retry sending the last failed message
    *
    * Retrieves the failed message from state and resends it.
    * Clears error and failed message state on successful send.
    */
-  const retryMessage = async (): Promise<void> => {
+  const retryMessage = useCallback(async (): Promise<void> => {
     if (!state.failedMessage) {
       return;
     }
@@ -575,9 +651,9 @@ export function ChatProvider({
     dispatch({ type: "SET_ERROR", payload: null });
     dispatch({ type: "SET_FAILED_MESSAGE", payload: null });
 
-    // Resend the message
-    await sendMessage(messageToRetry);
-  };
+    // Resend the message using ref to avoid circular dependency
+    await sendMessageRef.current?.(messageToRetry);
+  }, [state.failedMessage]);
 
   /**
    * clearMessages - Reset conversation state
@@ -639,9 +715,206 @@ export function ChatProvider({
     dispatch({ type: "CLEAR_LOGS" });
   };
 
+  /**
+   * sendStreamingMessage - Send message with streaming response
+   *
+   * Uses Server-Sent Events (SSE) to stream response in real-time.
+   * Provides typewriter effect with progressive message updates.
+   *
+   * @param message - User message text
+   */
+  const sendStreamingMessage = useCallback(
+    async (message: string): Promise<void> => {
+      // Prevent concurrent streams
+      if (state.isStreaming) {
+        toast.error("Please wait for current response to complete");
+        return;
+      }
+
+      if (!state.sessionId) {
+        const error = new Error("Session ID not initialized");
+        dispatch({ type: "SET_ERROR", payload: error });
+        return;
+      }
+
+      // Generate unique IDs for messages
+      const userMessageId = crypto.randomUUID();
+      const assistantMessageId = crypto.randomUUID();
+
+      // Create user message (optimistic update)
+      const userMessage: Message = {
+        id: userMessageId,
+        role: MessageRole.USER,
+        content: message,
+        timestamp: new Date(),
+      };
+
+      // Create placeholder assistant message
+      const placeholderMessage: Message = {
+        id: assistantMessageId,
+        role: MessageRole.ASSISTANT,
+        content: "",
+        timestamp: new Date(),
+      };
+
+      // Add user message to state
+      dispatch({ type: "ADD_MESSAGE", payload: userMessage });
+
+      // Set typing indicator (orchestrator starts routing)
+      dispatch({ type: "SET_TYPING_AGENT", payload: AgentId.ORCHESTRATOR });
+
+      // Orchestrator routing animation
+      if (orchestratorTimeoutRef.current) {
+        clearTimeout(orchestratorTimeoutRef.current);
+      }
+
+      dispatch({
+        type: "UPDATE_AGENT_STATUS",
+        payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.ROUTING },
+      });
+
+      orchestratorTimeoutRef.current = setTimeout(() => {
+        dispatch({
+          type: "UPDATE_AGENT_STATUS",
+          payload: { agent: AgentId.ORCHESTRATOR, status: AgentStatus.IDLE },
+        });
+        orchestratorTimeoutRef.current = null;
+      }, ORCHESTRATOR_ROUTING_ANIMATION_MS);
+
+      // Start streaming
+      dispatch({
+        type: "START_STREAMING",
+        payload: {
+          messageId: assistantMessageId,
+          placeholderMessage,
+        },
+      });
+
+      try {
+        await sendStream(message, state.sessionId, {
+          // Update message content progressively
+          onChunk: (accumulatedText) => {
+            dispatch({
+              type: "UPDATE_STREAMING_MESSAGE",
+              payload: {
+                messageId: assistantMessageId,
+                content: accumulatedText,
+              },
+            });
+          },
+
+          // Update agent status in real-time
+          onAgentUpdate: (agent, status) => {
+            dispatch({
+              type: "UPDATE_AGENT_STATUS",
+              payload: { agent, status },
+            });
+          },
+
+          // Add log entries in real-time
+          onLog: (log) => {
+            dispatch({ type: "ADD_LOG_ENTRIES", payload: [log] });
+          },
+
+          // Finalize message on completion
+          onComplete: (metadata) => {
+            // Get the current message content from state
+            const currentMessage = state.messages.find(
+              (m) => m.id === assistantMessageId
+            );
+            const finalContent = currentMessage?.content || "";
+
+            // Extract agent and confidence from metadata (extended type in backend)
+            const metadataAny = metadata as typeof metadata & {
+              agent?: AgentId;
+              confidence?: number;
+            };
+
+            const finalMessage: Message = {
+              id: assistantMessageId,
+              role: MessageRole.ASSISTANT,
+              content: finalContent,
+              agent: metadataAny.agent,
+              confidence: metadataAny.confidence,
+              timestamp: new Date(),
+            };
+
+            dispatch({
+              type: "END_STREAMING",
+              payload: {
+                messageId: assistantMessageId,
+                finalMessage,
+              },
+            });
+
+            // Update agent metrics
+            if (metadataAny.agent) {
+              dispatch({
+                type: "INCREMENT_AGENT_METRICS",
+                payload: {
+                  agent: metadataAny.agent,
+                  metrics: {
+                    tokens: metadata.tokensUsed,
+                    cost: metadata.cost,
+                    latency: metadata.latency,
+                  },
+                  cacheStatus: metadata.cache_status,
+                },
+              });
+            }
+          },
+
+          // Handle errors (will be enhanced in Story 4.6)
+          onError: (error) => {
+            dispatch({
+              type: "STREAMING_ERROR",
+              payload: {
+                messageId: assistantMessageId,
+                error: error.message,
+              },
+            });
+
+            // Remove optimistic user message on error
+            dispatch({ type: "REMOVE_MESSAGE", payload: userMessageId });
+            dispatch({ type: "SET_FAILED_MESSAGE", payload: message });
+
+            // Show user-friendly error toast with retry button
+            const errorMessage = getUserFriendlyMessage(error);
+            toast.error(errorMessage, {
+              action: {
+                label: "Retry",
+                onClick: () => {
+                  // Retry by calling sendStreamingMessage again
+                  void sendStreamingMessage(message);
+                },
+              },
+            });
+          },
+        });
+      } catch (error) {
+        // Handle any unexpected errors
+        dispatch({
+          type: "STREAMING_ERROR",
+          payload: {
+            messageId: assistantMessageId,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Unknown streaming error",
+          },
+        });
+      } finally {
+        // Clear typing indicator
+        dispatch({ type: "SET_TYPING_AGENT", payload: null });
+      }
+    },
+    [state.isStreaming, state.sessionId, state.messages, sendStream]
+  );
+
   const value: ChatContextValue = {
     ...state,
     sendMessage,
+    sendStreamingMessage,
     retryMessage,
     clearMessages,
     clearError,
