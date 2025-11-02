@@ -53,8 +53,8 @@ describe("AgentStatusBadge", () => {
     render(<AgentStatusBadge status={AgentStatus.IDLE} agentName="Test Agent" />);
 
     const badge = screen.getByText("IDLE");
-    expect(badge).toHaveClass("text-[10px]");
-    expect(badge).toHaveClass("px-2.5");
+    expect(badge).toHaveClass("text-micro");
+    expect(badge).toHaveClass("px-2");
     expect(badge).toHaveClass("py-0.5");
   });
 });
