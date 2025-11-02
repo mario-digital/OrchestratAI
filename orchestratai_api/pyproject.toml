@@ -15,6 +15,22 @@ dependencies = [
     # LLM Orchestration
     "langchain-core>=0.1.0",
     "langchain-openai>=0.0.5",
+    "langchain-community>=0.0.20",
+    "langchain-text-splitters>=0.0.1",
+    # Vector DB & Retrieval
+    "chromadb>=0.4.22",
+    "langchain-chroma>=0.1.0",
+    "sentence-transformers>=2.3.0",
+    # Document Loaders
+    "pypdf>=3.17.0",
+    "unstructured[md]>=0.10.0",
+    # Database
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.0",
+    "greenlet>=3.0.0",
+    # Async support
+    "anyio>=4.0.0",
     # Utilities
     "tiktoken>=0.5.0",
     "tenacity>=8.2.0",
@@ -68,10 +84,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-# asyncio_mode = "auto"
-# NOTE: Temporarily commented out for Story 2.1 - pytest-asyncio is listed in dev dependencies
-# but not yet required since current tests are synchronous. Uncomment after running 'uv sync'
-# when implementing async endpoint tests in Story 2.2+
+asyncio_mode = "auto"
 addopts = [
     "--strict-markers",
     "--strict-config",
