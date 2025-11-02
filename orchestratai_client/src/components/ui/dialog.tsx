@@ -37,8 +37,10 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("fixed inset-0 z-50", className)}
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+      className={cn(
+        "fixed inset-0 z-modal-backdrop bg-bg-primary/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        className
+      )}
       {...props}
     />
   );
@@ -53,20 +55,20 @@ function DialogContent({
   showCloseButton?: boolean;
 }): JSX.Element {
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal
+      data-slot="dialog-portal"
+      container={typeof document !== "undefined" ? document.body : undefined}
+    >
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background fixed z-50 grid w-full gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          "bg-bg-primary fixed left-1/2 top-1/2 z-modal grid w-full max-w-modal-max-width mx-4 -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-border-default p-6 shadow-lg duration-normal sm:max-w-lg",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-1/2 data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-1/2",
           className
         )}
-        style={{
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          maxWidth: "calc(100% - 2rem)",
-        }}
         {...props}
       >
         {children}

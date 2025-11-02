@@ -22,7 +22,7 @@
 "use client"; // Client-only hook (uses browser EventSource API)
 
 import { useCallback, useRef, useState, useEffect } from "react";
-import type { AgentId, AgentStatus } from "@/lib/enums";
+import { AgentId, AgentStatus } from "@/lib/enums";
 import type { RetrievalLog, ChatMetrics } from "@/lib/types";
 import { StreamError, StreamErrorCode } from "@/lib/errors";
 
@@ -96,6 +96,27 @@ const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000; // 1 second
 const TIMEOUT_MS = 30000; // 30 seconds
 const MAX_PARSE_ERRORS = 5;
+
+const VALID_AGENT_IDS = new Set<AgentId>(Object.values(AgentId));
+const VALID_AGENT_STATUSES = new Set<AgentStatus>(Object.values(AgentStatus));
+
+function normalizeAgentId(agent: unknown): AgentId | null {
+  if (typeof agent !== "string") {
+    return null;
+  }
+
+  const normalized = agent.trim().toLowerCase() as AgentId;
+  return VALID_AGENT_IDS.has(normalized) ? normalized : null;
+}
+
+function normalizeAgentStatus(status: unknown): AgentStatus | null {
+  if (typeof status !== "string") {
+    return null;
+  }
+
+  const normalized = status.trim().toLowerCase() as AgentStatus;
+  return VALID_AGENT_STATUSES.has(normalized) ? normalized : null;
+}
 
 export function useStreaming(): UseStreamingReturn {
   const [isStreaming, setIsStreaming] = useState(false);
@@ -321,12 +342,29 @@ export function useStreaming(): UseStreamingReturn {
           resetTimeout(callbacks); // Reset timeout on each event
 
           try {
-            const data = JSON.parse(e.data as string) as {
-              agent: AgentId;
-              status: AgentStatus;
+            const rawData = JSON.parse(e.data as string) as {
+              agent?: unknown;
+              status?: unknown;
             };
+
+            const agent = normalizeAgentId(rawData.agent);
+            const status = normalizeAgentStatus(rawData.status);
+
+            if (!agent || !status) {
+              console.error("Invalid agent_status payload:", rawData);
+              consecutiveParseErrorsRef.current++;
+
+              if (consecutiveParseErrorsRef.current >= MAX_PARSE_ERRORS) {
+                console.error(
+                  "Too many invalid agent_status events, closing stream"
+                );
+                cleanup();
+              }
+              return;
+            }
+
             consecutiveParseErrorsRef.current = 0; // Reset on success
-            callbacks.onAgentUpdate(data.agent, data.status);
+            callbacks.onAgentUpdate(agent, status);
           } catch (error) {
             console.error(
               "Failed to parse agent_status:",

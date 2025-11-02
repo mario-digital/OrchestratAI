@@ -46,7 +46,7 @@ function AgentIcon({ agentId }: { agentId: AgentId }): JSX.Element {
 
   return (
     <svg
-      className={`w-4 h-4 ${config.className}`}
+      className={`size-4 ${config.className}`}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -133,7 +133,7 @@ export const AgentCard = memo(
           <div className="flex items-center gap-2">
             <AgentIcon agentId={agentId} />
             <h3
-              className={`font-semibold uppercase text-xs tracking-wide ${getNameColorClass()}`}
+              className={`font-semibold uppercase text-small tracking-wide ${getNameColorClass()}`}
             >
               {name}
             </h3>
@@ -147,7 +147,7 @@ export const AgentCard = memo(
         <CardContent className="space-y-2">
           {/* Model name */}
           <p
-            className={`text-xs ${
+            className={`text-small ${
               isActive ? "text-agent-active-label" : "text-text-secondary"
             }`}
           >
@@ -159,29 +159,35 @@ export const AgentCard = memo(
             <>
               {strategy && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-agent-active-label">
+                  <span className="text-small text-agent-active-label">
                     Strategy:
                   </span>
-                  <span className="text-xs text-agent-active-value">
+                  <span className="text-small text-agent-active-value">
                     {strategy}
                   </span>
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-agent-active-label">Cache:</span>
-                <span className="text-xs text-agent-active-value">
+                <span className="text-small text-agent-active-label">
+                  Cache:
+                </span>
+                <span className="text-small text-agent-active-value">
                   Initialized
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-agent-active-label">Tokens:</span>
-                <span className="text-xs text-agent-active-value">
+                <span className="text-small text-agent-active-label">
+                  Tokens:
+                </span>
+                <span className="text-small text-agent-active-value">
                   {metrics.tokens.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-agent-active-label">Cost:</span>
-                <span className="text-xs text-agent-active-cost">
+                <span className="text-small text-agent-active-label">
+                  Cost:
+                </span>
+                <span className="text-small text-agent-active-cost">
                   ${metrics.cost.toFixed(4)}
                 </span>
               </div>
@@ -189,8 +195,10 @@ export const AgentCard = memo(
           ) : (
             strategy && (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-text-tertiary">Strategy:</span>
-                <span className="text-xs text-text-secondary">{strategy}</span>
+                <span className="text-small text-text-tertiary">Strategy:</span>
+                <span className="text-small text-text-secondary">
+                  {strategy}
+                </span>
               </div>
             )
           )}

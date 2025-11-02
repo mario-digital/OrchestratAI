@@ -259,6 +259,38 @@ describe("useStreaming", () => {
       );
     });
 
+    it("normalizes agent_status payload casing", async () => {
+      const { result } = renderHook(() => useStreaming());
+      const onAgentUpdate = vi.fn();
+      const callbacks = {
+        onChunk: vi.fn(),
+        onAgentUpdate,
+        onLog: vi.fn(),
+        onComplete: vi.fn(),
+      };
+
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
+      await waitFor(() => expect(mockEventSource).toBeDefined());
+
+      act(() => {
+        mockEventSource.simulateEvent("agent_status", {
+          agent: "ORCHESTRATOR",
+          status: "ACTIVE",
+        });
+      });
+
+      expect(onAgentUpdate).toHaveBeenCalledWith(
+        AgentId.ORCHESTRATOR,
+        AgentStatus.ACTIVE
+      );
+    });
+
     it("should handle retrieval_log events", async () => {
       const mockLog: RetrievalLog = {
         id: "550e8400-e29b-41d4-a716-446655440000",

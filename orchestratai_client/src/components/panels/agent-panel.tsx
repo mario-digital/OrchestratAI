@@ -36,7 +36,7 @@ export function AgentPanel(): JSX.Element {
       <div className="p-4 border-b border-border-default flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg
-            className="w-4 h-4 text-agent-card-text-cyan"
+            className="size-4 text-agent-card-text-cyan"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -48,7 +48,7 @@ export function AgentPanel(): JSX.Element {
               d="M13 10V3L4 14h7v7l9-11h-7z"
             />
           </svg>
-          <h2 className="text-sm font-semibold text-agent-card-text-cyan uppercase tracking-wide">
+          <h2 className="text-small font-semibold text-agent-card-text-cyan uppercase tracking-wide">
             Agent Pipeline
           </h2>
         </div>
@@ -63,7 +63,7 @@ export function AgentPanel(): JSX.Element {
           }
         >
           <svg
-            className="w-4 h-4 transition-transform duration-200"
+            className="size-4 transition-transform duration-normal"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -88,6 +88,13 @@ export function AgentPanel(): JSX.Element {
         <div className="flex flex-col gap-3">
           {agentOrder.map(({ id, name }) => {
             const agentState = agents[id];
+
+            // Safety check: ensure agent state exists
+            if (!agentState) {
+              console.error(`Agent state not found for ${id}`, { agents });
+              return null;
+            }
+
             return (
               <AgentCard
                 key={id}

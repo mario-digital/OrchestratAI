@@ -12,9 +12,7 @@
 import { useChatContext } from "@/components/providers/chat-provider";
 import { MessageList } from "./message-list";
 import { InputArea } from "./input-area";
-import { TypingIndicator } from "./typing-indicator";
 import { Badge } from "@/components/ui/badge";
-import { AgentId } from "@/lib/enums";
 import type { JSX } from "react";
 
 /**
@@ -23,7 +21,7 @@ import type { JSX } from "react";
  * Features:
  * - Message display with auto-scroll
  * - User input with character limit
- * - Loading state with typing indicator
+ * - Loading state with typing indicator inside message bubble
  * - Error display with retry option
  * - Real-time API integration
  *
@@ -35,30 +33,12 @@ import type { JSX } from "react";
  * </ChatProvider>
  * ```
  */
-/**
- * Get human-readable agent name from AgentId
- */
-function getAgentName(agentId: AgentId): string {
-  switch (agentId) {
-    case AgentId.ORCHESTRATOR:
-      return "Orchestrator";
-    case AgentId.BILLING:
-      return "Billing Agent";
-    case AgentId.TECHNICAL:
-      return "Technical Agent";
-    case AgentId.POLICY:
-      return "Policy Agent";
-    default:
-      return "AI Assistant";
-  }
-}
-
 export function ChatInterface(): JSX.Element {
   const {
     messages,
     isProcessing,
     isStreaming,
-    typingAgent,
+    streamingMessageId,
     useFallbackMode,
     sendStreamingMessage,
   } = useChatContext();
@@ -69,20 +49,14 @@ export function ChatInterface(): JSX.Element {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Message List */}
-      <div className="flex-1 overflow-hidden">
-        <MessageList messages={messages} isProcessing={isProcessing} />
+      {/* Message List with integrated typing indicator */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <MessageList
+          messages={messages}
+          isProcessing={isProcessing}
+          streamingMessageId={streamingMessageId}
+        />
       </div>
-
-      {/* Typing Indicator */}
-      {typingAgent && (
-        <div className="px-4 py-2 border-t border-input-border">
-          <TypingIndicator
-            agentName={getAgentName(typingAgent)}
-            agentId={typingAgent}
-          />
-        </div>
-      )}
 
       {/* Fallback Mode Indicator */}
       {useFallbackMode && (

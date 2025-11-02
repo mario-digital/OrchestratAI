@@ -35,6 +35,8 @@ export interface MessageListProps {
   messages: MessageListMessage[];
   /** Whether an assistant is currently processing */
   isProcessing?: boolean;
+  /** ID of message currently being streamed */
+  streamingMessageId?: string | null;
 }
 
 /**
@@ -50,35 +52,32 @@ export interface MessageListProps {
 export function MessageList({
   messages,
   isProcessing: _isProcessing = false,
+  streamingMessageId,
 }: MessageListProps): JSX.Element {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * Check if user is near bottom of scroll area
-   * @returns true if within 100px of bottom
-   */
-  const isNearBottom = (): boolean => {
-    const scrollArea = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]"
-    );
-    if (!scrollArea) return true;
-
-    const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-
-    return distanceFromBottom < 100; // Within 100px of bottom
-  };
 
   /**
    * Auto-scroll to bottom when messages change
-   * Only scrolls if user is near bottom (prevents interrupting manual scroll)
    */
   useEffect(() => {
-    if (bottomRef.current && isNearBottom()) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
-  }, [messages.length]);
+    const viewport = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]"
+    );
+    if (!viewport) return;
+
+    // Always auto-scroll to bottom for new messages
+    // Use setTimeout to ensure content is fully rendered (including animations)
+    const scrollTimeout = setTimeout(() => {
+      if (viewport) {
+        viewport.scrollTo({
+          top: viewport.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(scrollTimeout);
+  }, [messages]);
 
   return (
     <ScrollArea
@@ -103,13 +102,13 @@ export function MessageList({
                 agent={message.agent}
                 confidence={message.confidence}
                 timestamp={message.timestamp}
+                isTyping={
+                  message.id === streamingMessageId && message.content === ""
+                }
               />
             ))}
           </AnimatePresence>
         )}
-
-        {/* Invisible anchor for auto-scroll */}
-        <div ref={bottomRef} aria-hidden="true" />
       </div>
     </ScrollArea>
   );

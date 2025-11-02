@@ -91,12 +91,13 @@ const eslintConfig = [
       "react/react-in-jsx-scope": "off",
 
       // Tailwind CSS design system enforcement
+      // Allow data-[...] patterns (Radix UI state selectors) but block other arbitrary values
       "no-restricted-syntax": [
         "error",
         {
           selector:
-            "JSXAttribute[name.name='className'] Literal[value=/\\[.*\\]/]",
-          message: "Arbitrary values are not allowed. Use design tokens only.",
+            "JSXAttribute[name.name='className'] Literal[value=/\\[(?!state|slot|orientation|disabled|checked|pressed|selected|highlighted|side|align|swipe|motion|placeholder).*\\]/]",
+          message: "Arbitrary values are not allowed. Use design tokens only. Exception: data-[...] attribute selectors for Radix UI are permitted.",
         },
       ],
 
