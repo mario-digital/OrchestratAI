@@ -19,6 +19,7 @@ import {
   LogStatus,
 } from "@/lib/enums";
 import type { RetrievalLog } from "@/lib/types";
+import { StreamError, StreamErrorCode } from "@/lib/errors";
 
 // Import mocked modules
 import { sendMessage as sendMessageAPI } from "@/lib/api/chat";
@@ -35,6 +36,7 @@ describe("ChatProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    sessionStorage.clear(); // Clear fallback mode preference
     vi.clearAllTimers();
 
     // Setup default mock for useStreaming (can be overridden in specific tests)
@@ -732,7 +734,7 @@ describe("ChatProvider", () => {
       expect(mockSendStream).toHaveBeenCalledTimes(1);
     });
 
-    it("handles streaming errors", async () => {
+    it("handles streaming errors and falls back to non-streaming", async () => {
       const { result } = renderHook(() => useChatContext(), {
         wrapper: ChatProvider,
       });
@@ -747,9 +749,14 @@ describe("ChatProvider", () => {
 
       const callbacks = mockSendStream.mock.calls[0]?.[2];
 
-      const mockError = new Error("Stream connection failed");
+      // Use StreamError with retryable: false to trigger fallback
+      const mockError = new StreamError(
+        "Stream connection failed",
+        StreamErrorCode.TIMEOUT,
+        false // Not retryable - will trigger fallback
+      );
 
-      // Simulate error
+      // Simulate error - this should trigger fallback mode
       act(() => {
         callbacks.onError(mockError);
       });
@@ -757,10 +764,10 @@ describe("ChatProvider", () => {
       await waitFor(() => {
         expect(result.current.isStreaming).toBe(false);
         expect(result.current.streamingMessageId).toBeNull();
-        expect(result.current.error).toBeDefined();
-        // User message should be removed on error
-        expect(result.current.messages).toHaveLength(0);
-        expect(result.current.failedMessage).toBe("test");
+        // Should have enabled fallback mode
+        expect(result.current.useFallbackMode).toBe(true);
+        // Should have messages (fallback to non-streaming sends them)
+        expect(result.current.messages.length).toBeGreaterThan(0);
       });
     });
 
