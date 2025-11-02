@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, ReactElement, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Collapsible,
   CollapsibleContent,
@@ -9,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { springPhysics } from "@/lib/animations";
 
 interface CollapsiblePanelProps {
   children: ReactNode;
@@ -61,8 +63,19 @@ export function CollapsiblePanel({
           </Button>
         </CollapsibleTrigger>
 
-        <CollapsibleContent className="transition-all duration-300 ease-in-out">
-          {children}
+        <CollapsibleContent className="overflow-hidden">
+          <AnimatePresence mode="wait">
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={springPhysics.natural}
+              >
+                {children}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CollapsibleContent>
       </div>
     </Collapsible>

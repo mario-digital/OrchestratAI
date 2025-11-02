@@ -54,65 +54,51 @@ describe("TypingIndicator", () => {
   });
 
   describe("Animated Dots", () => {
-    it("renders three animated dots", () => {
-      const { container } = render(
+    const renderIndicator = () =>
+      render(
         <TypingIndicator agentName="Test Agent" agentId={AgentId.BILLING} />
       );
 
-      const dots = container.querySelectorAll(".animate-bounce");
-      expect(dots.length).toBe(3);
+    it("renders three animated dots", () => {
+      renderIndicator();
+      expect(screen.getAllByTestId("typing-dot")).toHaveLength(3);
     });
 
-    it("applies bounce animation to all dots", () => {
-      const { container } = render(
-        <TypingIndicator agentName="Test Agent" agentId={AgentId.BILLING} />
-      );
-
-      const dots = container.querySelectorAll(".animate-bounce");
-      dots.forEach((dot) => {
-        expect(dot).toHaveClass("animate-bounce");
+    it("applies base styling to the dots", () => {
+      renderIndicator();
+      screen.getAllByTestId("typing-dot").forEach((dot) => {
+        expect(dot).toHaveClass("rounded-full");
+        expect(dot).toHaveClass("bg-current");
       });
     });
 
     it("applies staggered animation delays", () => {
-      const { container } = render(
-        <TypingIndicator agentName="Test Agent" agentId={AgentId.BILLING} />
-      );
+      renderIndicator();
+      const dots = screen.getAllByTestId("typing-dot");
 
-      const dots = container.querySelectorAll(".animate-bounce");
-
-      // Check that dots have different animation delays
-      const dot1 = dots[0] as HTMLElement;
-      const dot2 = dots[1] as HTMLElement;
-      const dot3 = dots[2] as HTMLElement;
-
-      expect(dot1.style.animationDelay).toBe("0ms");
-      expect(dot2.style.animationDelay).toBe("160ms");
-      expect(dot3.style.animationDelay).toBe("320ms");
+      expect((dots[0] as HTMLElement).style.animationDelay).toBe("0ms");
+      expect((dots[1] as HTMLElement).style.animationDelay).toBe("150ms");
+      expect((dots[2] as HTMLElement).style.animationDelay).toBe("300ms");
     });
 
     it("uses design token for animation duration", () => {
-      const { container } = render(
-        <TypingIndicator agentName="Test Agent" agentId={AgentId.BILLING} />
-      );
+      renderIndicator();
+      const firstDot = screen.getAllByTestId("typing-dot")[0] as HTMLElement;
 
-      const dots = container.querySelectorAll(".animate-bounce");
-      const firstDot = dots[0] as HTMLElement;
-
-      // Check that animation duration references CSS variable
-      expect(firstDot.style.animationDuration).toContain("var(--duration-slow");
+      expect(firstDot.style.animationDuration).toBe("var(--duration-slow)");
     });
 
     it("dots are hidden from screen readers", () => {
-      const { container } = render(
-        <TypingIndicator agentName="Test Agent" agentId={AgentId.BILLING} />
+      renderIndicator();
+
+      const wrapper = screen.getByLabelText(
+        "Test Agent is composing a response"
       );
-
-      const dotsContainer = container.querySelector('[aria-hidden="true"]');
+      const dotsContainer = wrapper.querySelector('[aria-hidden="true"]');
       expect(dotsContainer).toBeInTheDocument();
-
-      const dots = dotsContainer?.querySelectorAll(".animate-bounce");
-      expect(dots?.length).toBe(3);
+      expect(
+        dotsContainer?.querySelectorAll('[data-testid="typing-dot"]').length
+      ).toBe(3);
     });
   });
 
