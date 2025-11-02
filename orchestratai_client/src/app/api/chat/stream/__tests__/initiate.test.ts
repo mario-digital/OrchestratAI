@@ -2,17 +2,23 @@
  * Tests for Stream Initiation API Route
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { POST } from "../initiate/route";
 import { NextRequest } from "next/server";
 
 describe("POST /api/chat/stream/initiate", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     fetchMock = vi.fn();
     global.fetch = fetchMock;
     process.env["BACKEND_API_URL"] = "http://localhost:8000";
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it("should forward POST request to backend", async () => {

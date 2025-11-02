@@ -2,17 +2,23 @@
  * Tests for Stream-by-ID API Route
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "../[stream_id]/route";
 import { NextRequest } from "next/server";
 
 describe("GET /api/chat/stream/[stream_id]", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     fetchMock = vi.fn();
     global.fetch = fetchMock;
     process.env["BACKEND_API_URL"] = "http://localhost:8000";
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it("should forward GET request to backend with stream_id", async () => {

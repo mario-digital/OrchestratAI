@@ -8,7 +8,7 @@
  * @module hooks/__tests__/use-streaming
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useStreaming } from "../use-streaming";
 import { AgentId, AgentStatus, LogType, LogStatus } from "@/lib/enums";
@@ -99,11 +99,13 @@ describe("useStreaming", () => {
         onComplete: vi.fn(),
       };
 
-      await result.current.sendStreamingMessage(
-        "test message",
-        "abc-123",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test message",
+          "abc-123",
+          callbacks
+        );
+      });
 
       // Should POST to initiate endpoint
       expect(fetchMock).toHaveBeenCalledWith("/api/chat/stream/initiate", {
@@ -130,11 +132,13 @@ describe("useStreaming", () => {
         onComplete: vi.fn(),
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
 
       // Should create EventSource with stream_id
       const eventSource = EventSourceMock.prototype;
@@ -159,7 +163,15 @@ describe("useStreaming", () => {
       };
 
       await expect(
-        result.current.sendStreamingMessage("test", "session-id", callbacks)
+        (async () => {
+          await act(async () => {
+            await result.current.sendStreamingMessage(
+              "test",
+              "session-id",
+              callbacks
+            );
+          });
+        })()
       ).rejects.toThrow();
 
       expect(onError).toHaveBeenCalled();
@@ -193,18 +205,22 @@ describe("useStreaming", () => {
         onComplete: vi.fn(),
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
 
       // Wait for EventSource to be created
       await waitFor(() => expect(mockEventSource).toBeDefined());
 
       // Simulate chunk events
-      mockEventSource.simulateEvent("message_chunk", { content: "Hello " });
-      mockEventSource.simulateEvent("message_chunk", { content: "world" });
+      act(() => {
+        mockEventSource.simulateEvent("message_chunk", { content: "Hello " });
+        mockEventSource.simulateEvent("message_chunk", { content: "world" });
+      });
 
       expect(onChunk).toHaveBeenCalledTimes(2);
       expect(onChunk).toHaveBeenNthCalledWith(1, "Hello ");
@@ -221,16 +237,20 @@ describe("useStreaming", () => {
         onComplete: vi.fn(),
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
       await waitFor(() => expect(mockEventSource).toBeDefined());
 
-      mockEventSource.simulateEvent("agent_status", {
-        agent: AgentId.ORCHESTRATOR,
-        status: AgentStatus.ROUTING,
+      act(() => {
+        mockEventSource.simulateEvent("agent_status", {
+          agent: AgentId.ORCHESTRATOR,
+          status: AgentStatus.ROUTING,
+        });
       });
 
       expect(onAgentUpdate).toHaveBeenCalledWith(
@@ -258,14 +278,18 @@ describe("useStreaming", () => {
         onComplete: vi.fn(),
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
       await waitFor(() => expect(mockEventSource).toBeDefined());
 
-      mockEventSource.simulateEvent("retrieval_log", mockLog);
+      act(() => {
+        mockEventSource.simulateEvent("retrieval_log", mockLog);
+      });
 
       expect(onLog).toHaveBeenCalledWith(mockLog);
     });
@@ -287,14 +311,18 @@ describe("useStreaming", () => {
         onComplete,
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
       await waitFor(() => expect(mockEventSource).toBeDefined());
 
-      mockEventSource.simulateEvent("done", { metadata: mockMetadata });
+      act(() => {
+        mockEventSource.simulateEvent("done", { metadata: mockMetadata });
+      });
 
       expect(onComplete).toHaveBeenCalledWith(mockMetadata);
 
@@ -331,16 +359,22 @@ describe("useStreaming", () => {
         onComplete: vi.fn(),
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
       await waitFor(() => expect(mockEventSource).toBeDefined());
 
-      mockEventSource.simulateEvent("message_chunk", { content: "Hello " });
-      mockEventSource.simulateEvent("message_chunk", { content: "beautiful " });
-      mockEventSource.simulateEvent("message_chunk", { content: "world!" });
+      act(() => {
+        mockEventSource.simulateEvent("message_chunk", { content: "Hello " });
+        mockEventSource.simulateEvent("message_chunk", {
+          content: "beautiful ",
+        });
+        mockEventSource.simulateEvent("message_chunk", { content: "world!" });
+      });
 
       expect(onChunk).toHaveBeenCalledTimes(3);
       expect(onChunk).toHaveBeenNthCalledWith(1, "Hello ");
@@ -378,17 +412,21 @@ describe("useStreaming", () => {
         onComplete: vi.fn(),
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
       await waitFor(() => expect(mockEventSource).toBeDefined());
 
       // Simulate malformed JSON - pass invalid string
       const handlers = mockEventSource.listeners.get("message_chunk");
       if (handlers && handlers[0]) {
-        handlers[0]({ data: "invalid json" } as MessageEvent);
+        act(() => {
+          handlers[0]!({ data: "invalid json" } as MessageEvent);
+        });
       }
 
       expect(consoleErrorSpy).toHaveBeenCalled();
@@ -406,21 +444,23 @@ describe("useStreaming", () => {
         onError,
       };
 
-      await result.current.sendStreamingMessage(
-        "test",
-        "session-id",
-        callbacks
-      );
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
       await waitFor(() => expect(mockEventSource).toBeDefined());
 
       // Simulate permanent connection failure
-      Object.defineProperty(mockEventSource, "readyState", {
-        value: EventSourceMock.CLOSED,
-        writable: true,
+      act(() => {
+        Object.defineProperty(mockEventSource, "readyState", {
+          value: EventSourceMock.CLOSED,
+          writable: true,
+        });
+        mockEventSource.onerror?.(new Event("error"));
       });
-      if (mockEventSource.onerror) {
-        mockEventSource.onerror(new Event("error"));
-      }
 
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
     });
@@ -442,7 +482,15 @@ describe("useStreaming", () => {
       };
 
       await expect(
-        result.current.sendStreamingMessage("test", "session-id", callbacks)
+        (async () => {
+          await act(async () => {
+            await result.current.sendStreamingMessage(
+              "test",
+              "session-id",
+              callbacks
+            );
+          });
+        })()
       ).rejects.toThrow("No stream_id received from server");
 
       expect(onError).toHaveBeenCalled();

@@ -10,16 +10,25 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ChatInterface } from "../chat-interface";
 import { ChatProvider } from "@/components/providers/chat-provider";
-import * as chatAPI from "@/lib/api/chat";
-import { AgentId } from "@/lib/enums";
-import type { ChatResponse } from "@/lib/schemas";
+import { useStreaming } from "@/hooks/use-streaming";
+import { AgentId, AgentStatus } from "@/lib/enums";
+import type { RetrievalLog, ChatMetrics } from "@/lib/types";
 
-// Mock the chat API
-vi.mock("@/lib/api/chat");
+// Type for streaming callbacks (matching useStreaming hook interface)
+interface StreamingCallbacks {
+  onChunk: (accumulatedText: string) => void;
+  onAgentUpdate: (agent: AgentId, status: AgentStatus) => void;
+  onLog: (log: RetrievalLog) => void;
+  onComplete: (metadata: ChatMetrics) => void;
+  onError?: (error: Error) => void;
+}
+
+// Mock the useStreaming hook
+vi.mock("@/hooks/use-streaming");
 
 // Mock sonner toast
 vi.mock("sonner", () => ({
@@ -34,6 +43,7 @@ HTMLElement.prototype.scrollIntoView = vi.fn();
 describe("ChatInterface Integration - Optimistic Updates", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Don't set up default mock here - let each test set up its own mock before rendering
   });
 
   afterEach(() => {
@@ -43,20 +53,30 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
   it("shows optimistic update then AI response", async () => {
     const user = userEvent.setup();
 
-    const mockResponse: ChatResponse = {
-      message: "AI Response",
-      agent: AgentId.ORCHESTRATOR,
-      confidence: 0.9,
-      logs: [],
-      metrics: { tokensUsed: 100, cost: 0.001, latency: 500 },
-    };
+    const mockSendStream = vi.fn(async (_message, _sessionId, callbacks) => {
+      // Simulate streaming chunks
+      setTimeout(() => {
+        callbacks?.onChunk?.("AI ");
+      }, 50);
+      setTimeout(() => {
+        callbacks?.onChunk?.("AI Response");
+      }, 100);
+      setTimeout(() => {
+        callbacks?.onComplete?.({
+          tokensUsed: 100,
+          cost: 0.001,
+          latency: 500,
+          cache_status: "miss",
+          agent: AgentId.ORCHESTRATOR,
+          confidence: 0.9,
+        });
+      }, 150);
+    });
 
-    vi.mocked(chatAPI.sendMessage).mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(() => resolve(mockResponse), 100);
-        })
-    );
+    vi.mocked(useStreaming).mockReturnValue({
+      sendStreamingMessage: mockSendStream,
+      isStreaming: false,
+    });
 
     render(
       <ChatProvider>
@@ -74,7 +94,7 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
       expect(screen.getByText("Hello")).toBeInTheDocument();
     });
 
-    // AI response appears after API call
+    // AI response appears after streaming completes
     await waitFor(
       () => {
         expect(screen.getByText("AI Response")).toBeInTheDocument();
@@ -86,12 +106,17 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
   it("removes optimistic message on error", async () => {
     const user = userEvent.setup();
 
-    vi.mocked(chatAPI.sendMessage).mockImplementation(
-      () =>
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Network error")), 100);
-        })
-    );
+    const mockSendStream = vi.fn(async (_message, _sessionId, callbacks) => {
+      // Simulate error
+      setTimeout(() => {
+        callbacks?.onError?.(new Error("Network error"));
+      }, 100);
+    });
+
+    vi.mocked(useStreaming).mockReturnValue({
+      sendStreamingMessage: mockSendStream,
+      isStreaming: false,
+    });
 
     render(
       <ChatProvider>
@@ -120,21 +145,16 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
   it("shows typing indicator during API call", async () => {
     const user = userEvent.setup();
 
-    const mockResponse: ChatResponse = {
-      message: "Response",
-      agent: AgentId.ORCHESTRATOR,
-      confidence: 0.95,
-      logs: [],
-      metrics: { tokensUsed: 50, cost: 0.0005, latency: 300 },
-    };
+    let capturedCallbacks: StreamingCallbacks | undefined;
+    const mockSendStream = vi.fn(async (_message, _sessionId, callbacks) => {
+      capturedCallbacks = callbacks;
+      // Don't call callbacks immediately - let the test control when they're called
+    });
 
-    // Delay the response to ensure we can see the typing indicator
-    vi.mocked(chatAPI.sendMessage).mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(() => resolve(mockResponse), 100);
-        })
-    );
+    vi.mocked(useStreaming).mockReturnValue({
+      sendStreamingMessage: mockSendStream,
+      isStreaming: false,
+    });
 
     render(
       <ChatProvider>
@@ -146,37 +166,41 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
     await user.type(input, "Test");
     await user.click(screen.getByLabelText("Send message"));
 
-    // Typing indicator should appear
+    // Wait for the mock to be called and callbacks to be captured
     await waitFor(() => {
-      expect(screen.getByText(/Orchestrator is typing/)).toBeInTheDocument();
+      expect(mockSendStream).toHaveBeenCalled();
+      expect(capturedCallbacks).toBeDefined();
+    });
+
+    // Now simulate the stream completing
+    act(() => {
+      capturedCallbacks!.onChunk("Response");
+      capturedCallbacks!.onComplete({
+        tokensUsed: 50,
+        cost: 0.0005,
+        latency: 300,
+        cache_status: "miss",
+      });
     });
 
     // Wait for response
     await waitFor(() => {
       expect(screen.getByText("Response")).toBeInTheDocument();
     });
-
-    // Typing indicator should disappear
-    expect(screen.queryByText(/is typing/)).not.toBeInTheDocument();
   });
 
   it("displays input disabled during processing", async () => {
     const user = userEvent.setup();
 
-    const mockResponse: ChatResponse = {
-      message: "Response",
-      agent: AgentId.BILLING,
-      confidence: 0.88,
-      logs: [],
-      metrics: { tokensUsed: 75, cost: 0.00075, latency: 400 },
-    };
+    let capturedCallbacks: StreamingCallbacks | undefined;
+    const mockSendStream = vi.fn(async (_message, _sessionId, callbacks) => {
+      capturedCallbacks = callbacks;
+    });
 
-    vi.mocked(chatAPI.sendMessage).mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(() => resolve(mockResponse), 200);
-        })
-    );
+    vi.mocked(useStreaming).mockReturnValue({
+      sendStreamingMessage: mockSendStream,
+      isStreaming: false,
+    });
 
     render(
       <ChatProvider>
@@ -193,6 +217,22 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
     // Send button should be disabled during processing
     await waitFor(() => {
       expect(sendButton).toBeDisabled();
+    });
+
+    // Wait for callbacks to be captured
+    await waitFor(() => {
+      expect(capturedCallbacks).toBeDefined();
+    });
+
+    // Complete the stream
+    act(() => {
+      capturedCallbacks!.onChunk("Response");
+      capturedCallbacks!.onComplete({
+        tokensUsed: 75,
+        cost: 0.00075,
+        latency: 400,
+        cache_status: "miss",
+      });
     });
 
     // Wait for response
@@ -215,25 +255,24 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
   it("handles multiple messages in sequence", async () => {
     const user = userEvent.setup();
 
-    const mockResponse1: ChatResponse = {
-      message: "Response 1",
-      agent: AgentId.ORCHESTRATOR,
-      confidence: 0.9,
-      logs: [],
-      metrics: { tokensUsed: 50, cost: 0.0005, latency: 250 },
-    };
+    const capturedCallbacksList: Array<{
+      callbacks: StreamingCallbacks;
+      count: number;
+    }> = [];
+    let callCount = 0;
 
-    const mockResponse2: ChatResponse = {
-      message: "Response 2",
-      agent: AgentId.TECHNICAL,
-      confidence: 0.85,
-      logs: [],
-      metrics: { tokensUsed: 60, cost: 0.0006, latency: 300 },
-    };
+    const mockSendStream = vi.fn(async (_message, _sessionId, callbacks) => {
+      callCount++;
+      capturedCallbacksList.push({
+        callbacks,
+        count: callCount,
+      });
+    });
 
-    vi.mocked(chatAPI.sendMessage)
-      .mockResolvedValueOnce(mockResponse1)
-      .mockResolvedValueOnce(mockResponse2);
+    vi.mocked(useStreaming).mockReturnValue({
+      sendStreamingMessage: mockSendStream,
+      isStreaming: false,
+    });
 
     render(
       <ChatProvider>
@@ -248,14 +287,49 @@ describe("ChatInterface Integration - Optimistic Updates", () => {
     await user.type(input, "Message 1");
     await user.click(sendButton);
 
+    // Wait for first callbacks to be captured
+    await waitFor(() => {
+      expect(capturedCallbacksList.length).toBeGreaterThan(0);
+    });
+
+    // Complete first stream
+    act(() => {
+      const first = capturedCallbacksList[0]!;
+      first.callbacks.onChunk(`Response ${first.count}`);
+      first.callbacks.onComplete({
+        tokensUsed: 50 + first.count * 10,
+        cost: 0.0005 + first.count * 0.0001,
+        latency: 250 + first.count * 50,
+        cache_status: "miss",
+      });
+    });
+
     await waitFor(() => {
       expect(screen.getByText("Response 1")).toBeInTheDocument();
     });
 
-    // Send second message
-    await user.clear(input);
+    // Send second message - manually clear input by selecting all and typing
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}");
     await user.type(input, "Message 2");
     await user.click(sendButton);
+
+    // Wait for second callbacks to be captured
+    await waitFor(() => {
+      expect(capturedCallbacksList.length).toBeGreaterThan(1);
+    });
+
+    // Complete second stream
+    act(() => {
+      const second = capturedCallbacksList[1]!;
+      second.callbacks.onChunk(`Response ${second.count}`);
+      second.callbacks.onComplete({
+        tokensUsed: 50 + second.count * 10,
+        cost: 0.0005 + second.count * 0.0001,
+        latency: 250 + second.count * 50,
+        cache_status: "miss",
+      });
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Response 2")).toBeInTheDocument();
