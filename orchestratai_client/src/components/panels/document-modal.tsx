@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
@@ -101,6 +102,9 @@ export function DocumentModal({
             <DialogTitle className="truncate">{source}</DialogTitle>
             <Badge className={badgeColor}>{similarityPercentage}%</Badge>
           </div>
+          <DialogDescription className="sr-only">
+            Detailed view of {source}. Similarity score {similarityPercentage}%.
+          </DialogDescription>
         </DialogHeader>
         <div className="mt-4 p-4 bg-background-secondary rounded-md">
           <pre className="whitespace-pre-wrap font-mono text-sm text-text-primary">

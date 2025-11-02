@@ -31,6 +31,8 @@ describe("DocumentModal Component", () => {
 
     expect(screen.getByText("pricing_faq.md")).toBeInTheDocument();
     expect(screen.getByText(/Full document content/)).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAttribute("aria-describedby");
   });
 
   it("does not render when isOpen is false", () => {

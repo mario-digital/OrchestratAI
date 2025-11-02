@@ -179,66 +179,111 @@ describe("APIClient", () => {
     });
 
     it("should throw NetworkError on fetch failure", async () => {
-      global.fetch = vi
-        .fn()
-        .mockRejectedValue(new TypeError("Failed to fetch"));
+      vi.useFakeTimers();
 
-      await expect(apiClient.get("/test")).rejects.toThrow(NetworkError);
+      try {
+        global.fetch = vi
+          .fn()
+          .mockRejectedValue(new TypeError("Failed to fetch"));
+
+        const requestPromise = apiClient.get("/test").then(
+          () => {
+            throw new Error("Expected network request to fail");
+          },
+          (error) => {
+            expect(error).toBeInstanceOf(NetworkError);
+            expect(error.message).toContain("Failed to fetch");
+          }
+        );
+
+        await vi.runAllTimersAsync();
+
+        await requestPromise;
+
+        await vi.runAllTimersAsync();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("should throw TimeoutError on request timeout", async () => {
-      // Create client with very short timeout
-      const shortTimeoutClient = new APIClient("http://test-api.com", 100);
+      // Use fake timers so the test finishes instantly
+      vi.useFakeTimers();
 
-      global.fetch = vi.fn().mockImplementation((_, options) => {
-        return new Promise((resolve, reject) => {
-          // Listen to abort signal
-          if (options?.signal) {
-            options.signal.addEventListener("abort", () => {
-              reject(
-                new DOMException("The operation was aborted.", "AbortError")
-              );
-            });
-          }
+      try {
+        // Create client with very short timeout
+        const shortTimeoutClient = new APIClient("http://test-api.com", 100);
 
-          // Simulate slow response
-          setTimeout(() => {
-            resolve({
-              ok: true,
-              json: async () => ({ data: "test" }),
-            });
-          }, 200); // Longer than timeout
+        global.fetch = vi.fn().mockImplementation((_, options) => {
+          return new Promise((resolve, reject) => {
+            // Listen to abort signal
+            if (options?.signal) {
+              options.signal.addEventListener("abort", () => {
+                reject(
+                  new DOMException("The operation was aborted.", "AbortError")
+                );
+              });
+            }
+
+            // Simulate slow response (will be fast thanks to fake timers)
+            setTimeout(() => {
+              resolve({
+                ok: true,
+                json: async () => ({ data: "test" }),
+              });
+            }, 200); // Longer than timeout
+          });
         });
-      });
 
-      await expect(shortTimeoutClient.get("/test")).rejects.toThrow(
-        TimeoutError
-      );
-      await expect(shortTimeoutClient.get("/test")).rejects.toThrow(
-        "timed out after"
-      );
-    }, 10000); // Increase test timeout
+        const requestPromise = shortTimeoutClient
+          .get("/test")
+          .catch((error) => {
+            expect(error).toBeInstanceOf(TimeoutError);
+            expect(error.message).toContain("timed out after");
+          });
+
+        // Drive all timeouts (abort + retries) immediately
+        await vi.runAllTimersAsync();
+
+        await requestPromise;
+
+        // Ensure no pending timers remain (cleanup the simulated response timer)
+        await vi.runAllTimersAsync();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe("Retry Logic", () => {
     it("should retry on network error and succeed on 3rd attempt", async () => {
-      const mockData = { data: "success" };
+      vi.useFakeTimers();
 
-      global.fetch = vi
-        .fn()
-        .mockRejectedValueOnce(new TypeError("Failed to fetch"))
-        .mockRejectedValueOnce(new TypeError("Failed to fetch"))
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => mockData,
-        });
+      try {
+        const mockData = { data: "success" };
 
-      const result = await apiClient.get("/test");
+        global.fetch = vi
+          .fn()
+          .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+          .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+          .mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            json: async () => mockData,
+          });
 
-      expect(result).toEqual(mockData);
-      expect(global.fetch).toHaveBeenCalledTimes(3);
-    }, 10000); // Increase test timeout for retries
+        const resultPromise = apiClient.get("/test");
+
+        await vi.runAllTimersAsync();
+
+        const result = await resultPromise;
+
+        expect(result).toEqual(mockData);
+        expect(global.fetch).toHaveBeenCalledTimes(3);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
 
     it("should NOT retry on 4xx errors", async () => {
       global.fetch = vi.fn().mockResolvedValue({
@@ -267,15 +312,35 @@ describe("APIClient", () => {
     });
 
     it("should fail after max retries on persistent network errors", async () => {
-      global.fetch = vi
-        .fn()
-        .mockRejectedValue(new TypeError("Failed to fetch"));
+      vi.useFakeTimers();
 
-      await expect(apiClient.get("/test")).rejects.toThrow(NetworkError);
+      try {
+        global.fetch = vi
+          .fn()
+          .mockRejectedValue(new TypeError("Failed to fetch"));
 
-      // Should retry 3 times
-      expect(global.fetch).toHaveBeenCalledTimes(3);
-    }, 10000); // Increase test timeout for retries
+        const requestPromise = apiClient.get("/test").then(
+          () => {
+            throw new Error("Expected retries to exhaust and fail");
+          },
+          (error) => {
+            expect(error).toBeInstanceOf(NetworkError);
+            expect(error.message).toContain("Failed to fetch");
+          }
+        );
+
+        await vi.runAllTimersAsync();
+
+        await requestPromise;
+
+        // Should retry 3 times
+        expect(global.fetch).toHaveBeenCalledTimes(3);
+
+        await vi.runAllTimersAsync();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe("Configuration", () => {

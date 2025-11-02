@@ -791,9 +791,13 @@ export function ChatProvider({
       });
 
       try {
+        // Track latest accumulated content so we can finalize without stale state reads
+        let latestContent = "";
+
         await sendStream(message, state.sessionId, {
           // Update message content progressively
           onChunk: (accumulatedText) => {
+            latestContent = accumulatedText;
             dispatch({
               type: "UPDATE_STREAMING_MESSAGE",
               payload: {
@@ -818,12 +822,6 @@ export function ChatProvider({
 
           // Finalize message on completion
           onComplete: (metadata) => {
-            // Get the current message content from state
-            const currentMessage = state.messages.find(
-              (m) => m.id === assistantMessageId
-            );
-            const finalContent = currentMessage?.content || "";
-
             // Extract agent and confidence from metadata (extended type in backend)
             const metadataAny = metadata as typeof metadata & {
               agent?: AgentId;
@@ -833,7 +831,7 @@ export function ChatProvider({
             const finalMessage: Message = {
               id: assistantMessageId,
               role: MessageRole.ASSISTANT,
-              content: finalContent,
+              content: latestContent,
               agent: metadataAny.agent,
               confidence: metadataAny.confidence,
               timestamp: new Date(),
@@ -908,7 +906,7 @@ export function ChatProvider({
         dispatch({ type: "SET_TYPING_AGENT", payload: null });
       }
     },
-    [state.isStreaming, state.sessionId, state.messages, sendStream]
+    [state.isStreaming, state.sessionId, sendStream]
   );
 
   const value: ChatContextValue = {
