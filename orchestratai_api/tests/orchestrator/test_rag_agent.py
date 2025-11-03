@@ -1,6 +1,6 @@
 """Tests for RAG agent retrieval workflow."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 from langchain_core.documents import Document
@@ -18,11 +18,17 @@ async def test_rag_agent_retrieval_workflow():
     # Mock documents
     mock_docs = [
         (
-            Document(page_content="RAG stands for Retrieval-Augmented Generation", metadata={"source": "doc1.pdf"}),
+            Document(
+                page_content="RAG stands for Retrieval-Augmented Generation",
+                metadata={"source": "doc1.pdf"},
+            ),
             0.1,
         ),  # Low distance = high similarity
         (
-            Document(page_content="It combines retrieval with generation", metadata={"source": "doc2.pdf"}),
+            Document(
+                page_content="It combines retrieval with generation",
+                metadata={"source": "doc2.pdf"},
+            ),
             0.15,
         ),
     ]
@@ -33,7 +39,10 @@ async def test_rag_agent_retrieval_workflow():
 
     # Mock LLM response
     mock_llm_result = LLMCallResult(
-        content="RAG (Retrieval-Augmented Generation) is a technique that enhances LLMs by retrieving relevant documents.",
+        content=(
+            "RAG (Retrieval-Augmented Generation) is a technique that enhances LLMs "
+            "by retrieving relevant documents."
+        ),
         model="gpt-4-turbo",
         tokens_input=150,
         tokens_output=30,
@@ -53,7 +62,9 @@ async def test_rag_agent_retrieval_workflow():
     response = await agent.run(request)
 
     # Verify vector search called
-    mock_vector_store.similarity_search_with_scores.assert_called_once_with(query="What is RAG?", k=2)
+    mock_vector_store.similarity_search_with_scores.assert_called_once_with(
+        query="What is RAG?", k=2
+    )
 
     # Verify provider called with context
     mock_provider.complete.assert_called_once()
@@ -130,9 +141,18 @@ async def test_rag_agent_similarity_score_conversion():
     # ChromaDB returns distance (lower = better)
     # We convert to similarity: 1.0 - (distance / 2.0)
     mock_docs = [
-        (Document(page_content="Perfect match", metadata={"source": "doc1.pdf"}), 0.0),  # Distance 0 = similarity 1.0
-        (Document(page_content="Good match", metadata={"source": "doc2.pdf"}), 0.5),  # Distance 0.5 = similarity 0.75
-        (Document(page_content="Fair match", metadata={"source": "doc3.pdf"}), 1.0),  # Distance 1.0 = similarity 0.5
+        (
+            Document(page_content="Perfect match", metadata={"source": "doc1.pdf"}),
+            0.0,
+        ),  # Distance 0 = similarity 1.0
+        (
+            Document(page_content="Good match", metadata={"source": "doc2.pdf"}),
+            0.5,
+        ),  # Distance 0.5 = similarity 0.75
+        (
+            Document(page_content="Fair match", metadata={"source": "doc3.pdf"}),
+            1.0,
+        ),  # Distance 1.0 = similarity 0.5
     ]
 
     mock_vector_store = AsyncMock()
@@ -179,7 +199,9 @@ async def test_rag_agent_with_no_documents():
     )
 
     agent = RAGAgent(provider=mock_provider, vector_store=mock_vector_store)
-    request = ChatRequest(message="Unknown topic", session_id="550e8400-e29b-41d4-a716-446655440000")
+    request = ChatRequest(
+        message="Unknown topic", session_id="550e8400-e29b-41d4-a716-446655440000"
+    )
 
     response = await agent.run(request)
 

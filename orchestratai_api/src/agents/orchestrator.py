@@ -247,7 +247,7 @@ async def delegate_to_worker(
         return await guide_user(state)
 
 
-def build_orchestrator_graph(*, vector_store: VectorStore) -> StateGraph:
+def build_orchestrator_graph(*, vector_store: VectorStore) -> Any:  # type: ignore[misc]
     """Build and compile the LangGraph orchestrator workflow.
 
     Args:
