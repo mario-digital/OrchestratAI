@@ -18,13 +18,13 @@ services:
       - VECTOR_DB_BACKEND=${VECTOR_DB_BACKEND:-chromadb}
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
-      # PostgreSQL Configuration (credentials from .env, supports 1Password)
-      - DATABASE_URL=${DATABASE_URL}
+      # PostgreSQL Configuration (password resolved via 1Password, same as API keys)
       - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - POSTGRES_DB=${POSTGRES_DB:-orchestratai}
       - POSTGRES_USER=${POSTGRES_USER:-orchestratai}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # Note: DATABASE_URL auto-constructed in database.py with password resolution
       - USE_FAKE_EMBEDDINGS=${USE_FAKE_EMBEDDINGS:-false}
     volumes:
       - ./orchestratai_api/src:/app/src
