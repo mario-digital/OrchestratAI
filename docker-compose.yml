@@ -9,6 +9,8 @@ services:
       - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
       # LLM Provider Credentials (1Password auto-resolves op:// references)
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
@@ -25,7 +27,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-orchestratai}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       # Note: DATABASE_URL auto-constructed in database.py with password resolution
-      - USE_FAKE_EMBEDDINGS=${USE_FAKE_EMBEDDINGS:-false}
+      - USE_ONEPASSWORD=${USE_ONEPASSWORD:-false}
+      - USE_FAKE_EMBEDDINGS=${USE_FAKE_EMBEDDINGS:-true}
     volumes:
       - ./orchestratai_api/src:/app/src
     depends_on:
@@ -34,7 +37,7 @@ services:
       postgres:
         condition: service_healthy
       chromadb:
-        condition: service_healthy
+        condition: service_started
     networks:
       - orchestratai-network
     healthcheck:
