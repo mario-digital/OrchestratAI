@@ -75,7 +75,8 @@ class TestBedrockProviderInit:
             # Don't mock boto3 client so we can test credential resolution
             with pytest.raises(RuntimeError) as exc_info:
                 BedrockProvider(model="anthropic.claude-3-haiku-20240307-v1:0")
-            assert "AWS_REGION" in str(exc_info.value)
+            message = str(exc_info.value)
+            assert "AWS_ACCESS_KEY_ID" in message
 
 
 class TestBedrockProviderComplete:
