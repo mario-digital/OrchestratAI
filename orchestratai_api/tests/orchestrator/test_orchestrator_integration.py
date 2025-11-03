@@ -345,3 +345,171 @@ async def test_streaming_integration(temp_vector_store, mock_cache):
         assert "agent_status" in event_types
         assert "message_chunk" in event_types
         assert "done" in event_types
+
+
+@pytest.mark.asyncio
+async def test_delegate_mode_cag_policy_question_end_to_end(temp_vector_store, mock_cache):
+    """Test delegate mode: policy question routed to CAG agent."""
+    # Mock orchestrator analysis for POLICY_QUESTION
+    analysis_result = LLMCallResult(
+        content=(
+            '{"intent": "POLICY_QUESTION", "confidence": 0.90, '
+            '"reasoning": "User asking about company policy"}'
+        ),
+        model="claude-3-5-sonnet",
+        tokens_input=100,
+        tokens_output=50,
+        cost=0.001,
+    )
+
+    # Mock CAG provider response (Bedrock Haiku)
+    cag_result = LLMCallResult(
+        content=(
+            "Based on our refund policy, you can request a full refund "
+            "within 30 days of purchase."
+        ),
+        model="claude-3-haiku",
+        tokens_input=80,
+        tokens_output=25,
+        cost=0.0004,
+    )
+
+    with (
+        patch("src.agents.orchestrator.ProviderFactory.for_role") as mock_factory,
+    ):
+
+        def get_mock_provider(role):
+            from src.llm.provider_factory import AgentRole
+
+            mock_provider = AsyncMock()
+            if role == AgentRole.ORCHESTRATOR_ANALYSIS:
+                mock_provider.complete = AsyncMock(return_value=analysis_result)
+            elif role == AgentRole.CAG:
+                mock_provider.complete = AsyncMock(return_value=cag_result)
+            elif role == AgentRole.EMBEDDINGS:
+                # Mock embeddings for semantic cache
+                mock_provider.embed = AsyncMock(return_value=[1.0, 2.0, 3.0])
+            return mock_provider
+
+        mock_factory.side_effect = get_mock_provider
+
+        # Build orchestrator
+        orchestrator = build_orchestrator_graph(
+            vector_store=temp_vector_store, cache=mock_cache
+        )
+
+        # Execute with policy question
+        initial_state = {
+            "messages": [{"role": "user", "content": "Can I get a refund?"}],
+            "analysis": {},
+            "route": "",
+            "result": None,
+            "session_id": "550e8400-e29b-41d4-a716-446655440002",
+        }
+
+        final_state = await orchestrator.ainvoke(initial_state)
+
+        # Verify result
+        result = final_state["result"]
+        assert result is not None
+        assert result.agent == AgentId.POLICY  # CAG agent maps to POLICY
+        assert "refund" in result.message.lower()
+
+        # Verify routing log + cache log present
+        assert len(result.logs) >= 2
+        assert result.logs[0].type == LogType.ROUTING
+        assert "CAG agent" in result.logs[0].title
+
+        # Verify cache log exists
+        cache_logs = [log for log in result.logs if log.type == LogType.CACHE]
+        assert len(cache_logs) == 1
+        assert cache_logs[0].data["operation"] in ["hit", "miss"]
+        assert "latency_ms" in cache_logs[0].data
+
+        # Verify cache_status in metrics
+        assert result.metrics.cache_status in ["hit", "miss", "none"]
+
+        # Verify agent status
+        assert result.agent_status[AgentId.POLICY] == AgentStatus.COMPLETE
+
+
+@pytest.mark.asyncio
+async def test_delegate_mode_cag_pricing_question_end_to_end(temp_vector_store, mock_cache):
+    """Test delegate mode: pricing question routed to CAG agent."""
+    # Mock orchestrator analysis for PRICING_QUESTION
+    analysis_result = LLMCallResult(
+        content=(
+            '{"intent": "PRICING_QUESTION", "confidence": 0.88, '
+            '"reasoning": "User asking about pricing or costs"}'
+        ),
+        model="claude-3-5-sonnet",
+        tokens_input=100,
+        tokens_output=50,
+        cost=0.001,
+    )
+
+    # Mock CAG provider response (Bedrock Haiku)
+    cag_result = LLMCallResult(
+        content=(
+            "Our pricing starts at $29/month for the basic plan and "
+            "$99/month for the professional plan."
+        ),
+        model="claude-3-haiku",
+        tokens_input=70,
+        tokens_output=30,
+        cost=0.0004,
+    )
+
+    with (
+        patch("src.agents.orchestrator.ProviderFactory.for_role") as mock_factory,
+    ):
+
+        def get_mock_provider(role):
+            from src.llm.provider_factory import AgentRole
+
+            mock_provider = AsyncMock()
+            if role == AgentRole.ORCHESTRATOR_ANALYSIS:
+                mock_provider.complete = AsyncMock(return_value=analysis_result)
+            elif role == AgentRole.CAG:
+                mock_provider.complete = AsyncMock(return_value=cag_result)
+            elif role == AgentRole.EMBEDDINGS:
+                # Mock embeddings for semantic cache
+                mock_provider.embed = AsyncMock(return_value=[2.0, 3.0, 4.0])
+            return mock_provider
+
+        mock_factory.side_effect = get_mock_provider
+
+        # Build orchestrator
+        orchestrator = build_orchestrator_graph(
+            vector_store=temp_vector_store, cache=mock_cache
+        )
+
+        # Execute with pricing question
+        initial_state = {
+            "messages": [{"role": "user", "content": "How much does it cost?"}],
+            "analysis": {},
+            "route": "",
+            "result": None,
+            "session_id": "550e8400-e29b-41d4-a716-446655440003",
+        }
+
+        final_state = await orchestrator.ainvoke(initial_state)
+
+        # Verify result
+        result = final_state["result"]
+        assert result is not None
+        assert result.agent == AgentId.POLICY  # CAG agent maps to POLICY
+        assert "pricing" in result.message.lower() or "plan" in result.message.lower()
+
+        # Verify routing log + cache log present
+        assert len(result.logs) >= 2
+        assert result.logs[0].type == LogType.ROUTING
+        assert "CAG agent" in result.logs[0].title
+
+        # Verify cache log exists
+        cache_logs = [log for log in result.logs if log.type == LogType.CACHE]
+        assert len(cache_logs) == 1
+        assert cache_logs[0].data["operation"] in ["hit", "miss"]
+
+        # Verify agent status
+        assert result.agent_status[AgentId.POLICY] == AgentStatus.COMPLETE
