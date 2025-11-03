@@ -27,12 +27,23 @@ async def redis_cache():
     NOTE: This requires Redis to be running locally or in Docker.
     Set REDIS_HOST environment variable or use default localhost:6379
     """
-    cache = RedisSemanticCache(ttl_seconds=60)
+    import os
+
+    # Skip if REDIS_HOST not configured (e.g., in CI without Redis)
+    redis_host = os.getenv("REDIS_HOST")
+    if not redis_host:
+        pytest.skip("REDIS_HOST not configured - skipping Redis integration tests")
+
+    try:
+        cache = RedisSemanticCache(ttl_seconds=60)
+    except Exception as e:
+        pytest.skip(f"Failed to create Redis cache: {e}")
 
     # Verify Redis is available
     try:
         await cache._client.ping()
     except Exception as e:
+        await cache.close()
         pytest.skip(f"Redis not available: {e}")
 
     # Clean up any existing cache data

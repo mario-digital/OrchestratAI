@@ -69,10 +69,12 @@ uv run pytest tests/cag/ -v --cov=src/cache --cov=src/agents/workers/cag_agent -
 
 ### For Integration Tests
 - **Redis server running** on localhost:6379 (or set REDIS_HOST env var)
+- **Note:** Integration tests will be **skipped automatically** if REDIS_HOST is not set
 - Start Redis with Docker:
   ```bash
   docker run -d -p 6379:6379 --name redis-test redis:7-alpine
   ```
+- In CI/CD: Integration tests are skipped unless Redis is configured
 
 ## Environment Variables
 
