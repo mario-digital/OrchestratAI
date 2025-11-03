@@ -52,7 +52,7 @@ class RedisSemanticCache:
         redis_host = resolve_secret("REDIS_HOST")
 
         # Initialize async Redis client
-        self._client = redis.from_url(f"redis://{redis_host}")
+        self._client = redis.from_url(f"redis://{redis_host}")  # type: ignore[no-untyped-call]
         self._ttl = ttl_seconds
 
     async def get(
