@@ -67,3 +67,17 @@ class BaseLLMProvider(ABC):
             Tuple of (prompt_tokens, completion_tokens_estimate)
         """
         ...
+
+    async def embed(self, text: str) -> list[float]:
+        """Generate embedding vector for text.
+
+        Args:
+            text: Text to embed
+
+        Returns:
+            Embedding vector as list of floats
+
+        Raises:
+            NotImplementedError: If provider does not support embeddings
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} does not support embeddings")

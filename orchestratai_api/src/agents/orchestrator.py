@@ -6,7 +6,9 @@ from typing import Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
+from src.agents.workers.cag_agent import CAGAgent
 from src.agents.workers.rag_agent import RAGAgent
+from src.cache.redis_cache import RedisSemanticCache
 from src.llm.provider_factory import AgentRole, ProviderFactory
 from src.models.enums import AgentId, AgentStatus, LogStatus, LogType
 from src.models.schemas import ChatMetrics, ChatRequest, ChatResponse, RetrievalLog
@@ -30,6 +32,7 @@ class OrchestratorState(TypedDict):
 META_QUESTION = "META_QUESTION"
 DOMAIN_QUESTION = "DOMAIN_QUESTION"
 POLICY_QUESTION = "POLICY_QUESTION"
+PRICING_QUESTION = "PRICING_QUESTION"
 
 
 async def analyse_query(state: OrchestratorState) -> OrchestratorState:
@@ -58,10 +61,11 @@ Intent types:
 - META_QUESTION: Questions about what you can do, your capabilities, how you work
 - DOMAIN_QUESTION: Questions requiring domain knowledge, document retrieval, or technical info
 - POLICY_QUESTION: Questions about policies, rules, or compliance
+- PRICING_QUESTION: Questions about pricing, costs, billing, or refunds
 
 Respond with JSON only:
 {{
-    "intent": "META_QUESTION" | "DOMAIN_QUESTION" | "POLICY_QUESTION",
+    "intent": "META_QUESTION" | "DOMAIN_QUESTION" | "POLICY_QUESTION" | "PRICING_QUESTION",
     "confidence": 0.0-1.0,
     "reasoning": "brief explanation"
 }}"""
@@ -99,11 +103,16 @@ Respond with JSON only:
 def decide_route(state: OrchestratorState) -> Literal["guide", "delegate"]:
     """Decide whether to guide directly or delegate to a worker.
 
+    Routing logic:
+    - META_QUESTION → guide mode (direct orchestrator response)
+    - POLICY_QUESTION or PRICING_QUESTION → delegate to CAG agent
+    - DOMAIN_QUESTION → delegate to RAG agent
+
     Args:
         state: Current orchestrator state with analysis
 
     Returns:
-        "guide" for meta questions, "delegate" for domain/policy questions
+        "guide" for meta questions, "delegate" for domain/policy/pricing questions
     """
     intent = state["analysis"].get("intent", DOMAIN_QUESTION)
 
@@ -190,15 +199,19 @@ async def delegate_to_worker(
     state: OrchestratorState,
     *,
     vector_store: VectorStore,
+    cache: RedisSemanticCache,
 ) -> OrchestratorState:
     """Delegate query to appropriate worker agent.
 
-    Currently routes DOMAIN_QUESTION to RAG agent.
-    Future: Add CAG, Hybrid agents.
+    Routing logic:
+    - POLICY_QUESTION or PRICING_QUESTION → CAG agent (cached responses)
+    - DOMAIN_QUESTION → RAG agent (document retrieval)
+    - Other → guide mode fallback
 
     Args:
         state: Current orchestrator state
         vector_store: Vector database for RAG agent
+        cache: Redis semantic cache for CAG agent
 
     Returns:
         Updated state with worker response
@@ -206,7 +219,49 @@ async def delegate_to_worker(
     intent = state["analysis"].get("intent", DOMAIN_QUESTION)
 
     # Route based on intent
-    if intent == DOMAIN_QUESTION:
+    if intent in [POLICY_QUESTION, PRICING_QUESTION]:
+        # Use CAG agent for policy/pricing questions
+        cag_provider = ProviderFactory.for_role(AgentRole.CAG)
+        embeddings_provider = ProviderFactory.for_role(AgentRole.EMBEDDINGS)
+        cag_agent = CAGAgent(
+            provider=cag_provider,
+            cache=cache,
+            embeddings=embeddings_provider,
+        )
+
+        # Build ChatRequest for CAG agent
+        request = ChatRequest(
+            message=state["messages"][-1]["content"],
+            session_id=state["session_id"],
+        )
+
+        # Invoke CAG agent
+        response = await cag_agent.run(request)
+
+        # Add routing log to beginning of logs
+        now = datetime.now(UTC).isoformat()
+        routing_log = RetrievalLog(
+            id=str(uuid.uuid4()),
+            type=LogType.ROUTING,
+            title="Orchestrator routed to CAG agent",
+            data={
+                "intent": state["analysis"]["intent"],
+                "confidence": state["analysis"]["confidence"],
+                "target_agent": "policy",
+                "reasoning": state["analysis"]["reasoning"],
+            },
+            timestamp=now,
+            status=LogStatus.SUCCESS,
+            chunks=None,
+        )
+
+        # Prepend routing log
+        response.logs.insert(0, routing_log)
+
+        state["result"] = response
+        return state
+
+    elif intent == DOMAIN_QUESTION:
         # Use RAG agent for domain questions
         rag_provider = ProviderFactory.for_role(AgentRole.RAG)
         rag_agent = RAGAgent(provider=rag_provider, vector_store=vector_store)
@@ -247,19 +302,24 @@ async def delegate_to_worker(
         return await guide_user(state)
 
 
-def build_orchestrator_graph(*, vector_store: VectorStore) -> Any:
+def build_orchestrator_graph(
+    *,
+    vector_store: VectorStore,
+    cache: RedisSemanticCache,
+) -> Any:
     """Build and compile the LangGraph orchestrator workflow.
 
     Args:
-        vector_store: Vector database for worker agents
+        vector_store: Vector database for RAG agent
+        cache: Redis semantic cache for CAG agent
 
     Returns:
         Compiled StateGraph ready for execution
     """
 
-    # Define delegate wrapper to capture vector_store
+    # Define delegate wrapper to capture vector_store and cache
     async def delegate_wrapper(state: OrchestratorState) -> OrchestratorState:
-        return await delegate_to_worker(state, vector_store=vector_store)
+        return await delegate_to_worker(state, vector_store=vector_store, cache=cache)
 
     # Create workflow
     workflow = StateGraph(OrchestratorState)

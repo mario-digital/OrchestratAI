@@ -5,7 +5,7 @@ from typing import Any
 
 import tiktoken
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from pydantic import SecretStr
 
 from .base_provider import BaseLLMProvider
@@ -72,6 +72,16 @@ class OpenAIProvider(BaseLLMProvider):
         except KeyError:
             # Fallback to cl100k_base for newer models
             self._encoder = tiktoken.get_encoding("cl100k_base")
+
+        # Initialize embeddings client if this is an embeddings model
+        self._embeddings: OpenAIEmbeddings | None
+        if "embedding" in model:
+            self._embeddings = OpenAIEmbeddings(
+                model=model,
+                api_key=SecretStr(api_key),
+            )
+        else:
+            self._embeddings = None
 
     async def complete(
         self,
@@ -188,6 +198,28 @@ class OpenAIProvider(BaseLLMProvider):
         num_tokens += 3  # Every reply is primed with <|start|>assistant<|message|>
 
         return (num_tokens, 0)  # Completion tokens unknown until generation
+
+    async def embed(self, text: str) -> list[float]:
+        """Generate embedding vector for text.
+
+        Args:
+            text: Text to embed
+
+        Returns:
+            Embedding vector as list of floats
+
+        Raises:
+            RuntimeError: If this provider is not configured for embeddings
+        """
+        if not self._embeddings:
+            raise RuntimeError(
+                f"Provider '{self.model}' is not configured for embeddings. "
+                "Use a model like 'text-embedding-3-large'."
+            )
+
+        # Generate embedding using LangChain
+        result = await self._embeddings.aembed_query(text)
+        return result
 
     def _convert_to_langchain_messages(
         self,
