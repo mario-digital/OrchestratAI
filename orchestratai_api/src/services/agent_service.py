@@ -64,6 +64,8 @@ class AgentService:
             msg = "Orchestrator failed to produce a result"
             raise RuntimeError(msg)
 
+        # Type assertion for mypy
+        assert isinstance(result, ChatResponse)
         return result
 
     async def process_chat_stream(self, request: ChatRequest) -> AsyncIterator[str]:
