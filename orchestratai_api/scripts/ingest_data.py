@@ -203,6 +203,10 @@ async def ingest_documents(
     print()
 
     # Embed and persist to ChromaDB
+    # NOTE: All chunks are loaded into memory before batch processing.
+    # For very large datasets (>10k documents), consider implementing a streaming
+    # generator pattern to avoid OOM errors. Current implementation is suitable
+    # for initial corpus setup and moderate-sized datasets.
     print("🔮 Embedding and persisting to ChromaDB...")
     print("   (This may take a while - generating embeddings for each chunk...)")
     try:
