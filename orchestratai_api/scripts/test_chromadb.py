@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 """Test ChromaDB vector search."""
 
+__test__ = False  # prevent pytest from collecting this module
+
 import asyncio
+import os
 import sys
 from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Ensure local testing doesn't require real credentials
+os.environ.setdefault("USE_ONEPASSWORD", "false")
+os.environ.setdefault("OPENAI_API_KEY", "test-openai-key")
+os.environ.setdefault("USE_FAKE_EMBEDDINGS", "true")
 
 from src.retrieval.chroma_store import ChromaVectorStore
 
@@ -28,7 +36,7 @@ async def test_chromadb():
         # Try connecting with the persisted directory from ingestion
         store = ChromaVectorStore(
             persist_directory="../data/chroma_db",
-            collection_name="knowledge_base_v1"
+            collection_name="knowledge_base_v1",
         )
 
         print("📊 Testing similarity search for: 'What is RAG?'\n")

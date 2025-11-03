@@ -31,12 +31,12 @@ class TestSecretResolution:
             assert "not found" in str(exc_info.value)
 
     def test_resolve_missing_credential_onepassword_enabled(self):
-        """Should raise NotImplementedError when 1Password not yet implemented."""
+        """Should raise descriptive error when 1Password enabled but credential missing."""
         with patch.dict(os.environ, {"USE_ONEPASSWORD": "true"}, clear=True):
-            with pytest.raises(NotImplementedError) as exc_info:
+            with pytest.raises(RuntimeError) as exc_info:
                 resolve_secret("MISSING_KEY")
-
-            assert "1Password integration not yet implemented" in str(exc_info.value)
+            message = str(exc_info.value)
+            assert "Credential 'MISSING_KEY' not found" in message
 
     def test_environment_takes_precedence_over_onepassword(self):
         """Environment variables should take precedence even when 1Password enabled."""
@@ -62,14 +62,15 @@ class TestSecretResolution:
             assert result2 == "cached_value"
 
     def test_use_onepassword_defaults_to_true(self):
-        """USE_ONEPASSWORD should default to true when not set."""
+        """USE_ONEPASSWORD defaults to true which still requires defined credential."""
         with patch.dict(os.environ, {}, clear=True):
             # Remove USE_ONEPASSWORD to test default
             if "USE_ONEPASSWORD" in os.environ:
                 del os.environ["USE_ONEPASSWORD"]
 
-            with pytest.raises(NotImplementedError):
+            with pytest.raises(RuntimeError) as exc_info:
                 resolve_secret("MISSING_KEY")
+            assert "Credential 'MISSING_KEY' not found" in str(exc_info.value)
 
     def test_empty_environment_variable(self):
         """Should raise error for empty environment variable."""

@@ -1,13 +1,44 @@
 """ChromaDB vector store implementation."""
 
+import os
+from collections.abc import Iterable
+
 import anyio
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 from pydantic import SecretStr
 
 from src.llm.secrets import resolve_secret
 from src.retrieval.vector_store import VectorStore
+
+
+def _should_use_fake_embeddings() -> bool:
+    """Return True when fake embeddings are requested via configuration."""
+
+    value = os.getenv("USE_FAKE_EMBEDDINGS", "")
+    return value.lower() in {"true", "1", "yes", "y"}
+
+
+class BagOfWordsEmbeddings(Embeddings):
+    """Lightweight deterministic embeddings for local testing/dev."""
+
+    def __init__(self, dimension: int = 128) -> None:
+        self.dimension = dimension
+
+    def _embed(self, text: str) -> list[float]:
+        vector = [0.0] * self.dimension
+        for token in text.lower().split():
+            index = hash(token) % self.dimension
+            vector[index] += 1.0
+        return vector
+
+    def embed_documents(self, texts: Iterable[str]) -> list[list[float]]:
+        return [self._embed(text) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed(text)
 
 
 class ChromaVectorStore(VectorStore):
@@ -18,6 +49,7 @@ class ChromaVectorStore(VectorStore):
         *,
         persist_directory: str = "/app/chroma_db",
         collection_name: str = "knowledge_base_v1",
+        embeddings: Embeddings | None = None,
     ):
         """Initialize ChromaVectorStore.
 
@@ -25,11 +57,16 @@ class ChromaVectorStore(VectorStore):
             persist_directory: Directory for persistent storage
             collection_name: Name of the collection to use
         """
-        # Resolve OpenAI API key using 1Password integration (respects USE_ONEPASSWORD)
-        api_key = resolve_secret("OPENAI_API_KEY")
-        self._embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-large", api_key=SecretStr(api_key)
-        )
+        if embeddings is not None:
+            self._embeddings = embeddings
+        elif _should_use_fake_embeddings():
+            self._embeddings = BagOfWordsEmbeddings()
+        else:
+            # Resolve OpenAI API key using 1Password integration (respects USE_ONEPASSWORD)
+            api_key = resolve_secret("OPENAI_API_KEY")
+            self._embeddings = OpenAIEmbeddings(
+                model="text-embedding-3-large", api_key=SecretStr(api_key)
+            )
         self._persist_directory = persist_directory
         self._collection_name = collection_name
         self._client: Chroma | None = None

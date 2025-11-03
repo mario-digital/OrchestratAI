@@ -7,8 +7,8 @@ from src.storage.database import Base, get_db_session, init_db
 
 def test_base_declarative():
     """Test that Base class is properly configured."""
-    assert hasattr(Base, "__tablename__")  # DeclarativeBase has this
     assert hasattr(Base, "metadata")
+    assert hasattr(Base, "registry")
 
 
 @pytest.mark.asyncio

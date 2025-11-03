@@ -31,6 +31,9 @@ def resolve_secret(key: str) -> str:
         >>> # Without 1Password (in .env): OPENAI_API_KEY=sk-abc123...
         >>> api_key = resolve_secret("OPENAI_API_KEY")  # Returns plain value
     """
+    # Determine whether 1Password integration is enabled
+    use_onepassword = os.getenv("USE_ONEPASSWORD", "true").lower() not in {"false", "0", "no"}
+
     # Priority 1: Check system environment (Docker Compose injects resolved values)
     value = os.getenv(key)
 
@@ -49,6 +52,11 @@ def resolve_secret(key: str) -> str:
 
     # Auto-detect 1Password reference (op://) and resolve it
     if value.startswith("op://"):
+        if not use_onepassword:
+            raise RuntimeError(
+                "1Password integration is disabled (USE_ONEPASSWORD=false) but the credential "
+                f"'{key}' uses an op:// reference. Provide a resolved value or enable 1Password."
+            )
         return _resolve_from_onepassword_reference(value)
 
     # Plain value - return as-is

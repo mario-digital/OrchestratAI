@@ -25,6 +25,7 @@ services:
       - POSTGRES_DB=orchestratai
       - POSTGRES_USER=orchestratai
       - POSTGRES_PASSWORD=orchestratai_dev_password
+      - USE_FAKE_EMBEDDINGS=${USE_FAKE_EMBEDDINGS:-false}
     volumes:
       - ./orchestratai_api/src:/app/src
     depends_on:
