@@ -1,7 +1,5 @@
 """Tests for orchestrator routing decision logic."""
 
-import pytest
-
 from src.agents.orchestrator import (
     DOMAIN_QUESTION,
     META_QUESTION,

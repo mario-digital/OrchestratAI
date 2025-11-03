@@ -30,15 +30,24 @@ async def temp_vector_store():
         # Seed with test documents
         test_docs = [
             Document(
-                page_content="RAG stands for Retrieval-Augmented Generation. It's a technique that combines information retrieval with text generation.",
+                page_content=(
+                    "RAG stands for Retrieval-Augmented Generation. "
+                    "It's a technique that combines information retrieval with text generation."
+                ),
                 metadata={"source": "rag_basics.pdf", "page": 1},
             ),
             Document(
-                page_content="Vector databases store embeddings and enable similarity search. ChromaDB is a popular vector database.",
+                page_content=(
+                    "Vector databases store embeddings and enable similarity search. "
+                    "ChromaDB is a popular vector database."
+                ),
                 metadata={"source": "vector_db_guide.pdf", "page": 1},
             ),
             Document(
-                page_content="LangGraph is a framework for building agent workflows with state management and routing.",
+                page_content=(
+                    "LangGraph is a framework for building agent workflows "
+                    "with state management and routing."
+                ),
                 metadata={"source": "langgraph_docs.pdf", "page": 1},
             ),
         ]
@@ -57,7 +66,10 @@ async def test_guide_mode_end_to_end(temp_vector_store):
     """Test guide mode: meta question handled by orchestrator directly."""
     # Mock orchestrator providers
     analysis_result = LLMCallResult(
-        content='{"intent": "META_QUESTION", "confidence": 0.95, "reasoning": "User asking about capabilities"}',
+        content=(
+            '{"intent": "META_QUESTION", "confidence": 0.95, '
+            '"reasoning": "User asking about capabilities"}'
+        ),
         model="claude-3-5-sonnet",
         tokens_input=100,
         tokens_output=50,
@@ -65,7 +77,10 @@ async def test_guide_mode_end_to_end(temp_vector_store):
     )
 
     guide_result = LLMCallResult(
-        content="I can help you with document search, technical questions, and general information retrieval using RAG.",
+        content=(
+            "I can help you with document search, technical questions, "
+            "and general information retrieval using RAG."
+        ),
         model="claude-3-haiku",
         tokens_input=50,
         tokens_output=30,
@@ -123,7 +138,10 @@ async def test_delegate_mode_rag_end_to_end(temp_vector_store):
     """Test delegate mode: domain question routed to RAG agent."""
     # Mock orchestrator analysis
     analysis_result = LLMCallResult(
-        content='{"intent": "DOMAIN_QUESTION", "confidence": 0.92, "reasoning": "Requires domain knowledge"}',
+        content=(
+            '{"intent": "DOMAIN_QUESTION", "confidence": 0.92, '
+            '"reasoning": "Requires domain knowledge"}'
+        ),
         model="claude-3-5-sonnet",
         tokens_input=100,
         tokens_output=50,
@@ -132,7 +150,10 @@ async def test_delegate_mode_rag_end_to_end(temp_vector_store):
 
     # Mock RAG generation
     rag_result = LLMCallResult(
-        content="Based on the retrieved documents, RAG (Retrieval-Augmented Generation) combines retrieval with generation.",
+        content=(
+            "Based on the retrieved documents, RAG (Retrieval-Augmented Generation) "
+            "combines retrieval with generation."
+        ),
         model="gpt-4-turbo",
         tokens_input=200,
         tokens_output=40,
@@ -226,7 +247,9 @@ async def test_agent_service_integration(temp_vector_store):
         service = AgentService(vector_store=temp_vector_store)
 
         # Build request
-        request = ChatRequest(message="What is RAG?", session_id="550e8400-e29b-41d4-a716-446655440000")
+        request = ChatRequest(
+            message="What is RAG?", session_id="550e8400-e29b-41d4-a716-446655440000"
+        )
 
         # Process
         response = await service.process_chat(request)
@@ -277,7 +300,9 @@ async def test_streaming_integration(temp_vector_store):
         service = AgentService(vector_store=temp_vector_store)
 
         # Build request
-        request = ChatRequest(message="What can you do?", session_id="550e8400-e29b-41d4-a716-446655440000")
+        request = ChatRequest(
+            message="What can you do?", session_id="550e8400-e29b-41d4-a716-446655440000"
+        )
 
         # Collect streamed events
         events = []

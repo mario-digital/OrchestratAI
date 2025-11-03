@@ -31,16 +31,20 @@ stream_sessions: dict[str, dict[str, Any]] = {}
 
 
 # Dependency: Agent service singleton
+_agent_service_instance: AgentService | None = None
+
+
 def get_agent_service() -> AgentService:
     """Get or create agent service instance.
 
     Returns:
         AgentService configured with ChromaVectorStore
     """
-    if not hasattr(get_agent_service, "_instance"):
+    global _agent_service_instance
+    if _agent_service_instance is None:
         vector_store = ChromaVectorStore()
-        get_agent_service._instance = AgentService(vector_store=vector_store)
-    return get_agent_service._instance
+        _agent_service_instance = AgentService(vector_store=vector_store)
+    return _agent_service_instance
 
 
 @router.post("/chat", response_model=ChatResponse)

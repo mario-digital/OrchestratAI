@@ -1,6 +1,6 @@
 """Tests for orchestrator query analysis."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -21,7 +21,8 @@ async def test_analyse_query_meta_question():
 
     # Mock provider response
     mock_result = LLMCallResult(
-        content='{"intent": "META_QUESTION", "confidence": 0.95, "reasoning": "User asking about capabilities"}',
+        content='{"intent": "META_QUESTION", "confidence": 0.95, '
+        '"reasoning": "User asking about capabilities"}',
         model="claude-3-5-sonnet",
         tokens_input=100,
         tokens_output=50,
@@ -53,7 +54,8 @@ async def test_analyse_query_domain_question():
     }
 
     mock_result = LLMCallResult(
-        content='{"intent": "DOMAIN_QUESTION", "confidence": 0.92, "reasoning": "Requires domain knowledge"}',
+        content='{"intent": "DOMAIN_QUESTION", "confidence": 0.92, '
+        '"reasoning": "Requires domain knowledge"}',
         model="claude-3-5-sonnet",
         tokens_input=100,
         tokens_output=50,
