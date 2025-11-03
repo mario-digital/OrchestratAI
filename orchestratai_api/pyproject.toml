@@ -13,6 +13,7 @@ dependencies = [
     "openai>=1.12.0",
     "boto3>=1.34.0",
     # LLM Orchestration
+    "langgraph>=0.0.20",
     "langchain-core>=0.1.0",
     "langchain-openai>=0.0.5",
     "langchain-community>=0.0.20",

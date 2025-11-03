@@ -1,8 +1,8 @@
 """
 Chat endpoint for OrchestratAI
 
-Handles POST /api/chat requests, routes to appropriate agent,
-and returns mock responses during development.
+Handles POST /api/chat requests, routes through LangGraph orchestrator,
+and returns real agent responses with RAG capabilities.
 """
 
 import asyncio
@@ -12,13 +12,12 @@ from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from src.config import settings
 from src.models.schemas import ChatRequest, ChatResponse
-from src.services.mock_data import generate_mock_response
-from src.services.sse_utils import create_sse_event
+from src.retrieval.chroma_store import ChromaVectorStore
+from src.services.agent_service import AgentService
 
 # Create router with /api prefix
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -31,29 +30,53 @@ logger = logging.getLogger(__name__)
 stream_sessions: dict[str, dict[str, Any]] = {}
 
 
-@router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> ChatResponse:
+# Dependency: Agent service singleton
+def get_agent_service() -> AgentService:
+    """Get or create agent service instance.
+
+    Returns:
+        AgentService configured with ChromaVectorStore
     """
-    Process chat message and return mock agent response.
+    if not hasattr(get_agent_service, "_instance"):
+        vector_store = ChromaVectorStore()
+        get_agent_service._instance = AgentService(vector_store=vector_store)
+    return get_agent_service._instance
+
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat(
+    request: ChatRequest,
+    agent_service: AgentService = Depends(get_agent_service),  # noqa: B008
+) -> ChatResponse:
+    """
+    Process chat message through LangGraph orchestrator.
+
+    Routes query through orchestrator with guide/delegate modes.
+    Returns real agent response with RAG retrieval when needed.
 
     Args:
         request: ChatRequest containing message and session_id
+        agent_service: Injected agent service instance
 
     Returns:
         ChatResponse with agent message, logs, and metrics
 
     Raises:
         422: Pydantic validation error for invalid request format
+        500: Orchestrator execution error
     """
-    # Generate mock response using routing logic
-    response = generate_mock_response(request.message)
+    # Process through orchestrator
+    response = await agent_service.process_chat(request)
     return response
 
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatRequest) -> StreamingResponse:
+async def chat_stream(
+    request: ChatRequest,
+    agent_service: AgentService = Depends(get_agent_service),  # noqa: B008
+) -> StreamingResponse:
     """
-    Stream chat response using Server-Sent Events (SSE).
+    Stream chat response using Server-Sent Events (SSE) via LangGraph orchestrator.
 
     Returns real-time updates for agent status, message chunks, and retrieval logs.
     Streams four event types:
@@ -64,6 +87,7 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
 
     Args:
         request: ChatRequest containing message and session_id
+        agent_service: Injected agent service instance
 
     Returns:
         StreamingResponse with text/event-stream content type
@@ -91,60 +115,19 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
     Note:
         - Connection closes cleanly after `done` event
         - Client disconnect handled gracefully (no errors logged)
-        - Configurable streaming speed via STREAM_DELAY_MS setting
+        - Streams events from real LangGraph orchestrator
     """
 
     async def event_generator() -> AsyncGenerator[str, None]:
         """
-        Generate SSE events for streaming chat response.
+        Generate SSE events from orchestrator stream.
 
-        Yields SSE-formatted events in sequence:
-        1. Orchestrator routing
-        2. Target agent activation
-        3. Retrieval logs (if any)
-        4. Message chunks (word-by-word)
-        5. Final agent status
-        6. Done event with metadata
+        Yields SSE-formatted events from agent service.
         """
         try:
-            # Generate mock response (reuse existing service)
-            mock_response = generate_mock_response(request.message)
-
-            # 1. Emit orchestrator routing status
-            yield create_sse_event("agent_status", {"agent": "ORCHESTRATOR", "status": "ROUTING"})
-            await asyncio.sleep(0.1)  # 100ms delay
-
-            # 2. Orchestrator idle, target agent active
-            yield create_sse_event("agent_status", {"agent": "ORCHESTRATOR", "status": "IDLE"})
-            yield create_sse_event(
-                "agent_status", {"agent": mock_response.agent.value, "status": "ACTIVE"}
-            )
-            await asyncio.sleep(0.1)
-
-            # 3. Emit retrieval logs
-            for log in mock_response.logs:
-                yield create_sse_event("retrieval_log", log.model_dump())
-                await asyncio.sleep(0.05)  # 50ms between logs
-
-            # 4. Stream message chunks (word-by-word)
-            words = mock_response.message.split()
-            for word in words:
-                yield create_sse_event("message_chunk", {"content": word + " "})
-                await asyncio.sleep(settings.STREAM_DELAY_MS / 1000)
-
-            # 5. Final agent status
-            yield create_sse_event(
-                "agent_status", {"agent": mock_response.agent.value, "status": "COMPLETE"}
-            )
-
-            # 6. Done event with metadata
-            yield create_sse_event(
-                "done",
-                {
-                    "session_id": str(request.session_id),
-                    "metadata": mock_response.metrics.model_dump(),
-                },
-            )
+            # Stream from orchestrator
+            async for event in agent_service.process_chat_stream(request):
+                yield event
 
         except asyncio.CancelledError:
             # Client disconnected - log at INFO level (normal behavior)
@@ -201,9 +184,12 @@ async def initiate_stream(request: ChatRequest) -> dict[str, str]:
 
 
 @router.get("/chat/stream/{stream_id}")
-async def stream_by_id(stream_id: str) -> StreamingResponse:
+async def stream_by_id(
+    stream_id: str,
+    agent_service: AgentService = Depends(get_agent_service),  # noqa: B008
+) -> StreamingResponse:
     """
-    Stream chat response by ID (Step 2 of two-step streaming).
+    Stream chat response by ID (Step 2 of two-step streaming) via LangGraph orchestrator.
 
     Security: Uses stream_id to retrieve message from server-side storage.
     Message never appears in URL or logs.
@@ -213,6 +199,7 @@ async def stream_by_id(stream_id: str) -> StreamingResponse:
 
     Args:
         stream_id: UUID from /chat/stream/initiate endpoint
+        agent_service: Injected agent service instance
 
     Returns:
         StreamingResponse with SSE events
@@ -245,49 +232,17 @@ async def stream_by_id(stream_id: str) -> StreamingResponse:
 
     async def event_generator() -> AsyncGenerator[str, None]:
         """
-        Generate SSE events using stored message.
+        Generate SSE events using stored message via orchestrator.
 
         Note: Message retrieved from server-side storage, never from URL.
         """
         try:
-            # Generate mock response using stored message
-            mock_response = generate_mock_response(message)
+            # Build request from stored data
+            request = ChatRequest(message=message, session_id=session_id)
 
-            # 1. Emit orchestrator routing status
-            yield create_sse_event("agent_status", {"agent": "ORCHESTRATOR", "status": "ROUTING"})
-            await asyncio.sleep(0.1)
-
-            # 2. Orchestrator idle, target agent active
-            yield create_sse_event("agent_status", {"agent": "ORCHESTRATOR", "status": "IDLE"})
-            yield create_sse_event(
-                "agent_status", {"agent": mock_response.agent.value, "status": "ACTIVE"}
-            )
-            await asyncio.sleep(0.1)
-
-            # 3. Emit retrieval logs
-            for log in mock_response.logs:
-                yield create_sse_event("retrieval_log", log.model_dump())
-                await asyncio.sleep(0.05)
-
-            # 4. Stream message chunks (word-by-word)
-            words = mock_response.message.split()
-            for word in words:
-                yield create_sse_event("message_chunk", {"content": word + " "})
-                await asyncio.sleep(settings.STREAM_DELAY_MS / 1000)
-
-            # 5. Final agent status
-            yield create_sse_event(
-                "agent_status", {"agent": mock_response.agent.value, "status": "COMPLETE"}
-            )
-
-            # 6. Done event with metadata
-            yield create_sse_event(
-                "done",
-                {
-                    "session_id": session_id,
-                    "metadata": mock_response.metrics.model_dump(),
-                },
-            )
+            # Stream from orchestrator
+            async for event in agent_service.process_chat_stream(request):
+                yield event
 
             # Clean up session after successful completion
             if stream_id in stream_sessions:
