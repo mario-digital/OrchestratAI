@@ -21,7 +21,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.retrieval.chroma_store import ChromaVectorStore
-from src.storage.database import get_db_session, init_db
+from src.storage.database import _get_session_maker, init_db
 from src.storage.repository import DocumentRepository
 
 
@@ -144,11 +144,16 @@ async def ingest_documents(
             print("   ✓ ChromaDB collection cleared")
 
             # Clear PostgreSQL documents
-            async for session in get_db_session():
-                repo = DocumentRepository(session)
-                deleted = await repo.delete_by_collection(collection)
-                print(f"   ✓ PostgreSQL: Deleted {deleted} documents")
-                break
+            session_maker = _get_session_maker()
+            async with session_maker() as session:
+                try:
+                    repo = DocumentRepository(session)
+                    deleted = await repo.delete_by_collection(collection)
+                    await session.commit()
+                    print(f"   ✓ PostgreSQL: Deleted {deleted} documents")
+                except Exception:
+                    await session.rollback()
+                    raise
         except Exception as e:
             print(f"   ⚠️  Warning: Could not clear collections: {e}")
         print()
@@ -180,22 +185,27 @@ async def ingest_documents(
     # Store in PostgreSQL
     print("🗄️  Storing raw documents in PostgreSQL...")
     try:
-        async for session in get_db_session():
-            repo = DocumentRepository(session)
-            batch_size = 50
-            for idx, chunk in enumerate(chunks):
-                await repo.create(
-                    source=chunk.metadata.get("source", "unknown"),
-                    content=chunk.page_content,
-                    doc_metadata=chunk.metadata,
-                    page=chunk.metadata.get("page"),
-                    chunk_index=idx,
-                    collection_name=collection,
-                )
-                # Show progress every batch_size chunks
-                if (idx + 1) % batch_size == 0 or (idx + 1) == len(chunks):
-                    print(f"   Progress: {idx + 1}/{len(chunks)} chunks stored", flush=True)
-            # Session will auto-commit when the async context manager exits
+        session_maker = _get_session_maker()
+        async with session_maker() as session:
+            try:
+                repo = DocumentRepository(session)
+                batch_size = 50
+                for idx, chunk in enumerate(chunks):
+                    await repo.create(
+                        source=chunk.metadata.get("source", "unknown"),
+                        content=chunk.page_content,
+                        doc_metadata=chunk.metadata,
+                        page=chunk.metadata.get("page"),
+                        chunk_index=idx,
+                        collection_name=collection,
+                    )
+                    # Show progress every batch_size chunks
+                    if (idx + 1) % batch_size == 0 or (idx + 1) == len(chunks):
+                        print(f"   Progress: {idx + 1}/{len(chunks)} chunks stored", flush=True)
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
         print(f"   ✓ Stored {len(chunks)} document chunks in PostgreSQL")
     except Exception as e:
         print(f"   ✗ Error storing documents in PostgreSQL: {e}")
