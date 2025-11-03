@@ -11,18 +11,48 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
+from src.llm.secrets import resolve_secret
+
 
 def _get_database_url() -> str:
-    """Get database URL from environment with validation."""
-    url = os.getenv("DATABASE_URL")
-    if not url:
+    """Get database URL from environment with 1Password support.
+
+    Automatically resolves credentials via resolve_secret():
+    - POSTGRES_PASSWORD can be op://Private/OrchestratAI/POSTGRES_PASSWORD
+    - Falls back to plain password if not using 1Password
+
+    Returns:
+        Database URL with resolved credentials
+
+    Raises:
+        RuntimeError: If required environment variables are not set
+    """
+    # Check if DATABASE_URL is directly provided (legacy support)
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        # If it contains op://, we need to parse and resolve it
+        # For now, return as-is since it's already constructed
+        return database_url
+
+    # Build DATABASE_URL from components with 1Password support
+    postgres_host = os.getenv("POSTGRES_HOST", "postgres")
+    postgres_port = os.getenv("POSTGRES_PORT", "5432")
+    postgres_db = os.getenv("POSTGRES_DB", "orchestratai")
+    postgres_user = os.getenv("POSTGRES_USER", "orchestratai")
+
+    # Resolve password via 1Password (supports op:// references)
+    try:
+        postgres_password = resolve_secret("POSTGRES_PASSWORD")
+    except RuntimeError as e:
         raise RuntimeError(
-            "DATABASE_URL environment variable is not set. "
+            f"Failed to resolve POSTGRES_PASSWORD: {e}\n"
             "Please configure it in orchestratai_api/.env:\n"
-            "  DATABASE_URL=postgresql://user:password@host:port/dbname\n"
-            "For local development, see .env.template for the default configuration."
-        )
-    return url
+            "  - With 1Password: POSTGRES_PASSWORD=op://Private/OrchestratAI/POSTGRES_PASSWORD\n"
+            "  - Without 1Password: POSTGRES_PASSWORD=your-secure-password"
+        ) from e
+
+    # Construct DATABASE_URL with resolved password
+    return f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
 
 
 # Lazy initialization - only fails when actually used, not on import
