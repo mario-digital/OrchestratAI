@@ -10,11 +10,21 @@ import pytest_asyncio
 from langchain_core.documents import Document
 
 from src.agents.orchestrator import build_orchestrator_graph
+from src.cache.redis_cache import RedisSemanticCache
 from src.llm.types import LLMCallResult
 from src.models.enums import AgentId, AgentStatus, LogType
 from src.models.schemas import ChatRequest
 from src.retrieval.chroma_store import ChromaVectorStore
 from src.services.agent_service import AgentService
+
+
+@pytest.fixture
+def mock_cache() -> AsyncMock:
+    """Create mock Redis cache."""
+    cache = AsyncMock(spec=RedisSemanticCache)
+    cache.get = AsyncMock(return_value=(None, 0.0))  # Default: cache miss
+    cache.set = AsyncMock()
+    return cache
 
 
 @pytest_asyncio.fixture
@@ -64,7 +74,7 @@ async def temp_vector_store() -> Any:
 
 
 @pytest.mark.asyncio
-async def test_guide_mode_end_to_end(temp_vector_store):
+async def test_guide_mode_end_to_end(temp_vector_store, mock_cache):
     """Test guide mode: meta question handled by orchestrator directly."""
     # Mock orchestrator providers
     analysis_result = LLMCallResult(
@@ -106,7 +116,9 @@ async def test_guide_mode_end_to_end(temp_vector_store):
         mock_factory.side_effect = get_mock_provider
 
         # Build orchestrator
-        orchestrator = build_orchestrator_graph(vector_store=temp_vector_store)
+        orchestrator = build_orchestrator_graph(
+            vector_store=temp_vector_store, cache=mock_cache
+        )
 
         # Execute guide mode query
         initial_state = {
@@ -136,7 +148,7 @@ async def test_guide_mode_end_to_end(temp_vector_store):
 
 
 @pytest.mark.asyncio
-async def test_delegate_mode_rag_end_to_end(temp_vector_store):
+async def test_delegate_mode_rag_end_to_end(temp_vector_store, mock_cache):
     """Test delegate mode: domain question routed to RAG agent."""
     # Mock orchestrator analysis
     analysis_result = LLMCallResult(
@@ -179,7 +191,9 @@ async def test_delegate_mode_rag_end_to_end(temp_vector_store):
         mock_factory.side_effect = get_mock_provider
 
         # Build orchestrator
-        orchestrator = build_orchestrator_graph(vector_store=temp_vector_store)
+        orchestrator = build_orchestrator_graph(
+            vector_store=temp_vector_store, cache=mock_cache
+        )
 
         # Execute delegate mode query
         initial_state = {
@@ -212,7 +226,7 @@ async def test_delegate_mode_rag_end_to_end(temp_vector_store):
 
 
 @pytest.mark.asyncio
-async def test_agent_service_integration(temp_vector_store):
+async def test_agent_service_integration(temp_vector_store, mock_cache):
     """Test AgentService bridge layer."""
     # Mock providers
     analysis_result = LLMCallResult(
@@ -231,7 +245,9 @@ async def test_agent_service_integration(temp_vector_store):
         cost=0.004,
     )
 
-    with patch("src.agents.orchestrator.ProviderFactory.for_role") as mock_factory:
+    with patch("src.agents.orchestrator.ProviderFactory.for_role") as mock_factory, patch(
+        "src.services.agent_service.RedisSemanticCache", return_value=mock_cache
+    ):
 
         def get_mock_provider(role):
             from src.llm.provider_factory import AgentRole
@@ -266,7 +282,7 @@ async def test_agent_service_integration(temp_vector_store):
 
 
 @pytest.mark.asyncio
-async def test_streaming_integration(temp_vector_store):
+async def test_streaming_integration(temp_vector_store, mock_cache):
     """Test SSE streaming through agent service."""
     analysis_result = LLMCallResult(
         content='{"intent": "META_QUESTION", "confidence": 0.95, "reasoning": "Test"}',
@@ -284,7 +300,9 @@ async def test_streaming_integration(temp_vector_store):
         cost=0.0005,
     )
 
-    with patch("src.agents.orchestrator.ProviderFactory.for_role") as mock_factory:
+    with patch("src.agents.orchestrator.ProviderFactory.for_role") as mock_factory, patch(
+        "src.services.agent_service.RedisSemanticCache", return_value=mock_cache
+    ):
 
         def get_mock_provider(role):
             from src.llm.provider_factory import AgentRole
