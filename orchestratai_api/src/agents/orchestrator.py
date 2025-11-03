@@ -554,10 +554,18 @@ def _add_routing_log(
         target_agent: Name of target agent
     """
     now = datetime.now(UTC).isoformat()
+    name_map = {
+        "hybrid": "Hybrid",
+        "rag": "RAG",
+        "cag": "CAG",
+        "direct": "Direct",
+        "guide": "Guide",
+    }
+    display = name_map.get(target_agent, target_agent.title())
     routing_log = RetrievalLog(
         id=str(uuid.uuid4()),
         type=LogType.ROUTING,
-        title=f"Orchestrator routed to {target_agent} agent",
+        title=f"Orchestrator routed to {display} agent",
         data={
             "intent": state["analysis"].get("intent", "unknown"),
             "confidence": state["analysis"].get("confidence", 0.0),
