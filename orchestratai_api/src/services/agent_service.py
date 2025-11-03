@@ -57,6 +57,8 @@ class AgentService:
             "route": "",
             "result": None,
             "session_id": request.session_id,
+            "attempted_agents": [],
+            "error_message": None,
         }
 
         # Execute orchestrator workflow
@@ -96,6 +98,8 @@ class AgentService:
             "route": "",
             "result": None,
             "session_id": request.session_id,
+            "attempted_agents": [],
+            "error_message": None,
         }
 
         # Track what we've emitted
