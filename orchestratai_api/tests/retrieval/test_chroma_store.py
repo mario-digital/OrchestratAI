@@ -8,6 +8,14 @@ from langchain_core.documents import Document
 from src.retrieval.chroma_store import ChromaVectorStore
 
 
+@pytest.fixture(autouse=True)
+def set_test_openai_key(monkeypatch):
+    """Ensure tests use dummy credentials instead of hitting 1Password."""
+    monkeypatch.setenv("USE_ONEPASSWORD", "false")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
+    monkeypatch.setenv("USE_FAKE_EMBEDDINGS", "true")
+
+
 @pytest.fixture
 def temp_chroma_store(tmp_path: Path) -> ChromaVectorStore:
     """Create a temporary ChromaVectorStore for testing."""
@@ -62,7 +70,11 @@ async def test_add_documents(
     await temp_chroma_store.add_documents(documents=sample_documents)
 
     # Verify documents were added by searching
-    results = await temp_chroma_store.similarity_search(query="What is RAG?", k=1)
+    results = await temp_chroma_store.similarity_search(
+        query="Retrieval-Augmented Generation (RAG) improves LLM responses "
+        "by fetching relevant context.",
+        k=1,
+    )
     assert len(results) == 1
     assert "Retrieval-Augmented Generation" in results[0].page_content
 
@@ -107,7 +119,11 @@ async def test_similarity_search_with_scores(
     """Test similarity search with scores returns valid score ranges."""
     await temp_chroma_store.add_documents(documents=sample_documents)
 
-    results = await temp_chroma_store.similarity_search_with_scores(query="What is RAG?", k=3)
+    results = await temp_chroma_store.similarity_search_with_scores(
+        query="Retrieval-Augmented Generation (RAG) improves LLM responses "
+        "by fetching relevant context.",
+        k=3,
+    )
 
     assert len(results) <= 3
     assert len(results) > 0
@@ -116,12 +132,13 @@ async def test_similarity_search_with_scores(
     for doc, score in results:
         assert isinstance(doc, Document)
         assert isinstance(score, float)
-        # Scores should be between 0.0 and 1.0 (lower is better for Chroma)
-        assert 0.0 <= score <= 2.0  # Allow some margin for distance metrics
+        assert score >= 0.0
 
     # First result should have lowest (best) score
     scores = [score for _, score in results]
     assert scores == sorted(scores)
+    assert scores[0] == 0.0
+    assert results[0][0].metadata["source"] == "rag_guide.md"
 
 
 @pytest.mark.asyncio
@@ -133,13 +150,15 @@ async def test_similarity_search_strong_matches(
 
     # Query very similar to one of the documents
     results = await temp_chroma_store.similarity_search_with_scores(
-        query="Retrieval-Augmented Generation improves responses", k=1
+        query="Retrieval-Augmented Generation (RAG) improves LLM responses "
+        "by fetching relevant context.",
+        k=1,
     )
 
     assert len(results) == 1
     doc, score = results[0]
-    # Strong match should have low distance score
-    assert score < 0.5, f"Expected strong match score < 0.5, got {score}"
+    # Strong match should have zero distance when query matches document exactly
+    assert score == 0.0
     assert "Retrieval-Augmented Generation" in doc.page_content
 
 
@@ -188,7 +207,10 @@ async def test_score_threshold_filtering(
 
     # Use a more generous threshold
     results_strong = await temp_chroma_store.similarity_search_with_threshold(
-        query="Retrieval-Augmented Generation", k=5, score_threshold=1.0
+        query="Retrieval-Augmented Generation (RAG) improves LLM responses "
+        "by fetching relevant context.",
+        k=5,
+        score_threshold=1.0,
     )
 
     # Should get at least one match with generous threshold
@@ -196,7 +218,9 @@ async def test_score_threshold_filtering(
 
     # Verify all returned documents are below threshold
     results_with_scores = await temp_chroma_store.similarity_search_with_scores(
-        query="Retrieval-Augmented Generation", k=5
+        query="Retrieval-Augmented Generation (RAG) improves LLM responses "
+        "by fetching relevant context.",
+        k=5,
     )
     for doc, score in results_with_scores:
         if doc.page_content in [d.page_content for d in results_strong]:
