@@ -264,3 +264,21 @@ class TestCAGAgent:
 
         # Verify: Agent status includes POLICY as COMPLETE
         assert AgentId.POLICY in response.agent_status
+
+    @pytest.mark.asyncio
+    async def test_close_cleanup(self, mock_cache: AsyncMock) -> None:
+        """Test that close() properly cleans up cache connection."""
+        # Setup
+        mock_provider = AsyncMock()
+        mock_embeddings = AsyncMock()
+        agent = CAGAgent(
+            provider=mock_provider,
+            cache=mock_cache,
+            embeddings=mock_embeddings,
+        )
+
+        # Execute
+        await agent.close()
+
+        # Verify: Cache close was called
+        mock_cache.close.assert_called_once()

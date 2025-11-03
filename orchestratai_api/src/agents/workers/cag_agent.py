@@ -47,6 +47,14 @@ class CAGAgent(BaseAgent):
         self._cache = cache
         self._embeddings = embeddings
 
+    async def close(self) -> None:
+        """Clean up resources.
+
+        Closes the Redis cache connection to prevent connection leaks.
+        Should be called when the agent is no longer needed.
+        """
+        await self._cache.close()
+
     async def run(self, request: ChatRequest, **kwargs: Any) -> ChatResponse:
         """Execute CAG workflow: check cache or generate response.
 
