@@ -295,7 +295,9 @@ async def execute_with_fallback(
                     result.logs.insert(0, fallback_log)
 
             logger.info(f"Agent {agent_name} succeeded")
-            return result  # type: ignore[return-value]
+            # Result from agent callable should be ChatResponse
+            assert isinstance(result, ChatResponse)
+            return result
 
         except Exception as e:
             logger.error(f"Agent {agent_name} failed: {e}", exc_info=True)
