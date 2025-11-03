@@ -21,6 +21,8 @@ def test_decide_route_meta_question():
         "route": "",
         "result": None,
         "session_id": "test-session",
+        "attempted_agents": [],
+        "error_message": None,
     }
 
     route = decide_route(state)
@@ -30,7 +32,7 @@ def test_decide_route_meta_question():
 
 
 def test_decide_route_domain_question():
-    """Test that DOMAIN_QUESTION routes to delegate mode."""
+    """Test that DOMAIN_QUESTION routes to RAG agent."""
     state: OrchestratorState = {
         "messages": [{"role": "user", "content": "What is RAG?"}],
         "analysis": {
@@ -41,16 +43,18 @@ def test_decide_route_domain_question():
         "route": "",
         "result": None,
         "session_id": "test-session",
+        "attempted_agents": [],
+        "error_message": None,
     }
 
     route = decide_route(state)
 
-    assert route == "delegate"
-    assert state["route"] == "delegate"
+    assert route == "delegate_rag"
+    assert state["route"] == "delegate_rag"
 
 
 def test_decide_route_policy_question():
-    """Test that POLICY_QUESTION routes to delegate mode."""
+    """Test that POLICY_QUESTION routes to CAG agent."""
     state: OrchestratorState = {
         "messages": [{"role": "user", "content": "What is your privacy policy?"}],
         "analysis": {
@@ -61,12 +65,14 @@ def test_decide_route_policy_question():
         "route": "",
         "result": None,
         "session_id": "test-session",
+        "attempted_agents": [],
+        "error_message": None,
     }
 
     route = decide_route(state)
 
-    assert route == "delegate"
-    assert state["route"] == "delegate"
+    assert route == "delegate_cag"
+    assert state["route"] == "delegate_cag"
 
 
 def test_decide_route_missing_intent():
@@ -77,13 +83,15 @@ def test_decide_route_missing_intent():
         "route": "",
         "result": None,
         "session_id": "test-session",
+        "attempted_agents": [],
+        "error_message": None,
     }
 
     route = decide_route(state)
 
-    # Should default to delegate when intent is missing
-    assert route == "delegate"
-    assert state["route"] == "delegate"
+    # "Hello" contains simple chat keyword, routes to direct
+    assert route == "delegate_direct"
+    assert state["route"] == "delegate_direct"
 
 
 def test_decide_route_preserves_state():
@@ -98,6 +106,8 @@ def test_decide_route_preserves_state():
         "route": "",
         "result": None,
         "session_id": "test-session-123",
+        "attempted_agents": [],
+        "error_message": None,
     }
 
     original_messages = state["messages"].copy()

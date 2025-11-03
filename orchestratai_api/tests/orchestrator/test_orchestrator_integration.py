@@ -202,6 +202,8 @@ async def test_delegate_mode_rag_end_to_end(temp_vector_store, mock_cache):
             "route": "",
             "result": None,
             "session_id": "550e8400-e29b-41d4-a716-446655440001",
+            "attempted_agents": [],
+            "error_message": None,
         }
 
         final_state = await orchestrator.ainvoke(initial_state)
@@ -405,6 +407,8 @@ async def test_delegate_mode_cag_policy_question_end_to_end(temp_vector_store, m
             "route": "",
             "result": None,
             "session_id": "550e8400-e29b-41d4-a716-446655440002",
+            "attempted_agents": [],
+            "error_message": None,
         }
 
         final_state = await orchestrator.ainvoke(initial_state)
@@ -491,6 +495,8 @@ async def test_delegate_mode_cag_pricing_question_end_to_end(temp_vector_store, 
             "route": "",
             "result": None,
             "session_id": "550e8400-e29b-41d4-a716-446655440003",
+            "attempted_agents": [],
+            "error_message": None,
         }
 
         final_state = await orchestrator.ainvoke(initial_state)

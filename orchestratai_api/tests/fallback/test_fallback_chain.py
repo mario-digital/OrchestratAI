@@ -198,8 +198,8 @@ class TestFallbackChain:
         error_log = error_logs[0]
         assert error_log.data["attempted_agents"] == ["hybrid", "rag", "cag", "direct"]
 
-        # Verify: Agent status shows error
-        assert response.agent_status[AgentId.ORCHESTRATOR].value == "error"
+        # Verify: Agent status (all idle since no ERROR status exists)
+        assert response.agent_status[AgentId.ORCHESTRATOR].value == "idle"
 
     @pytest.mark.asyncio
     async def test_fallback_logs_emitted(
