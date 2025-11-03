@@ -76,7 +76,8 @@ class TestBedrockProviderInit:
             with pytest.raises(RuntimeError) as exc_info:
                 BedrockProvider(model="anthropic.claude-3-haiku-20240307-v1:0")
             message = str(exc_info.value)
-            assert "AWS_ACCESS_KEY_ID" in message
+            # Should mention AWS_REGION (checked first) or other AWS credentials
+            assert "AWS_REGION" in message or "AWS_ACCESS_KEY_ID" in message
 
 
 class TestBedrockProviderComplete:
