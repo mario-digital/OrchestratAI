@@ -100,6 +100,7 @@ omit = [
     "*/tests/*",
     "*/__init__.py",
     "*/conftest.py",
+    "*/services/mock_data.py",  # Obsolete mock implementation
 ]
 
 [tool.coverage.report]

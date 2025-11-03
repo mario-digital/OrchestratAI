@@ -2,9 +2,11 @@
 
 import os
 import tempfile
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import pytest_asyncio
 from langchain_core.documents import Document
 
 from src.agents.orchestrator import build_orchestrator_graph
@@ -15,8 +17,8 @@ from src.retrieval.chroma_store import ChromaVectorStore
 from src.services.agent_service import AgentService
 
 
-@pytest.fixture
-async def temp_vector_store():
+@pytest_asyncio.fixture
+async def temp_vector_store() -> Any:
     """Create temporary ChromaDB for testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         # Use fake embeddings for tests
