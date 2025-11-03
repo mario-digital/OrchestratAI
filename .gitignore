@@ -83,6 +83,17 @@ WiredTiger*
 mongod.lock
 journal/
 
+### CHROMADB / VECTOR DATABASES ###
+# ChromaDB data directories (binary files, sqlite databases)
+**/chroma_db/
+data/chroma_db/
+orchestratai_api/chroma_db/
+# SQLite databases
+*.sqlite3
+*.db
+# ChromaDB binary files
+*.bin
+
 ### GENERAL ###
 # IDE
 .vscode/
