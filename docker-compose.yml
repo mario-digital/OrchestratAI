@@ -34,7 +34,7 @@ services:
       postgres:
         condition: service_healthy
       chromadb:
-        condition: service_started
+        condition: service_healthy
     networks:
       - orchestratai-network
     healthcheck:
@@ -100,6 +100,11 @@ services:
       - ANONYMIZED_TELEMETRY=FALSE
     networks:
       - orchestratai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:16-alpine
