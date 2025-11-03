@@ -11,6 +11,7 @@ import time
 from unittest.mock import AsyncMock
 
 import pytest
+import pytest_asyncio
 
 from src.agents.workers.cag_agent import CAGAgent
 from src.cache.redis_cache import RedisSemanticCache
@@ -19,7 +20,7 @@ from src.models.enums import LogType
 from src.models.schemas import ChatRequest
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def redis_cache():
     """Create RedisSemanticCache with real Redis connection.
 
