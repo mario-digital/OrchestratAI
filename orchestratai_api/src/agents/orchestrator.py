@@ -245,7 +245,7 @@ You coordinate specialized agents for domain-specific questions."""
 
 
 async def execute_with_fallback(
-    preferred: list[tuple[str, Callable]],
+    preferred: list[tuple[str, Callable[[], Any]]],
     state: OrchestratorState,
 ) -> ChatResponse:
     """Execute agents in fallback chain until one succeeds.
@@ -295,7 +295,7 @@ async def execute_with_fallback(
                     result.logs.insert(0, fallback_log)
 
             logger.info(f"Agent {agent_name} succeeded")
-            return result
+            return result  # type: ignore[return-value]
 
         except Exception as e:
             logger.error(f"Agent {agent_name} failed: {e}", exc_info=True)
@@ -371,7 +371,7 @@ async def delegate_hybrid(
     )
 
     # Build fallback chain
-    async def try_hybrid():
+    async def try_hybrid() -> ChatResponse:
         hybrid_provider = ProviderFactory.for_role(AgentRole.HYBRID)
         rag_provider = ProviderFactory.for_role(AgentRole.RAG)
         embeddings_provider = ProviderFactory.for_role(AgentRole.EMBEDDINGS)
@@ -385,12 +385,12 @@ async def delegate_hybrid(
         )
         return await hybrid_agent.run(request)
 
-    async def try_rag():
+    async def try_rag() -> ChatResponse:
         rag_provider = ProviderFactory.for_role(AgentRole.RAG)
         rag_agent = RAGAgent(provider=rag_provider, vector_store=vector_store)
         return await rag_agent.run(request)
 
-    async def try_cag():
+    async def try_cag() -> ChatResponse:
         cag_provider = ProviderFactory.for_role(AgentRole.CAG)
         embeddings_provider = ProviderFactory.for_role(AgentRole.EMBEDDINGS)
         cag_agent = CAGAgent(
@@ -400,7 +400,7 @@ async def delegate_hybrid(
         )
         return await cag_agent.run(request)
 
-    async def try_direct():
+    async def try_direct() -> ChatResponse:
         direct_provider = ProviderFactory.for_role(AgentRole.DIRECT)
         direct_agent = DirectAgent(provider=direct_provider)
         return await direct_agent.run(request)
@@ -439,12 +439,12 @@ async def delegate_rag(
         session_id=state["session_id"],
     )
 
-    async def try_rag():
+    async def try_rag() -> ChatResponse:
         rag_provider = ProviderFactory.for_role(AgentRole.RAG)
         rag_agent = RAGAgent(provider=rag_provider, vector_store=vector_store)
         return await rag_agent.run(request)
 
-    async def try_cag():
+    async def try_cag() -> ChatResponse:
         cag_provider = ProviderFactory.for_role(AgentRole.CAG)
         embeddings_provider = ProviderFactory.for_role(AgentRole.EMBEDDINGS)
         cag_agent = CAGAgent(
@@ -454,7 +454,7 @@ async def delegate_rag(
         )
         return await cag_agent.run(request)
 
-    async def try_direct():
+    async def try_direct() -> ChatResponse:
         direct_provider = ProviderFactory.for_role(AgentRole.DIRECT)
         direct_agent = DirectAgent(provider=direct_provider)
         return await direct_agent.run(request)
@@ -490,7 +490,7 @@ async def delegate_cag(
         session_id=state["session_id"],
     )
 
-    async def try_cag():
+    async def try_cag() -> ChatResponse:
         cag_provider = ProviderFactory.for_role(AgentRole.CAG)
         embeddings_provider = ProviderFactory.for_role(AgentRole.EMBEDDINGS)
         cag_agent = CAGAgent(
@@ -500,7 +500,7 @@ async def delegate_cag(
         )
         return await cag_agent.run(request)
 
-    async def try_direct():
+    async def try_direct() -> ChatResponse:
         direct_provider = ProviderFactory.for_role(AgentRole.DIRECT)
         direct_agent = DirectAgent(provider=direct_provider)
         return await direct_agent.run(request)
