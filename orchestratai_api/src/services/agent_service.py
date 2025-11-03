@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from src.agents.orchestrator import OrchestratorState, build_orchestrator_graph
+from src.cache.redis_cache import RedisSemanticCache
 from src.models.schemas import ChatRequest, ChatResponse
 from src.retrieval.vector_store import VectorStore
 
@@ -23,6 +24,7 @@ class AgentService:
             vector_store: Vector database for RAG agents
         """
         self.vector_store = vector_store
+        self.cache = RedisSemanticCache()
         self._orchestrator: Any | None = None
 
     def _get_orchestrator(self) -> Any:
@@ -32,7 +34,9 @@ class AgentService:
             Compiled LangGraph orchestrator
         """
         if self._orchestrator is None:
-            self._orchestrator = build_orchestrator_graph(vector_store=self.vector_store)
+            self._orchestrator = build_orchestrator_graph(
+                vector_store=self.vector_store, cache=self.cache
+            )
         return self._orchestrator
 
     async def process_chat(self, request: ChatRequest) -> ChatResponse:
