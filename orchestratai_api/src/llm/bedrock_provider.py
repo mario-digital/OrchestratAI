@@ -1,6 +1,8 @@
 """AWS Bedrock LLM provider implementation for Anthropic Claude models."""
 
 import json
+import logging
+import os
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -10,6 +12,8 @@ from .base_provider import BaseLLMProvider
 from .pricing import dollar_cost
 from .secrets import resolve_secret
 from .types import LLMCallResult, StreamChunk
+
+logger = logging.getLogger(__name__)
 
 
 class BedrockProvider(BaseLLMProvider):
@@ -25,7 +29,7 @@ class BedrockProvider(BaseLLMProvider):
     """
 
     pricing = {
-        "anthropic.claude-3-5-sonnet-20241022-v2:0": {
+        "us.amazon.nova-micro-v1:0": {
             "prompt": 0.003,
             "completion": 0.015,
         },
@@ -44,7 +48,7 @@ class BedrockProvider(BaseLLMProvider):
         """Initialize AWS Bedrock provider.
 
         Args:
-            model: Bedrock model ID (e.g., "anthropic.claude-3-5-sonnet-20241022-v2:0")
+            model: Bedrock model ID (e.g., "us.amazon.nova-micro-v1:0")
             temperature: Sampling temperature (0.0-1.0, default 0.1)
 
         Raises:
@@ -57,6 +61,12 @@ class BedrockProvider(BaseLLMProvider):
         region = resolve_secret("AWS_REGION")
         access_key_id = resolve_secret("AWS_ACCESS_KEY_ID")
         secret_access_key = resolve_secret("AWS_SECRET_ACCESS_KEY")
+        session_token = os.getenv("AWS_SESSION_TOKEN")
+        if not session_token:
+            try:
+                session_token = resolve_secret("AWS_SESSION_TOKEN")
+            except RuntimeError:
+                session_token = None
 
         # Initialize boto3 bedrock-runtime client
         self._client = boto3.client(
@@ -64,6 +74,7 @@ class BedrockProvider(BaseLLMProvider):
             region_name=region,
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
+            aws_session_token=session_token,
         )
 
     async def complete(
@@ -85,12 +96,14 @@ class BedrockProvider(BaseLLMProvider):
         system_prompt, anthropic_messages = self._convert_to_anthropic_format(messages)
 
         # Prepare request body
-        body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "messages": anthropic_messages,
-            "temperature": self.temperature,
-            "max_tokens": kwargs.get("max_tokens", 4096),
-        }
+        body: dict[str, Any] = {"messages": anthropic_messages}
+
+        if self.model.startswith("anthropic.") or "anthropic." in self.model:
+            body["anthropic_version"] = "bedrock-2023-05-31"
+            body["temperature"] = self.temperature
+
+        if "max_tokens" in kwargs:
+            body["max_tokens"] = kwargs["max_tokens"]
 
         if system_prompt:
             body["system"] = system_prompt
@@ -111,11 +124,19 @@ class BedrockProvider(BaseLLMProvider):
         tokens_output = usage.get("output_tokens", 0)
 
         # Calculate cost
-        cost = dollar_cost(
-            self.pricing[self.model],
-            tokens_prompt=tokens_input,
-            tokens_completion=tokens_output,
-        )
+        pricing = self.pricing.get(self.model)
+        if pricing is None:
+            logger.warning(
+                "Missing pricing information for Bedrock model %s; defaulting cost to 0",
+                self.model,
+            )
+            cost = 0.0
+        else:
+            cost = dollar_cost(
+                pricing,
+                tokens_prompt=tokens_input,
+                tokens_completion=tokens_output,
+            )
 
         return LLMCallResult(
             content=content,
@@ -146,12 +167,14 @@ class BedrockProvider(BaseLLMProvider):
         system_prompt, anthropic_messages = self._convert_to_anthropic_format(messages)
 
         # Prepare request body
-        body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "messages": anthropic_messages,
-            "temperature": self.temperature,
-            "max_tokens": kwargs.get("max_tokens", 4096),
-        }
+        body: dict[str, Any] = {"messages": anthropic_messages}
+
+        if self.model.startswith("anthropic.") or "anthropic." in self.model:
+            body["anthropic_version"] = "bedrock-2023-05-31"
+            body["temperature"] = self.temperature
+
+        if "max_tokens" in kwargs:
+            body["max_tokens"] = kwargs["max_tokens"]
 
         if system_prompt:
             body["system"] = system_prompt
@@ -226,48 +249,40 @@ class BedrockProvider(BaseLLMProvider):
         self,
         messages: list[dict[str, str]],
     ) -> tuple[str | None, list[dict[str, Any]]]:
-        """Convert generic messages to Anthropic's format.
+        """Convert generic messages to the format expected by the target model."""
 
-        Anthropic requires:
-        1. System messages extracted into a separate 'system' field
-        2. Messages alternate between 'user' and 'assistant'
-        3. First message must be 'user' role
-
-        Args:
-            messages: List of dicts with 'role' and 'content' keys
-
-        Returns:
-            Tuple of (system_prompt, anthropic_messages)
-        """
-        system_prompt = None
-        anthropic_messages = []
+        system_prompt: str | None = None
+        formatted_messages: list[dict[str, Any]] = []
 
         for msg in messages:
             role = msg.get("role", "user")
             content = msg.get("content", "")
 
             if role == "system":
-                # Extract system message
-                if system_prompt:
-                    system_prompt += f"\n\n{content}"
-                else:
-                    system_prompt = content
-            else:
-                # Map to Anthropic roles
+                system_prompt = f"{system_prompt}\n\n{content}" if system_prompt else content
+                continue
+
+            if self.model.startswith("anthropic.") or "anthropic." in self.model:
                 anthropic_role = "assistant" if role == "assistant" else "user"
-                anthropic_messages.append(
+                formatted_messages.append({"role": anthropic_role, "content": content})
+            else:
+                formatted_messages.append(
                     {
-                        "role": anthropic_role,
-                        "content": content,
+                        "role": "assistant" if role == "assistant" else "user",
+                        "content": [{"text": content}]
+                        if self.model.startswith("us.amazon")
+                        else content,
                     }
                 )
 
-        # Ensure first message is 'user' (Anthropic requirement)
-        if anthropic_messages and anthropic_messages[0]["role"] != "user":
-            # Prepend empty user message if needed
-            anthropic_messages.insert(0, {"role": "user", "content": ""})
+        if (
+            formatted_messages
+            and (self.model.startswith("anthropic.") or "anthropic." in self.model)
+            and formatted_messages[0]["role"] != "user"
+        ):
+            formatted_messages.insert(0, {"role": "user", "content": ""})
 
-        return system_prompt, anthropic_messages
+        return system_prompt, formatted_messages
 
     def _extract_content(self, response_body: dict[str, Any]) -> str:
         """Extract text content from Anthropic response.

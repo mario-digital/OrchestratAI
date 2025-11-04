@@ -12,6 +12,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useStreaming } from "../use-streaming";
 import { AgentId, AgentStatus, LogType, LogStatus } from "@/lib/enums";
+import { StreamError, StreamErrorCode } from "@/lib/errors";
 import type { RetrievalLog, ChatMetrics } from "@/lib/types";
 
 /**
@@ -356,7 +357,7 @@ describe("useStreaming", () => {
         mockEventSource.simulateEvent("done", { metadata: mockMetadata });
       });
 
-      expect(onComplete).toHaveBeenCalledWith(mockMetadata);
+      expect(onComplete).toHaveBeenCalledWith(mockMetadata, undefined);
 
       // Wait for state update
       await waitFor(() => {
@@ -495,6 +496,51 @@ describe("useStreaming", () => {
       });
 
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it("should surface backend stream_error events", async () => {
+      const addListenerSpy = vi.spyOn(
+        MockEventSource.prototype,
+        "addEventListener"
+      );
+      const { result } = renderHook(() => useStreaming());
+      const onError = vi.fn();
+      const callbacks = {
+        onChunk: vi.fn(),
+        onAgentUpdate: vi.fn(),
+        onLog: vi.fn(),
+        onComplete: vi.fn(),
+        onError,
+      };
+
+      await act(async () => {
+        await result.current.sendStreamingMessage(
+          "test",
+          "session-id",
+          callbacks
+        );
+      });
+      await waitFor(() => expect(mockEventSource).toBeDefined());
+
+      const registeredEvents = addListenerSpy.mock.calls.map(
+        ([eventName]) => eventName
+      );
+      expect(registeredEvents).toContain("stream_error");
+
+      act(() => {
+        mockEventSource.simulateEvent("stream_error", {
+          message: "Agent orchestration failed",
+          code: "SERVER_ERROR",
+          retryable: false,
+        });
+      });
+
+      await waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
+      const [errorArg] = onError.mock.calls[0] as [StreamError];
+      expect(errorArg).toBeInstanceOf(StreamError);
+      expect(errorArg.message).toBe("Agent orchestration failed");
+      expect(errorArg.code).toBe(StreamErrorCode.SERVER_ERROR);
+      expect(errorArg.retryable).toBe(false);
     });
 
     it("should handle missing stream_id from server", async () => {

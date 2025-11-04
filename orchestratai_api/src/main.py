@@ -1,11 +1,18 @@
 """Main FastAPI application"""
 
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.health import router as health_router
-from src.api.routes.chat import router as chat_router
-from src.config import settings
+# Ensure dotenv values (including AWS credentials) are available before importing settings.
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(env_path, override=False)
+
+from src.api.health import router as health_router  # noqa: E402
+from src.api.routes.chat import router as chat_router  # noqa: E402
+from src.config import settings  # noqa: E402
 
 # Create FastAPI application
 app = FastAPI(

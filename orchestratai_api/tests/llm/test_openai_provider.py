@@ -61,11 +61,13 @@ class TestOpenAIProviderInit:
         resolve_secret.cache_clear()  # Clear cache to ensure clean test
 
         with patch.dict("os.environ", {"USE_ONEPASSWORD": "false"}, clear=True):
-            # Don't mock ChatOpenAI so we can test credential resolution
-            with patch("src.llm.openai_provider.tiktoken.encoding_for_model"):
-                with pytest.raises(RuntimeError) as exc_info:
-                    OpenAIProvider(model="gpt-4-turbo")
-                assert "OPENAI_API_KEY" in str(exc_info.value)
+            # Mock _read_from_env_file to prevent reading from actual .env file
+            with patch("src.llm.secrets._read_from_env_file", return_value=None):
+                # Don't mock ChatOpenAI so we can test credential resolution
+                with patch("src.llm.openai_provider.tiktoken.encoding_for_model"):
+                    with pytest.raises(RuntimeError) as exc_info:
+                        OpenAIProvider(model="gpt-4-turbo")
+                    assert "OPENAI_API_KEY" in str(exc_info.value)
 
 
 class TestOpenAIProviderComplete:

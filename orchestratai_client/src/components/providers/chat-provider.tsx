@@ -462,11 +462,6 @@ export function ChatProvider({
   initialSessionId,
 }: ChatProviderProps): React.JSX.Element {
   // Check sessionStorage for fallback mode preference
-  const initialUseFallback =
-    typeof window !== "undefined"
-      ? sessionStorage.getItem(FALLBACK_MODE_KEY) === "true"
-      : false;
-
   const [state, dispatch] = useReducer(chatReducer, {
     messages: [],
     isProcessing: false,
@@ -478,7 +473,7 @@ export function ChatProvider({
     retrievalLogs: [],
     isStreaming: false,
     streamingMessageId: null,
-    useFallbackMode: initialUseFallback,
+    useFallbackMode: false,
   });
 
   // Ref to track orchestrator animation timeout for cleanup
@@ -541,6 +536,30 @@ export function ChatProvider({
       }
     };
   }, []);
+
+  // Hydrate fallback mode preference after mount to avoid SSR mismatch
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedPreference = sessionStorage.getItem(FALLBACK_MODE_KEY);
+    if (storedPreference === "true") {
+      dispatch({ type: "SET_FALLBACK_MODE", payload: true });
+    }
+  }, []);
+
+  // Persist fallback mode choice for subsequent navigations
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    sessionStorage.setItem(
+      FALLBACK_MODE_KEY,
+      state.useFallbackMode ? "true" : "false"
+    );
+  }, [state.useFallbackMode]);
 
   /**
    * sendMessage - Send user message and receive AI response
@@ -824,6 +843,9 @@ export function ChatProvider({
         orchestratorTimeoutRef.current = null;
       }, ORCHESTRATOR_ROUTING_ANIMATION_MS);
 
+      // Ensure we are in streaming mode (disable fallback indicator)
+      dispatch({ type: "SET_FALLBACK_MODE", payload: false });
+
       // Start streaming
       dispatch({
         type: "START_STREAMING",
@@ -840,6 +862,7 @@ export function ChatProvider({
         await sendStream(message, state.sessionId, {
           // Update message content progressively
           onChunk: (accumulatedText) => {
+            console.log("chunk", assistantMessageId, accumulatedText);
             latestContent = accumulatedText;
             dispatch({
               type: "UPDATE_STREAMING_MESSAGE",
@@ -864,7 +887,8 @@ export function ChatProvider({
           },
 
           // Finalize message on completion
-          onComplete: (metadata) => {
+          onComplete: (metadata, agentStatus) => {
+            console.log("complete", assistantMessageId, metadata, agentStatus);
             // Extract agent and confidence from metadata (extended type in backend)
             const metadataAny = metadata as typeof metadata & {
               agent?: AgentId;
@@ -888,6 +912,13 @@ export function ChatProvider({
               },
             });
 
+            if (agentStatus) {
+              dispatch({ type: "SET_ALL_AGENT_STATUS", payload: agentStatus });
+            }
+
+            // Streaming succeeded; ensure fallback mode stays disabled
+            dispatch({ type: "SET_FALLBACK_MODE", payload: false });
+
             // Update agent metrics
             if (metadataAny.agent) {
               dispatch({
@@ -907,6 +938,7 @@ export function ChatProvider({
 
           // Handle errors with fallback logic
           onError: (error: StreamError) => {
+            console.error("stream error", assistantMessageId, error);
             dispatch({
               type: "STREAMING_ERROR",
               payload: {

@@ -1,6 +1,7 @@
 """Agent service bridge between HTTP and LangGraph orchestrator."""
 
 import json
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -8,6 +9,8 @@ from src.agents.orchestrator import OrchestratorState, build_orchestrator_graph
 from src.cache.redis_cache import RedisSemanticCache
 from src.models.schemas import ChatRequest, ChatResponse
 from src.retrieval.vector_store import VectorStore
+
+logger = logging.getLogger(__name__)
 
 
 class AgentService:
@@ -102,49 +105,62 @@ class AgentService:
             "error_message": None,
         }
 
+        # Helper to emit SSE events with proper event field
+        def format_event(event_type: str, payload: dict[str, Any]) -> str:
+            return f"event: {event_type}\ndata: {json.dumps(payload)}\n\n"
+
         # Track what we've emitted
         emitted_agent_status = False
         emitted_retrieval = False
 
-        # Stream events from LangGraph
-        async for event in orchestrator.astream_events(state, version="v2"):
-            event_type = event.get("event")
-            event_name = event.get("name", "")
+        try:
+            # Stream events from LangGraph
+            async for event in orchestrator.astream_events(state, version="v2"):
+                event_type = event.get("event")
+                event_name = event.get("name", "")
 
-            # Emit agent_status when analysis starts
-            if (
-                event_type == "on_chain_start"
-                and event_name == "analyse"
-                and not emitted_agent_status
-            ):
-                agent_status_event = {
-                    "type": "agent_status",
-                    "agent": "orchestrator",
-                    "status": "active",
-                }
-                yield f"data: {json.dumps(agent_status_event)}\n\n"
-                emitted_agent_status = True
+                # Emit agent_status when analysis starts
+                if (
+                    event_type == "on_chain_start"
+                    and event_name == "analyse"
+                    and not emitted_agent_status
+                ):
+                    agent_status_event = {
+                        "agent": "orchestrator",
+                        "status": "active",
+                    }
+                    yield format_event("agent_status", agent_status_event)
+                    emitted_agent_status = True
 
-            # Emit retrieval_log when delegate node runs (indicates RAG)
-            elif (
-                event_type == "on_chain_start"
-                and event_name == "delegate"
-                and not emitted_retrieval
-            ):
-                retrieval_event = {
-                    "type": "retrieval_log",
-                    "log_type": "vector_search",
-                    "message": "Searching knowledge base...",
-                }
-                yield f"data: {json.dumps(retrieval_event)}\n\n"
-                emitted_retrieval = True
+                # Emit retrieval_log when delegate node runs (indicates RAG)
+                elif (
+                    event_type == "on_chain_start"
+                    and event_name == "delegate"
+                    and not emitted_retrieval
+                ):
+                    retrieval_event = {
+                        "log_type": "vector_search",
+                        "message": "Searching knowledge base...",
+                    }
+                    yield format_event("retrieval_log", retrieval_event)
+                    emitted_retrieval = True
 
-            # Note: Actual message streaming requires provider.stream() integration
-            # For now, we'll emit the complete response at the end
+                # Note: Actual message streaming requires provider.stream() integration
+                # For now, we'll emit the complete response at the end
 
-        # Execute to get final result
-        final_state = await orchestrator.ainvoke(state)
-        result = final_state.get("result")
+            # Execute to get final result
+            final_state = await orchestrator.ainvoke(state)
+            result = final_state.get("result")
+        except Exception as exc:  # pragma: no cover - defensive path
+            logger.exception("LangGraph streaming failed: %s", exc)
+            error_event = {
+                "message": "Agent orchestration failed",
+                "code": "SERVER_ERROR",
+                "retryable": False,
+            }
+            yield format_event("stream_error", error_event)
+            # Stop streaming to keep the SSE pipe stable; upstream logger will capture
+            return
 
         if result is None:
             msg = "Orchestrator failed to produce a result"
@@ -154,21 +170,21 @@ class AgentService:
         words = result.message.split()
         for word in words:
             chunk_event = {
-                "type": "message_chunk",
                 "content": word + " ",
             }
-            yield f"data: {json.dumps(chunk_event)}\n\n"
+            yield format_event("message_chunk", chunk_event)
 
         # Emit done event with complete response
         done_event = {
-            "type": "done",
-            "response": {
-                "message": result.message,
+            "message": result.message,
+            "logs": [log.model_dump() for log in result.logs],
+            "agent_status": {
+                key.value: status.value for key, status in result.agent_status.items()
+            },
+            "metadata": {
+                **result.metrics.model_dump(),
                 "agent": result.agent.value,
                 "confidence": result.confidence,
-                "logs": [log.model_dump() for log in result.logs],
-                "metrics": result.metrics.model_dump(),
-                "agent_status": {k.value: v.value for k, v in result.agent_status.items()},
             },
         }
-        yield f"data: {json.dumps(done_event)}\n\n"
+        yield format_event("done", done_event)

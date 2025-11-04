@@ -60,8 +60,8 @@ export function ChatInterface(): JSX.Element {
 
       {/* Fallback Mode Indicator */}
       {useFallbackMode && (
-        <div className="px-4 py-2 border-t border-input-border bg-surface-secondary/50 flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
+        <div className="flex gap-2 p-4 border-t border-input-border bg-surface-secondary/50 items-center">
+          <Badge variant="outline" className="text-xs uppercase">
             Standard Mode
           </Badge>
           <span className="text-xs text-text-tertiary">

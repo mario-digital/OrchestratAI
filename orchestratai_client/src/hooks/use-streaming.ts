@@ -32,7 +32,10 @@ import { StreamError, StreamErrorCode } from "@/lib/errors";
 type OnChunk = (accumulatedText: string) => void;
 type OnAgentUpdate = (agent: AgentId, status: AgentStatus) => void;
 type OnLog = (log: RetrievalLog) => void;
-type OnComplete = (metadata: ChatMetrics) => void;
+type OnComplete = (
+  metadata: ChatMetrics,
+  agentStatus?: Record<AgentId, AgentStatus>
+) => void;
 type OnError = (error: StreamError) => void;
 
 /**
@@ -100,6 +103,14 @@ const MAX_PARSE_ERRORS = 5;
 const VALID_AGENT_IDS = new Set<AgentId>(Object.values(AgentId));
 const VALID_AGENT_STATUSES = new Set<AgentStatus>(Object.values(AgentStatus));
 
+const STREAM_ERROR_CODE_MAP: Record<string, StreamErrorCode> = {
+  NETWORK_ERROR: StreamErrorCode.NETWORK_ERROR,
+  SERVER_ERROR: StreamErrorCode.SERVER_ERROR,
+  TIMEOUT: StreamErrorCode.TIMEOUT,
+  PARSE_ERROR: StreamErrorCode.PARSE_ERROR,
+  CONNECTION_CLOSED: StreamErrorCode.CONNECTION_CLOSED,
+};
+
 function normalizeAgentId(agent: unknown): AgentId | null {
   if (typeof agent !== "string") {
     return null;
@@ -116,6 +127,15 @@ function normalizeAgentStatus(status: unknown): AgentStatus | null {
 
   const normalized = status.trim().toLowerCase() as AgentStatus;
   return VALID_AGENT_STATUSES.has(normalized) ? normalized : null;
+}
+
+function mapBackendErrorCode(code: unknown): StreamErrorCode {
+  if (typeof code !== "string") {
+    return StreamErrorCode.SERVER_ERROR;
+  }
+
+  const normalized = code.trim().toUpperCase();
+  return STREAM_ERROR_CODE_MAP[normalized] ?? StreamErrorCode.SERVER_ERROR;
 }
 
 export function useStreaming(): UseStreamingReturn {
@@ -398,6 +418,47 @@ export function useStreaming(): UseStreamingReturn {
           }
         });
 
+        eventSource.addEventListener("stream_error", (e: MessageEvent) => {
+          clearStreamTimeout();
+
+          try {
+            const data = JSON.parse(e.data as string) as {
+              message?: string;
+              code?: string;
+              retryable?: boolean;
+            };
+
+            consecutiveParseErrorsRef.current = 0;
+
+            const streamError = new StreamError(
+              data.message ?? "Streaming failed",
+              mapBackendErrorCode(data.code),
+              data.retryable ?? false
+            );
+
+            callbacks.onError?.(streamError);
+          } catch (error) {
+            console.error(
+              "Failed to parse stream_error event:",
+              error,
+              "Raw data:",
+              e.data
+            );
+
+            const streamError = new StreamError(
+              "Streaming failed",
+              StreamErrorCode.SERVER_ERROR,
+              false,
+              error instanceof Error ? error : undefined
+            );
+
+            callbacks.onError?.(streamError);
+          } finally {
+            retryCountRef.current = 0;
+            cleanup();
+          }
+        });
+
         /**
          * Handle done event
          * Finalizes stream with metadata and closes connection
@@ -408,8 +469,9 @@ export function useStreaming(): UseStreamingReturn {
           try {
             const data = JSON.parse(e.data as string) as {
               metadata: ChatMetrics;
+              agent_status?: Record<AgentId, AgentStatus>;
             };
-            callbacks.onComplete(data.metadata);
+            callbacks.onComplete(data.metadata, data.agent_status);
             retryCountRef.current = 0; // Reset retry count on success
           } catch (error) {
             console.error("Failed to parse done event:", error);
