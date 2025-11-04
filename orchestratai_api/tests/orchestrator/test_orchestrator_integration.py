@@ -422,7 +422,8 @@ async def test_delegate_mode_cag_policy_question_end_to_end(temp_vector_store, m
         # Verify routing log + cache log present
         assert len(result.logs) >= 2
         assert result.logs[0].type == LogType.ROUTING
-        assert "CAG agent" in result.logs[0].title
+        # Should be "Policy (CAG) agent" or "Billing (CAG) agent"
+        assert "CAG" in result.logs[0].title
 
         # Verify cache log exists
         cache_logs = [log for log in result.logs if log.type == LogType.CACHE]
@@ -510,7 +511,8 @@ async def test_delegate_mode_cag_pricing_question_end_to_end(temp_vector_store, 
         # Verify routing log + cache log present
         assert len(result.logs) >= 2
         assert result.logs[0].type == LogType.ROUTING
-        assert "CAG agent" in result.logs[0].title
+        # Should be "Policy (CAG) agent" or "Billing (CAG) agent"
+        assert "CAG" in result.logs[0].title
 
         # Verify cache log exists
         cache_logs = [log for log in result.logs if log.type == LogType.CACHE]
