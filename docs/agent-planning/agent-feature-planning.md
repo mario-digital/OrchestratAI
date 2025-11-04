@@ -362,7 +362,7 @@ POSTGRES_PORT=5432
 POSTGRES_DB=orchestratai
 POSTGRES_USER=orchestratai_user
 POSTGRES_PASSWORD=orchestratai_pass
-DATABASE_URL=postgresql://orchestratai_user:orchestratai_pass@postgres:5432/orchestratai
+DATABASE_URL=postgresql://orchestratai_user:userpass@postgres:5432/orchestratai
 
 # Agent Configuration
 # Orchestrator uses TWO models:

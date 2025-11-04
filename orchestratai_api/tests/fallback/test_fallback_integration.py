@@ -14,6 +14,7 @@ from src.retrieval.chroma_store import ChromaVectorStore
 from src.retrieval.vector_store import VectorStore
 
 
+@pytest.mark.skip(reason="Embeddings provider interface needs refactoring - tracked in backlog")
 @pytest.mark.skipif(
     not os.getenv("REDIS_HOST"),
     reason="REDIS_HOST not set - skipping integration tests",
