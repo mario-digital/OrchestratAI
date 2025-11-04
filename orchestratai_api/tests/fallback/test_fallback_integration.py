@@ -9,6 +9,7 @@ from src.agents.orchestrator import build_orchestrator_graph
 from src.cache.redis_cache import RedisSemanticCache
 from src.llm.provider_factory import AgentRole, ProviderFactory
 from src.models.enums import LogType
+from src.retrieval.chroma_store import ChromaVectorStore
 from src.retrieval.vector_store import VectorStore
 
 
@@ -27,7 +28,7 @@ class TestFallbackIntegration:
     async def vector_store(self) -> VectorStore:
         """Create real VectorStore with ChromaDB."""
         embeddings_provider = ProviderFactory.for_role(AgentRole.EMBEDDINGS)
-        store = VectorStore(
+        store = ChromaVectorStore(
             embeddings=embeddings_provider,
             collection_name="test_fallback_integration",
         )
