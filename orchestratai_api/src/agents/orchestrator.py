@@ -115,7 +115,14 @@ Respond with JSON only:
 
 def decide_route(
     state: OrchestratorState,
-) -> Literal["guide", "delegate_hybrid", "delegate_rag", "delegate_cag", "delegate_direct"]:
+) -> Literal[
+    "guide",
+    "delegate_hybrid",
+    "delegate_rag",
+    "delegate_billing",
+    "delegate_policy",
+    "delegate_direct",
+]:
     """Decide which agent should handle the query.
 
     Routing logic:
@@ -123,7 +130,8 @@ def decide_route(
     - COMPLEX_QUESTION → Hybrid agent (RAG + cache synthesis)
     - SIMPLE_CHAT → Direct agent (fast conversational)
     - DOMAIN_QUESTION → RAG agent (document retrieval)
-    - POLICY_QUESTION or PRICING_QUESTION → CAG agent (cached responses)
+    - PRICING_QUESTION → Billing agent (cached pricing/billing responses)
+    - POLICY_QUESTION → Policy agent (cached policy responses)
 
     Uses heuristics for classification:
     - Message length > 100 chars → likely complex
@@ -161,9 +169,12 @@ def decide_route(
     elif intent == SIMPLE_CHAT or is_simple_chat:
         state["route"] = "delegate_direct"
         return "delegate_direct"
-    elif intent in [POLICY_QUESTION, PRICING_QUESTION]:
-        state["route"] = "delegate_cag"
-        return "delegate_cag"
+    elif intent == PRICING_QUESTION:
+        state["route"] = "delegate_billing"
+        return "delegate_billing"
+    elif intent == POLICY_QUESTION:
+        state["route"] = "delegate_policy"
+        return "delegate_policy"
     elif intent == DOMAIN_QUESTION:
         state["route"] = "delegate_rag"
         return "delegate_rag"
@@ -473,12 +484,12 @@ async def delegate_rag(
     return state
 
 
-async def delegate_cag(
+async def delegate_billing(
     state: OrchestratorState,
     *,
     cache: RedisSemanticCache,
 ) -> OrchestratorState:
-    """Delegate to CAG agent with fallback: CAG → Direct.
+    """Delegate to CAG agent for billing questions with fallback: CAG → Direct.
 
     Args:
         state: Current orchestrator state
@@ -500,7 +511,8 @@ async def delegate_cag(
             cache=cache,
             embeddings=embeddings_provider,
         )
-        return await cag_agent.run(request)
+        # Pass PRICING_QUESTION intent for billing questions
+        return await cag_agent.run(request, intent=PRICING_QUESTION)
 
     async def try_direct() -> ChatResponse:
         direct_provider = ProviderFactory.for_role(AgentRole.DIRECT)
@@ -513,7 +525,53 @@ async def delegate_cag(
     ]
 
     response = await execute_with_fallback(fallback_chain, state)
-    _add_routing_log(response, state, "cag")
+    _add_routing_log(response, state, "billing")
+    state["result"] = response
+    return state
+
+
+async def delegate_policy(
+    state: OrchestratorState,
+    *,
+    cache: RedisSemanticCache,
+) -> OrchestratorState:
+    """Delegate to CAG agent for policy questions with fallback: CAG → Direct.
+
+    Args:
+        state: Current orchestrator state
+        cache: Redis semantic cache
+
+    Returns:
+        Updated state with response
+    """
+    request = ChatRequest(
+        message=state["messages"][-1]["content"],
+        session_id=state["session_id"],
+    )
+
+    async def try_cag() -> ChatResponse:
+        cag_provider = ProviderFactory.for_role(AgentRole.CAG)
+        embeddings_provider = ProviderFactory.for_role(AgentRole.EMBEDDINGS)
+        cag_agent = CAGAgent(
+            provider=cag_provider,
+            cache=cache,
+            embeddings=embeddings_provider,
+        )
+        # Pass POLICY_QUESTION intent for policy questions
+        return await cag_agent.run(request, intent=POLICY_QUESTION)
+
+    async def try_direct() -> ChatResponse:
+        direct_provider = ProviderFactory.for_role(AgentRole.DIRECT)
+        direct_agent = DirectAgent(provider=direct_provider)
+        return await direct_agent.run(request)
+
+    fallback_chain = [
+        ("cag", try_cag),
+        ("direct", try_direct),
+    ]
+
+    response = await execute_with_fallback(fallback_chain, state)
+    _add_routing_log(response, state, "policy")
     state["result"] = response
     return state
 
@@ -591,7 +649,7 @@ def build_orchestrator_graph(
 
     Graph structure:
     - analyse → decide_route → [guide | delegate_hybrid | delegate_rag |
-      delegate_cag | delegate_direct]
+      delegate_billing | delegate_policy | delegate_direct]
     - Each delegate node has built-in fallback chain
     - All paths lead to END
 
@@ -610,8 +668,11 @@ def build_orchestrator_graph(
     async def rag_wrapper(state: OrchestratorState) -> OrchestratorState:
         return await delegate_rag(state, vector_store=vector_store, cache=cache)
 
-    async def cag_wrapper(state: OrchestratorState) -> OrchestratorState:
-        return await delegate_cag(state, cache=cache)
+    async def billing_wrapper(state: OrchestratorState) -> OrchestratorState:
+        return await delegate_billing(state, cache=cache)
+
+    async def policy_wrapper(state: OrchestratorState) -> OrchestratorState:
+        return await delegate_policy(state, cache=cache)
 
     # Create workflow
     workflow = StateGraph(OrchestratorState)
@@ -621,7 +682,8 @@ def build_orchestrator_graph(
     workflow.add_node("guide", guide_user)
     workflow.add_node("delegate_hybrid", hybrid_wrapper)
     workflow.add_node("delegate_rag", rag_wrapper)
-    workflow.add_node("delegate_cag", cag_wrapper)
+    workflow.add_node("delegate_billing", billing_wrapper)
+    workflow.add_node("delegate_policy", policy_wrapper)
     workflow.add_node("delegate_direct", delegate_direct)
 
     # Set entry point
@@ -635,7 +697,8 @@ def build_orchestrator_graph(
             "guide": "guide",
             "delegate_hybrid": "delegate_hybrid",
             "delegate_rag": "delegate_rag",
-            "delegate_cag": "delegate_cag",
+            "delegate_billing": "delegate_billing",
+            "delegate_policy": "delegate_policy",
             "delegate_direct": "delegate_direct",
         },
     )
@@ -644,7 +707,8 @@ def build_orchestrator_graph(
     workflow.add_edge("guide", END)
     workflow.add_edge("delegate_hybrid", END)
     workflow.add_edge("delegate_rag", END)
-    workflow.add_edge("delegate_cag", END)
+    workflow.add_edge("delegate_billing", END)
+    workflow.add_edge("delegate_policy", END)
     workflow.add_edge("delegate_direct", END)
 
     # Compile graph

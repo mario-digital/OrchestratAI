@@ -112,10 +112,11 @@ class AgentService:
         # Map node names to agent IDs (based on worker agent implementations)
         node_to_agent = {
             "guide": "orchestrator",  # Orchestrator guide mode
-            "delegate_hybrid": "billing",  # Hybrid agent → BILLING
-            "delegate_rag": "technical",  # RAG agent → TECHNICAL
-            "delegate_cag": "policy",  # CAG agent → POLICY
-            "delegate_direct": "orchestrator",  # Direct agent → ORCHESTRATOR
+            "delegate_hybrid": "technical",  # Hybrid agent → TECHNICAL (complex questions)
+            "delegate_rag": "technical",  # RAG agent → TECHNICAL (domain questions)
+            "delegate_billing": "billing",  # CAG agent → BILLING (pricing questions)
+            "delegate_policy": "policy",  # CAG agent → POLICY (policy questions)
+            "delegate_direct": "orchestrator",  # Direct agent → ORCHESTRATOR (simple chat)
         }
 
         # Track what we've emitted
@@ -136,7 +137,8 @@ class AgentService:
                     "guide",
                     "delegate_hybrid",
                     "delegate_rag",
-                    "delegate_cag",
+                    "delegate_billing",
+                    "delegate_policy",
                     "delegate_direct",
                     "__end__",
                 ]:
@@ -164,7 +166,7 @@ class AgentService:
                     and event_name in node_to_agent
                     and not emitted_worker_start
                 ):
-                    # Store which agent will respond
+                    # Get the agent from mapping - now works for ALL nodes including billing/policy
                     responding_agent = node_to_agent[event_name]
                     logger.info(f"Node {event_name} started, agent: {responding_agent}")
 
@@ -190,6 +192,7 @@ class AgentService:
 
                 # Capture final state when a delegate/guide node completes
                 elif event_type == "on_chain_end" and event_name in node_to_agent:
+                    logger.info(f"on_chain_end event for {event_name}")
                     # Extract state from the node's output
                     if "data" in event and "output" in event["data"]:
                         final_state = event["data"]["output"]
@@ -220,11 +223,11 @@ class AgentService:
         assert isinstance(result, ChatResponse)
 
         # Use the responding_agent we captured during streaming
-        # If we didn't capture it (shouldn't happen), fall back to result.agent
         if responding_agent is None:
+            # This should not happen with split nodes, but fallback just in case
             responding_agent = result.agent.value
             logger.warning(
-                f"Responding agent not captured from events, using result: {responding_agent}"
+                f"Responding agent not captured during streaming, using result: {responding_agent}"
             )
 
         logger.info(f"Streaming response from agent: {responding_agent}")
@@ -246,12 +249,12 @@ class AgentService:
         logger.info(f"Agent {responding_agent} marked as complete")
 
         # Emit done event with complete response
+        # NOTE: We don't include agent_status here because we've been emitting
+        # individual agent_status events throughout the stream. Including it here
+        # would overwrite our carefully timed status updates.
         done_event = {
             "message": result.message,
             "logs": [log.model_dump() for log in result.logs],
-            "agent_status": {
-                key.value: status.value for key, status in result.agent_status.items()
-            },
             "metadata": {
                 **result.metrics.model_dump(),
                 "agent": result.agent.value,

@@ -215,7 +215,7 @@ class TestHybridAgent:
 
         # Verify: Response structure
         assert response.message == "Hybrid response synthesizing multiple sources"
-        assert response.agent == AgentId.BILLING  # Hybrid maps to BILLING
+        assert response.agent == AgentId.TECHNICAL  # Hybrid handles complex technical questions
         assert response.confidence == 0.90
         assert response.metrics.cache_status == "hit"
 

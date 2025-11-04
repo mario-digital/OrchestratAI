@@ -60,13 +60,16 @@ class CAGAgent(BaseAgent):
 
         Args:
             request: Incoming chat request
-            **kwargs: Additional parameters (unused)
+            **kwargs: Additional parameters including 'intent' for routing
 
         Returns:
             ChatResponse with message, cache logs, and metrics
         """
         start_time = time.perf_counter()
         query = request.message
+
+        # Extract intent to determine which agent ID to return
+        intent = kwargs.get("intent", "")
 
         # Step 1: Embed query using embeddings provider
         embedding_start = time.perf_counter()
@@ -85,6 +88,7 @@ class CAGAgent(BaseAgent):
                 similarity=similarity,
                 total_latency=int((time.perf_counter() - start_time) * 1000),
                 cache_latency=cache_latency,
+                intent=intent,
             )
 
         # Step 4: Cache miss - call LLM provider
@@ -134,6 +138,7 @@ class CAGAgent(BaseAgent):
             total_latency=int((time.perf_counter() - start_time) * 1000),
             cache_latency=cache_latency,
             llm_latency=llm_latency,
+            intent=intent,
         )
 
     def _build_cache_hit_response(
@@ -143,6 +148,7 @@ class CAGAgent(BaseAgent):
         similarity: float,
         total_latency: int,
         cache_latency: int,
+        intent: str = "",
     ) -> ChatResponse:
         """Build response for cache hit.
 
@@ -151,6 +157,7 @@ class CAGAgent(BaseAgent):
             similarity: Cosine similarity score
             total_latency: Total response time in ms
             cache_latency: Cache lookup time in ms
+            intent: Question intent (PRICING_QUESTION or POLICY_QUESTION)
 
         Returns:
             ChatResponse with cached message and cache hit metrics
@@ -185,17 +192,22 @@ class CAGAgent(BaseAgent):
             cache_status="hit",
         )
 
+        # Determine which agent ID to return based on intent
+        # PRICING_QUESTION → BILLING, POLICY_QUESTION → POLICY
+        is_policy = intent == "POLICY_QUESTION"
+        agent_id = AgentId.POLICY if is_policy else AgentId.BILLING
+
         # Build agent status
         agent_status = {
             AgentId.ORCHESTRATOR: AgentStatus.COMPLETE,
-            AgentId.BILLING: AgentStatus.IDLE,
+            AgentId.BILLING: AgentStatus.COMPLETE if not is_policy else AgentStatus.IDLE,
             AgentId.TECHNICAL: AgentStatus.IDLE,
-            AgentId.POLICY: AgentStatus.COMPLETE,  # CAG agent maps to POLICY
+            AgentId.POLICY: AgentStatus.COMPLETE if is_policy else AgentStatus.IDLE,
         }
 
         return ChatResponse(
             message=cached_payload["message"],
-            agent=AgentId.POLICY,  # CAG agent maps to POLICY
+            agent=agent_id,
             confidence=0.90,  # High confidence for cached responses
             logs=[cache_log],
             metrics=chat_metrics,
@@ -210,6 +222,7 @@ class CAGAgent(BaseAgent):
         total_latency: int,
         cache_latency: int,
         llm_latency: int,
+        intent: str = "",
     ) -> ChatResponse:
         """Build response for cache miss.
 
@@ -219,6 +232,7 @@ class CAGAgent(BaseAgent):
             total_latency: Total response time in ms
             cache_latency: Cache lookup time in ms
             llm_latency: LLM call time in ms
+            intent: Question intent (PRICING_QUESTION or POLICY_QUESTION)
 
         Returns:
             ChatResponse with generated message and cache miss metrics
@@ -249,17 +263,22 @@ class CAGAgent(BaseAgent):
             cache_status="miss",
         )
 
+        # Determine which agent ID to return based on intent
+        # PRICING_QUESTION → BILLING, POLICY_QUESTION → POLICY
+        is_policy = intent == "POLICY_QUESTION"
+        agent_id = AgentId.POLICY if is_policy else AgentId.BILLING
+
         # Build agent status
         agent_status = {
             AgentId.ORCHESTRATOR: AgentStatus.COMPLETE,
-            AgentId.BILLING: AgentStatus.IDLE,
+            AgentId.BILLING: AgentStatus.COMPLETE if not is_policy else AgentStatus.IDLE,
             AgentId.TECHNICAL: AgentStatus.IDLE,
-            AgentId.POLICY: AgentStatus.COMPLETE,  # CAG agent maps to POLICY
+            AgentId.POLICY: AgentStatus.COMPLETE if is_policy else AgentStatus.IDLE,
         }
 
         return ChatResponse(
             message=result.content,
-            agent=AgentId.POLICY,  # CAG agent maps to POLICY
+            agent=agent_id,
             confidence=0.85,  # Default confidence for CAG responses
             logs=[cache_log],
             metrics=chat_metrics,
