@@ -106,7 +106,7 @@ class ChromaVectorStore(VectorStore):
                     self._chroma_host = None
                     os.environ.pop("CHROMADB_HOST", None)
                     os.environ.pop("CHROMADB_PORT", None)
-                    telemetry_settings = None
+                    telemetry_settings = Settings(anonymized_telemetry=False)
 
             if self._client is None:
                 # Local file storage mode using the new PersistentClient API
