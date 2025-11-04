@@ -10,22 +10,26 @@ from src.cache.redis_cache import RedisSemanticCache
 from src.llm.base_provider import BaseLLMProvider
 from src.llm.provider_factory import AgentRole
 from src.models.enums import AgentId, AgentStatus, LogStatus, LogType
-from src.models.schemas import ChatMetrics, ChatRequest, ChatResponse, RetrievalLog
+from src.models.schemas import ChatMetrics, ChatRequest, ChatResponse, DocumentChunk, RetrievalLog
+from src.retrieval.vector_store import VectorStore
 
 
 class CAGAgent(BaseAgent):
-    """CAG agent with semantic caching in Redis.
+    """CAG agent with semantic caching and RAG retrieval.
 
     This agent:
     1. Embeds the user's query using embeddings provider
     2. Checks semantic cache for similar queries
     3. If cache hit: Returns cached response with cost=0
-    4. If cache miss: Calls LLM provider and caches result
+    4. If cache miss:
+       a. Retrieves relevant documents from ChromaDB
+       b. Calls LLM provider with retrieved context
+       c. Caches result
     5. Returns response with cache metrics
 
     Cost savings:
     - Cache hit: $0 (instant response)
-    - Cache miss: Full LLM cost (Bedrock Haiku ~$0.0004 per query)
+    - Cache miss: Full LLM cost but with accurate context from knowledge base
     - With 70% hit rate: ~70% cost reduction
     """
 
@@ -35,6 +39,7 @@ class CAGAgent(BaseAgent):
         provider: BaseLLMProvider,
         cache: RedisSemanticCache,
         embeddings: BaseLLMProvider,
+        vector_store: VectorStore,
     ):
         """Initialize CAG agent.
 
@@ -42,10 +47,12 @@ class CAGAgent(BaseAgent):
             provider: LLM provider for generation (Bedrock Haiku)
             cache: Redis semantic cache instance
             embeddings: Embeddings provider (OpenAI text-embedding-3-large)
+            vector_store: Vector store for RAG retrieval
         """
         super().__init__(role=AgentRole.CAG, provider=provider)
         self._cache = cache
         self._embeddings = embeddings
+        self.vector_store = vector_store
 
     async def close(self) -> None:
         """Clean up resources.
@@ -91,17 +98,51 @@ class CAGAgent(BaseAgent):
                 intent=intent,
             )
 
-        # Step 4: Cache miss - call LLM provider
+        # Step 4: Cache miss - retrieve from ChromaDB
+        retrieval_start = time.perf_counter()
+        results = await self.vector_store.similarity_search_with_scores(
+            query=query,
+            k=5,  # Top 5 most relevant documents
+        )
+        retrieval_latency = int((time.perf_counter() - retrieval_start) * 1000)
+
+        # Extract documents and scores
+        documents = [doc for doc, _ in results]
+        # ChromaDB returns distance (lower is better), convert to similarity (0-1)
+        # Distance of 0 = perfect match (similarity 1.0), distance of 2 = poor match
+        similarities = [max(0.0, 1.0 - (score / 2.0)) for _, score in results]
+
+        # Build document chunks for logging
+        chunks = [
+            DocumentChunk(
+                id=i,
+                content=doc.page_content,
+                similarity=sim,
+                source=doc.metadata.get("source", "unknown"),
+                metadata=doc.metadata,
+            )
+            for i, (doc, sim) in enumerate(zip(documents, similarities, strict=False))
+        ]
+
+        # Build context from retrieved documents
+        context = "\n\n".join(
+            [f"[Document {i + 1}]\n{doc.page_content}" for i, (doc, _score) in enumerate(results)]
+        )
+
+        # Step 5: Call LLM provider with retrieved context
         llm_start = time.perf_counter()
         system_prompt = (
             "You are a helpful AI assistant specializing in policy and pricing questions. "
-            "Provide clear, concise answers based on company policies. "
-            "If you're unsure, acknowledge the uncertainty."
+            "Use the provided context documents to answer the user's question accurately. "
+            "If the context doesn't contain relevant information, acknowledge that and "
+            "provide a general response."
         )
+
+        user_message = f"Context:\n{context}\n\nQuestion: {query}"
 
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": query},
+            {"role": "user", "content": user_message},
         ]
 
         result = await self.provider.complete(messages=messages)
@@ -138,6 +179,8 @@ class CAGAgent(BaseAgent):
             total_latency=int((time.perf_counter() - start_time) * 1000),
             cache_latency=cache_latency,
             llm_latency=llm_latency,
+            retrieval_latency=retrieval_latency,
+            chunks=chunks,
             intent=intent,
         )
 
@@ -222,6 +265,8 @@ class CAGAgent(BaseAgent):
         total_latency: int,
         cache_latency: int,
         llm_latency: int,
+        retrieval_latency: int,
+        chunks: list[DocumentChunk],
         intent: str = "",
     ) -> ChatResponse:
         """Build response for cache miss.
@@ -232,6 +277,8 @@ class CAGAgent(BaseAgent):
             total_latency: Total response time in ms
             cache_latency: Cache lookup time in ms
             llm_latency: LLM call time in ms
+            retrieval_latency: Document retrieval time in ms
+            chunks: Retrieved document chunks
             intent: Question intent (PRICING_QUESTION or POLICY_QUESTION)
 
         Returns:
@@ -239,7 +286,26 @@ class CAGAgent(BaseAgent):
         """
         now = datetime.now(UTC).isoformat()
 
-        # Build cache log
+        # Build retrieval logs
+        logs: list[RetrievalLog] = []
+
+        # Add vector search log
+        vector_log = RetrievalLog(
+            id=str(uuid.uuid4()),
+            type=LogType.VECTOR_SEARCH,
+            title=f"Retrieved {len(chunks)} documents from knowledge base",
+            data={
+                "collection_name": "knowledge_base_v1",
+                "chunks": len(chunks),
+                "latency_ms": retrieval_latency,
+            },
+            timestamp=now,
+            status=LogStatus.SUCCESS,
+            chunks=chunks,
+        )
+        logs.append(vector_log)
+
+        # Add cache log
         cache_log = RetrievalLog(
             id=str(uuid.uuid4()),
             type=LogType.CACHE,
@@ -254,6 +320,7 @@ class CAGAgent(BaseAgent):
             status=LogStatus.SUCCESS,
             chunks=None,
         )
+        logs.append(cache_log)
 
         # Build metrics
         chat_metrics = ChatMetrics(
@@ -280,7 +347,7 @@ class CAGAgent(BaseAgent):
             message=result.content,
             agent=agent_id,
             confidence=0.85,  # Default confidence for CAG responses
-            logs=[cache_log],
+            logs=logs,
             metrics=chat_metrics,
             agent_status=agent_status,
         )

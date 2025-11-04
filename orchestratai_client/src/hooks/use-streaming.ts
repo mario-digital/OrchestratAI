@@ -34,7 +34,8 @@ type OnAgentUpdate = (agent: AgentId, status: AgentStatus) => void;
 type OnLog = (log: RetrievalLog) => void;
 type OnComplete = (
   metadata: ChatMetrics,
-  agentStatus?: Record<AgentId, AgentStatus>
+  agentStatus?: Record<AgentId, AgentStatus>,
+  logs?: RetrievalLog[]
 ) => void;
 type OnError = (error: StreamError) => void;
 
@@ -470,8 +471,14 @@ export function useStreaming(): UseStreamingReturn {
             const data = JSON.parse(e.data as string) as {
               metadata: ChatMetrics;
               agent_status?: Record<AgentId, AgentStatus>;
+              logs?: RetrievalLog[];
             };
-            callbacks.onComplete(data.metadata, data.agent_status);
+            console.log("[use-streaming] Done event received:", {
+              hasLogs: !!data.logs,
+              logsCount: data.logs?.length || 0,
+              logs: data.logs,
+            });
+            callbacks.onComplete(data.metadata, data.agent_status, data.logs);
             retryCountRef.current = 0; // Reset retry count on success
           } catch (error) {
             console.error("Failed to parse done event:", error);

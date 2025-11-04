@@ -13,7 +13,7 @@
 "use client";
 
 import { type JSX } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { MessageRole, AgentId } from "@/lib/enums";
 import { getAgentTextColor } from "@/lib/utils/agent-colors";
@@ -99,29 +99,46 @@ export function MessageBubble({
         )}
 
         {/* Message Content or Typing Indicator */}
-        {isTyping ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm opacity-70">{agent} is typing</span>
-            <div className="flex gap-1" aria-hidden="true">
-              {["bubble-dot-1", "bubble-dot-2", "bubble-dot-3"].map(
-                (dotId, i) => (
-                  <motion.span
-                    key={dotId}
-                    className="inline-block h-2 w-2 rounded-full bg-current opacity-70"
-                    variants={bounceAnimation}
-                    initial="initial"
-                    animate="animate"
-                    transition={{
-                      delay: i * 0.15,
-                    }}
-                  />
-                )
-              )}
-            </div>
-          </div>
-        ) : (
-          <p className="whitespace-pre-wrap break-words">{content}</p>
-        )}
+        <AnimatePresence mode="wait">
+          {isTyping ? (
+            <motion.div
+              key="typing"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-2"
+            >
+              <span className="text-sm opacity-70">{agent} is typing</span>
+              <div className="flex gap-1" aria-hidden="true">
+                {["bubble-dot-1", "bubble-dot-2", "bubble-dot-3"].map(
+                  (dotId, i) => (
+                    <motion.span
+                      key={dotId}
+                      className="inline-block h-2 w-2 rounded-full bg-current opacity-70"
+                      variants={bounceAnimation}
+                      initial="initial"
+                      animate="animate"
+                      transition={{
+                        delay: i * 0.15,
+                      }}
+                    />
+                  )
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.p
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="whitespace-pre-wrap break-words"
+            >
+              {content}
+            </motion.p>
+          )}
+        </AnimatePresence>
 
         {/* Confidence Score (Assistant Messages Only) */}
         {isAssistant && confidence !== undefined && (

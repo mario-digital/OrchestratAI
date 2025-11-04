@@ -49,3 +49,12 @@ class VectorStore(ABC):
     async def clear(self) -> None:
         """Clear all documents from the vector store."""
         ...
+
+    @abstractmethod
+    async def health_check(self) -> bool:
+        """Check if vector store is accessible and healthy.
+
+        Returns:
+            True if healthy, False otherwise
+        """
+        ...

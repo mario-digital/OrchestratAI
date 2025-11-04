@@ -136,8 +136,15 @@ function parseCacheOperationData(data: unknown): CacheOperationData {
 
   const obj = data as Record<string, unknown>;
 
+  // Check for operation field (backend sends "hit" or "miss")
+  const operation =
+    typeof obj["operation"] === "string" ? obj["operation"] : null;
+  const isHit =
+    operation === "hit" ||
+    (typeof obj["is_hit"] === "boolean" && obj["is_hit"]);
+
   return {
-    is_hit: typeof obj["is_hit"] === "boolean" ? obj["is_hit"] : false,
+    is_hit: isHit,
     hit_rate: typeof obj["hit_rate"] === "number" ? obj["hit_rate"] : 0,
     cache_size: typeof obj["cache_size"] === "number" ? obj["cache_size"] : 0,
     cache_key:
@@ -205,10 +212,13 @@ function renderLogCard(log: RetrievalLog): JSX.Element {
     case LogType.VECTOR_SEARCH: {
       // Vector search data structure with validation
       const vectorData = parseVectorSearchData(data);
+      // Use chunks from log.chunks if available (preferred), otherwise from data.chunks
+      const chunks =
+        log.chunks && log.chunks.length > 0 ? log.chunks : vectorData.chunks;
       return (
         <VectorSearchCard
           collectionName={vectorData.collection_name}
-          chunks={vectorData.chunks}
+          chunks={chunks}
           latencyMs={vectorData.latency_ms}
         />
       );
@@ -230,10 +240,13 @@ function renderLogCard(log: RetrievalLog): JSX.Element {
     case LogType.DOCUMENTS: {
       // Document retrieval - similar to vector search with validation
       const docsData = parseVectorSearchData(data);
+      // Use chunks from log.chunks if available (preferred), otherwise from data.chunks
+      const chunks =
+        log.chunks && log.chunks.length > 0 ? log.chunks : docsData.chunks;
       return (
         <VectorSearchCard
           collectionName={docsData.collection_name}
-          chunks={docsData.chunks}
+          chunks={chunks}
           latencyMs={docsData.latency_ms}
         />
       );

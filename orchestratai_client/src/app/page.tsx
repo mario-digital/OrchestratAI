@@ -1,3 +1,5 @@
+"use client";
+
 import { ReactElement } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -7,8 +9,10 @@ import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChatErrorBoundary } from "@/components/chat/chat-error-boundary";
 import { RetrievalPanel } from "@/components/panels/retrieval-panel";
 import { AgentPanel } from "@/components/panels/agent-panel";
+import { useChatContext } from "@/components/providers/chat-provider";
 
 export default function Home(): ReactElement {
+  const { latestMetrics, dbStatus } = useChatContext();
   // Chat interface with full state management wrapped in error boundary
   const chatPanel = (
     <ChatErrorBoundary>
@@ -44,7 +48,13 @@ export default function Home(): ReactElement {
       />
 
       {/* Footer - Hidden on mobile, visible on desktop */}
-      <Footer className="hidden md:block shrink-0" />
+      <Footer
+        className="hidden md:block shrink-0"
+        latency={latestMetrics?.latency}
+        tokens={latestMetrics?.tokens}
+        cost={latestMetrics?.cost}
+        dbStatus={dbStatus}
+      />
     </div>
   );
 }

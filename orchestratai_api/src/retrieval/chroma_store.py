@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import anyio
+import chromadb
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -55,7 +56,7 @@ class ChromaVectorStore(VectorStore):
         """Initialize ChromaVectorStore.
 
         Args:
-            persist_directory: Directory for persistent storage
+            persist_directory: Directory for persistent storage (only used if not using server)
             collection_name: Name of the collection to use
         """
         if embeddings is not None:
@@ -68,28 +69,50 @@ class ChromaVectorStore(VectorStore):
             self._embeddings = OpenAIEmbeddings(
                 model="text-embedding-3-large", api_key=SecretStr(api_key)
             )
-        # Determine persistent storage directory.
-        resolved_dir = (
-            persist_directory
-            or os.getenv("CHROMA_PERSIST_DIRECTORY")
-            or str(Path(__file__).resolve().parent.parent.parent / "data" / "chroma")
-        )
 
-        # Ensure the directory exists when running locally (e.g., outside Docker)
-        Path(resolved_dir).mkdir(parents=True, exist_ok=True)
+        # Check if we should use ChromaDB server or local files
+        self._chroma_host = os.getenv("CHROMADB_HOST")
+        self._chroma_port = os.getenv("CHROMADB_PORT", "8000")
 
-        self._persist_directory = resolved_dir
+        # Store configuration but don't create client yet (lazy init)
+        if self._chroma_host:
+            self._persist_directory = None
+            self._chroma_client = None  # Will be created lazily
+        else:
+            # Fallback to local file storage
+            self._chroma_client = None
+            resolved_dir = (
+                persist_directory
+                or os.getenv("CHROMA_PERSIST_DIRECTORY")
+                or str(Path(__file__).resolve().parent.parent.parent / "data" / "chroma")
+            )
+            # Ensure the directory exists when running locally (e.g., outside Docker)
+            Path(resolved_dir).mkdir(parents=True, exist_ok=True)
+            self._persist_directory = resolved_dir
+
         self._collection_name = collection_name
         self._client: Chroma | None = None
 
     def _get_client(self) -> Chroma:
         """Lazy initialization of Chroma client."""
         if self._client is None:
-            self._client = Chroma(
-                persist_directory=self._persist_directory,
-                embedding_function=self._embeddings,
-                collection_name=self._collection_name,
-            )
+            if self._chroma_host:
+                # Server mode: create HttpClient and Chroma wrapper
+                http_client = chromadb.HttpClient(
+                    host=self._chroma_host, port=int(self._chroma_port)
+                )
+                self._client = Chroma(
+                    client=http_client,
+                    embedding_function=self._embeddings,
+                    collection_name=self._collection_name,
+                )
+            else:
+                # Local file storage mode
+                self._client = Chroma(
+                    persist_directory=self._persist_directory,
+                    embedding_function=self._embeddings,
+                    collection_name=self._collection_name,
+                )
         return self._client
 
     async def add_documents(self, *, documents: list[Document]) -> None:
@@ -147,6 +170,29 @@ class ChromaVectorStore(VectorStore):
         return await anyio.to_thread.run_sync(
             client.max_marginal_relevance_search, query, k, fetch_k, lambda_mult
         )
+
+    async def health_check(self) -> bool:
+        """Check if ChromaDB is accessible and healthy.
+
+        Returns:
+            True if ChromaDB is accessible, False otherwise
+        """
+        try:
+            if self._chroma_host:
+                # Server mode: check if we can reach the ChromaDB server
+                http_client = chromadb.HttpClient(
+                    host=self._chroma_host, port=int(self._chroma_port)
+                )
+                await anyio.to_thread.run_sync(lambda: http_client.heartbeat())
+                return True
+            else:
+                # Local file mode: check if we can access local storage
+                client = self._get_client()
+                await anyio.to_thread.run_sync(lambda: client._collection.count())
+                return True
+        except Exception:
+            # ChromaDB is unhealthy (server unreachable or local storage broken)
+            return False
 
     async def similarity_search_with_threshold(
         self, *, query: str, k: int = 5, score_threshold: float = 0.5

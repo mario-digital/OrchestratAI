@@ -410,6 +410,7 @@ async def delegate_hybrid(
             provider=cag_provider,
             cache=cache,
             embeddings=embeddings_provider,
+            vector_store=vector_store,
         )
         return await cag_agent.run(request)
 
@@ -464,6 +465,7 @@ async def delegate_rag(
             provider=cag_provider,
             cache=cache,
             embeddings=embeddings_provider,
+            vector_store=vector_store,
         )
         return await cag_agent.run(request)
 
@@ -487,12 +489,14 @@ async def delegate_rag(
 async def delegate_billing(
     state: OrchestratorState,
     *,
+    vector_store: VectorStore,
     cache: RedisSemanticCache,
 ) -> OrchestratorState:
     """Delegate to CAG agent for billing questions with fallback: CAG → Direct.
 
     Args:
         state: Current orchestrator state
+        vector_store: Vector database for retrieval
         cache: Redis semantic cache
 
     Returns:
@@ -510,6 +514,7 @@ async def delegate_billing(
             provider=cag_provider,
             cache=cache,
             embeddings=embeddings_provider,
+            vector_store=vector_store,
         )
         # Pass PRICING_QUESTION intent for billing questions
         return await cag_agent.run(request, intent=PRICING_QUESTION)
@@ -533,12 +538,14 @@ async def delegate_billing(
 async def delegate_policy(
     state: OrchestratorState,
     *,
+    vector_store: VectorStore,
     cache: RedisSemanticCache,
 ) -> OrchestratorState:
     """Delegate to CAG agent for policy questions with fallback: CAG → Direct.
 
     Args:
         state: Current orchestrator state
+        vector_store: Vector database for retrieval
         cache: Redis semantic cache
 
     Returns:
@@ -556,6 +563,7 @@ async def delegate_policy(
             provider=cag_provider,
             cache=cache,
             embeddings=embeddings_provider,
+            vector_store=vector_store,
         )
         # Pass POLICY_QUESTION intent for policy questions
         return await cag_agent.run(request, intent=POLICY_QUESTION)
@@ -670,10 +678,10 @@ def build_orchestrator_graph(
         return await delegate_rag(state, vector_store=vector_store, cache=cache)
 
     async def billing_wrapper(state: OrchestratorState) -> OrchestratorState:
-        return await delegate_billing(state, cache=cache)
+        return await delegate_billing(state, vector_store=vector_store, cache=cache)
 
     async def policy_wrapper(state: OrchestratorState) -> OrchestratorState:
-        return await delegate_policy(state, cache=cache)
+        return await delegate_policy(state, vector_store=vector_store, cache=cache)
 
     # Create workflow
     workflow = StateGraph(OrchestratorState)
