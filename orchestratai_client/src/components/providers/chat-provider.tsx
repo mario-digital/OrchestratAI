@@ -254,7 +254,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         console.warn(`UPDATE_AGENT_STATUS: Unknown agent ID "${agent}"`);
         return state;
       }
-      return {
+      const newState = {
         ...state,
         agents: {
           ...state.agents,
@@ -264,6 +264,11 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
           },
         },
       };
+      console.log(
+        `UPDATE_AGENT_STATUS reducer: ${agent} -> ${action.payload.status}`,
+        newState.agents
+      );
+      return newState;
     }
 
     case "INCREMENT_AGENT_METRICS": {
@@ -859,6 +864,15 @@ export function ChatProvider({
 
           // Update agent status in real-time
           onAgentUpdate: (agent, status) => {
+            console.log("agent update", agent, status);
+
+            // Clear the orchestrator timeout when we receive real status updates
+            // This prevents the timeout from overriding real backend status
+            if (orchestratorTimeoutRef.current) {
+              clearTimeout(orchestratorTimeoutRef.current);
+              orchestratorTimeoutRef.current = null;
+            }
+
             dispatch({
               type: "UPDATE_AGENT_STATUS",
               payload: { agent, status },
