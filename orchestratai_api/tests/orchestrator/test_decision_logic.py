@@ -54,7 +54,7 @@ def test_decide_route_domain_question():
 
 
 def test_decide_route_policy_question():
-    """Test that POLICY_QUESTION routes to CAG agent."""
+    """Test that POLICY_QUESTION routes to policy agent."""
     state: OrchestratorState = {
         "messages": [{"role": "user", "content": "What is your privacy policy?"}],
         "analysis": {
@@ -71,8 +71,8 @@ def test_decide_route_policy_question():
 
     route = decide_route(state)
 
-    assert route == "delegate_cag"
-    assert state["route"] == "delegate_cag"
+    assert route == "delegate_policy"
+    assert state["route"] == "delegate_policy"
 
 
 def test_decide_route_missing_intent():
