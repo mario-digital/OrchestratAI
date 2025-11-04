@@ -505,7 +505,7 @@ async def test_delegate_mode_cag_pricing_question_end_to_end(temp_vector_store, 
         # Verify result
         result = final_state["result"]
         assert result is not None
-        assert result.agent == AgentId.POLICY  # CAG agent maps to POLICY
+        assert result.agent == AgentId.BILLING  # Pricing questions → BILLING agent
         assert "pricing" in result.message.lower() or "plan" in result.message.lower()
 
         # Verify routing log + cache log present
