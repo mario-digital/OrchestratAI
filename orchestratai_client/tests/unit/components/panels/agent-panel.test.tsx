@@ -1,9 +1,44 @@
 // @vitest-environment jsdom
 
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { beforeAll, afterAll, beforeEach, describe, it, expect } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import { AgentPanel } from "@/components/panels/agent-panel";
 import { ChatProvider } from "@/components/providers/chat-provider";
+import { AgentId } from "@/lib/enums";
+import { getAgentModelLabel } from "@/lib/agent-models";
+
+const MODEL_ENV_KEYS = [
+  "NEXT_PUBLIC_ORCHESTRATOR_MODEL",
+  "NEXT_PUBLIC_BILLING_MODEL",
+  "NEXT_PUBLIC_TECHNICAL_MODEL",
+  "NEXT_PUBLIC_POLICY_MODEL",
+];
+
+const originalEnv: Record<string, string | undefined> = {};
+
+beforeAll(() => {
+  for (const key of MODEL_ENV_KEYS) {
+    originalEnv[key] = process.env[key];
+  }
+});
+
+beforeEach(() => {
+  process.env["NEXT_PUBLIC_ORCHESTRATOR_MODEL"] = "gpt-4o";
+  process.env["NEXT_PUBLIC_BILLING_MODEL"] = "gpt-4o-mini";
+  process.env["NEXT_PUBLIC_TECHNICAL_MODEL"] = "gpt-4o";
+  process.env["NEXT_PUBLIC_POLICY_MODEL"] = "gpt-4o-mini";
+});
+
+afterAll(() => {
+  for (const key of MODEL_ENV_KEYS) {
+    const value = originalEnv[key];
+    if (typeof value === "undefined") {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+});
 
 describe("AgentPanel", () => {
   // Helper function to render with ChatProvider
@@ -93,7 +128,20 @@ describe("AgentPanel", () => {
   it("displays agent models for all agents", async () => {
     renderWithProvider();
 
-    const modelTexts = await screen.findAllByText("OpenAI GPT-4o");
-    expect(modelTexts).toHaveLength(4);
+    const agentCards = [
+      { id: AgentId.ORCHESTRATOR, name: "Orchestrator" },
+      { id: AgentId.BILLING, name: "Billing Agent" },
+      { id: AgentId.TECHNICAL, name: "Technical Agent" },
+      { id: AgentId.POLICY, name: "Policy Agent" },
+    ];
+
+    for (const { id, name } of agentCards) {
+      const heading = await screen.findByText(name);
+      const card = heading.closest('[data-slot="card"]') ?? heading.closest("div");
+      if (!(card instanceof HTMLElement)) {
+        throw new Error(`Agent card container not found for ${name}`);
+      }
+      expect(within(card).getByText(getAgentModelLabel(id))).toBeInTheDocument();
+    }
   });
 });

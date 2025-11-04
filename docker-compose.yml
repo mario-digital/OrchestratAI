@@ -73,6 +73,10 @@ services:
       - NEXT_PUBLIC_API_URL=http://backend:8000
       - BACKEND_API_URL=http://backend:8000
       - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+      - NEXT_PUBLIC_ORCHESTRATOR_MODEL=${NEXT_PUBLIC_ORCHESTRATOR_MODEL:-gpt-4o}
+      - NEXT_PUBLIC_BILLING_MODEL=${NEXT_PUBLIC_BILLING_MODEL:-gpt-4o-mini}
+      - NEXT_PUBLIC_TECHNICAL_MODEL=${NEXT_PUBLIC_TECHNICAL_MODEL:-gpt-4o}
+      - NEXT_PUBLIC_POLICY_MODEL=${NEXT_PUBLIC_POLICY_MODEL:-gpt-4o-mini}
     volumes:
       - ./orchestratai_client/src:/app/orchestratai_client/src
       - ./orchestratai_client/public:/app/orchestratai_client/public

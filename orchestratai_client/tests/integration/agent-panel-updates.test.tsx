@@ -4,11 +4,21 @@
  * Tests the integration between AgentPanel and ChatProvider state management
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import { ChatProvider } from "@/components/providers/chat-provider";
 import { AgentPanel } from "@/components/panels/agent-panel";
 import { AgentId, AgentStatus } from "@/lib/enums";
+import { getAgentModelLabel } from "@/lib/agent-models";
 import * as chatApi from "@/lib/api/chat";
 
 // Mock the chat API
@@ -22,9 +32,28 @@ vi.mock("sonner", () => ({
   },
 }));
 
+const MODEL_ENV_KEYS = [
+  "NEXT_PUBLIC_ORCHESTRATOR_MODEL",
+  "NEXT_PUBLIC_BILLING_MODEL",
+  "NEXT_PUBLIC_TECHNICAL_MODEL",
+  "NEXT_PUBLIC_POLICY_MODEL",
+];
+
+const originalEnv: Record<string, string | undefined> = {};
+
 describe("AgentPanel with ChatProvider integration", () => {
+  beforeAll(() => {
+    for (const key of MODEL_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+    }
+  });
+
 beforeEach(() => {
   vi.clearAllMocks();
+    process.env["NEXT_PUBLIC_ORCHESTRATOR_MODEL"] = "gpt-4o";
+    process.env["NEXT_PUBLIC_BILLING_MODEL"] = "gpt-4o-mini";
+    process.env["NEXT_PUBLIC_TECHNICAL_MODEL"] = "gpt-4o";
+    process.env["NEXT_PUBLIC_POLICY_MODEL"] = "gpt-4o-mini";
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: vi.fn().mockImplementation((query: string) => ({
@@ -42,6 +71,17 @@ beforeEach(() => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  afterAll(() => {
+    for (const key of MODEL_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (typeof value === "undefined") {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
   });
 
   it("renders all agents with initial IDLE status", async () => {
@@ -169,9 +209,21 @@ beforeEach(() => {
       </ChatProvider>
     );
 
-    // All agents should show "OpenAI GPT-4o" model
-    const modelTexts = await screen.findAllByText("OpenAI GPT-4o");
-    expect(modelTexts).toHaveLength(4);
+    const agentCards = [
+      { id: AgentId.ORCHESTRATOR, name: "Orchestrator" },
+      { id: AgentId.BILLING, name: "Billing Agent" },
+      { id: AgentId.TECHNICAL, name: "Technical Agent" },
+      { id: AgentId.POLICY, name: "Policy Agent" },
+    ];
+
+    for (const { id, name } of agentCards) {
+      const heading = await screen.findByText(name);
+      const card = heading.closest('[data-slot="card"]') ?? heading.closest("div");
+      if (!(card instanceof HTMLElement)) {
+        throw new Error(`Agent card container not found for ${name}`);
+      }
+      expect(within(card).getByText(getAgentModelLabel(id))).toBeInTheDocument();
+    }
   });
 
   it("agents have no strategy badge initially", () => {
