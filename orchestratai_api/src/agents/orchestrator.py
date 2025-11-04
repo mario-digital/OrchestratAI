@@ -615,7 +615,8 @@ def _add_routing_log(
     name_map = {
         "hybrid": "Hybrid",
         "rag": "RAG",
-        "cag": "CAG",
+        "billing": "Billing (CAG)",
+        "policy": "Policy (CAG)",
         "direct": "Direct",
         "guide": "Guide",
     }
