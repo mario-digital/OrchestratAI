@@ -36,7 +36,11 @@ def load_documents(source_dir: Path) -> list[Document]:
     return documents
 
 
-def chunk_documents(documents: list[Document], chunk_size: int = 512, chunk_overlap: int = 80) -> list[Document]:
+def chunk_documents(
+    documents: list[Document],
+    chunk_size: int = 512,
+    chunk_overlap: int = 80,
+) -> list[Document]:
     """Split documents into chunks."""
     print(f"Chunking documents (size={chunk_size}, overlap={chunk_overlap})...")
     text_splitter = RecursiveCharacterTextSplitter(
