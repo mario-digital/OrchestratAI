@@ -48,7 +48,7 @@ PRICING_QUESTION = "PRICING_QUESTION"
 async def analyse_query(state: OrchestratorState) -> OrchestratorState:
     """Analyze the user query and classify intent.
 
-    Uses Claude 3.5 Sonnet for strategic routing decisions.
+    Uses Gpt4o for strategic routing decisions.
 
     Args:
         state: Current orchestrator state
@@ -187,7 +187,7 @@ def decide_route(
 async def guide_user(state: OrchestratorState) -> OrchestratorState:
     """Provide direct response without delegating to workers.
 
-    Uses Claude 3 Haiku for fast, cost-effective guide mode.
+    Uses Gpt4o for fast, cost-effective guide mode.
 
     Args:
         state: Current orchestrator state

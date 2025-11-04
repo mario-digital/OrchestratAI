@@ -60,4 +60,13 @@ describe("AgentStatusBadge", () => {
     expect(badge).toHaveClass("uppercase");
     expect(badge).toHaveClass("rounded-full");
   });
+
+  it("renders ACTIVE status with green background styling when isOnGreenBackground is true", () => {
+    render(<AgentStatusBadge status={AgentStatus.ACTIVE} agentName="Test Agent" isOnGreenBackground={true} />);
+
+    const badge = screen.getByText("ACTIVE");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass("bg-badge-active-on-green-bg");
+    expect(badge).toHaveClass("text-badge-active-on-green-text");
+  });
 });
