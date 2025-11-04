@@ -3,6 +3,7 @@
 import os
 
 import pytest
+from langchain_core.documents import Document
 
 from src.agents.workers.hybrid_agent import HybridAgent
 from src.agents.workers.rag_agent import RAGAgent
@@ -36,19 +37,30 @@ class TestHybridIntegration:
 
         # Seed with test documents
         test_docs = [
-            "RAG (Retrieval-Augmented Generation) combines retrieval with generation.",
-            "CAG (Cached-Augmented Generation) uses semantic caching for efficiency.",
-            "Hybrid agents combine both RAG and CAG approaches for best results.",
+            Document(
+                page_content=(
+                    "RAG (Retrieval-Augmented Generation) combines "
+                    "retrieval with generation."
+                ),
+                metadata={"source": "rag_doc.pdf", "page": 1},
+            ),
+            Document(
+                page_content=(
+                    "CAG (Cached-Augmented Generation) uses semantic "
+                    "caching for efficiency."
+                ),
+                metadata={"source": "cag_doc.pdf", "page": 1},
+            ),
+            Document(
+                page_content=(
+                    "Hybrid agents combine both RAG and CAG approaches "
+                    "for best results."
+                ),
+                metadata={"source": "hybrid_doc.pdf", "page": 1},
+            ),
         ]
 
-        await store.add_texts(
-            texts=test_docs,
-            metadatas=[
-                {"source": "rag_doc.pdf", "page": 1},
-                {"source": "cag_doc.pdf", "page": 1},
-                {"source": "hybrid_doc.pdf", "page": 1},
-            ],
-        )
+        await store.add_documents(documents=test_docs)
 
         yield store
 
