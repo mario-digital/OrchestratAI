@@ -470,9 +470,9 @@ describe("RetrievalPanel - Malformed Data Handling", () => {
     );
 
     expect(screen.getByText("VECTOR SEARCH")).toBeInTheDocument();
-    // Should render card even with malformed data
-    expect(screen.getByText("Method:")).toBeInTheDocument();
-    expect(screen.getByText("RAG")).toBeInTheDocument();
+    // Should render card even with malformed data (defaults to unknown collection, 0 chunks)
+    expect(screen.getByText("unknown")).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
   });
 
   it("handles malformed cache log data", () => {
