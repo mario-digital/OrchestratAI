@@ -93,7 +93,7 @@ describe("QueryAnalysisCard Component", () => {
       />
     );
 
-    expect(screen.getByText(/technical_question/i)).toBeInTheDocument();
+    expect(screen.getByText(/Technical Question/i)).toBeInTheDocument();
   });
 
   it("displays confidence score", () => {
@@ -185,7 +185,7 @@ describe("DocumentPreview Component", () => {
       />
     );
 
-    expect(screen.getByText("docs/architecture.md")).toBeInTheDocument();
+    expect(screen.getByText("architecture.md")).toBeInTheDocument();
   });
 
   it("displays similarity score", () => {
@@ -315,7 +315,7 @@ describe("CacheOperationCard Component", () => {
     expect(screen.getByText("1 B")).toBeInTheDocument();
   });
 
-  it("displays cache key when provided", () => {
+  it("displays Method: CAG label", () => {
     render(
       <CacheOperationCard
         _isHit={true}
@@ -325,13 +325,18 @@ describe("CacheOperationCard Component", () => {
       />
     );
 
-    expect(screen.getByText("query:12345")).toBeInTheDocument();
+    expect(screen.getByText("Method:")).toBeInTheDocument();
+    expect(screen.getByText("CAG")).toBeInTheDocument();
   });
 
-  it("does not display cache key section when not provided", () => {
+  it("displays clear explanation message for cache hit", () => {
     render(<CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={100} />);
 
-    expect(screen.queryByText("Cache Key:")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Similar question found in cache - instant response with zero cost/i
+      )
+    ).toBeInTheDocument();
   });
 
   it("displays HIT badge with green styling for cache hits", () => {

@@ -18,6 +18,6 @@ describe('Footer', () => {
     expect(screen.getByText(/--ms/)).toBeInTheDocument();
     expect(screen.getByText(/Tokens: --/)).toBeInTheDocument();
     expect(screen.getByText(/\$--/)).toBeInTheDocument();
-    expect(screen.getByText(/Connected/)).toBeInTheDocument();
+    expect(screen.getByText(/ChromaDB:/)).toBeInTheDocument();
   });
 });
