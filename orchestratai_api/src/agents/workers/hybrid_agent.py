@@ -249,15 +249,15 @@ class HybridAgent(BaseAgent):
         # Step 12: Build agent status map
         agent_status = {
             AgentId.ORCHESTRATOR: AgentStatus.COMPLETE,
-            AgentId.BILLING: AgentStatus.COMPLETE,  # Hybrid uses BILLING id
-            AgentId.TECHNICAL: AgentStatus.COMPLETE,  # RAG was also used
+            AgentId.BILLING: AgentStatus.IDLE,
+            AgentId.TECHNICAL: AgentStatus.COMPLETE,  # Hybrid handles complex technical questions
             AgentId.POLICY: AgentStatus.IDLE,
         }
 
         # Step 13: Return complete response
         return ChatResponse(
             message=result.content,
-            agent=AgentId.BILLING,  # Hybrid agent maps to BILLING
+            agent=AgentId.TECHNICAL,  # Hybrid handles complex technical questions
             confidence=0.90,  # High confidence for hybrid responses
             logs=logs,
             metrics=chat_metrics,

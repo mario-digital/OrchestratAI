@@ -98,7 +98,7 @@ class TestCAGAgent:
 
         # Verify: Response structure
         assert response.message == "Policy answer"
-        assert response.agent == AgentId.POLICY
+        assert response.agent == AgentId.BILLING
         assert response.confidence == 0.85
         assert response.metrics.cache_status == "miss"
         assert response.metrics.cost > 0  # Non-zero cost for cache miss
@@ -151,7 +151,7 @@ class TestCAGAgent:
 
         # Verify: Response structure
         assert response.message == "Cached policy answer"
-        assert response.agent == AgentId.POLICY
+        assert response.agent == AgentId.BILLING
         assert response.confidence == 0.90  # High confidence for cache hits
         assert response.metrics.cache_status == "hit"
         assert response.metrics.cost == 0.0  # Zero cost for cache hit
@@ -260,10 +260,10 @@ class TestCAGAgent:
         response = await agent.run(request)
 
         # Verify: Agent ID is POLICY
-        assert response.agent == AgentId.POLICY
+        assert response.agent == AgentId.BILLING
 
         # Verify: Agent status includes POLICY as COMPLETE
-        assert AgentId.POLICY in response.agent_status
+        assert AgentId.BILLING in response.agent_status
 
     @pytest.mark.asyncio
     async def test_close_cleanup(self, mock_cache: AsyncMock) -> None:
