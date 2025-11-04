@@ -4,6 +4,7 @@ import os
 from unittest.mock import patch
 
 import pytest
+from langchain_core.documents import Document
 
 from src.agents.orchestrator import build_orchestrator_graph
 from src.cache.redis_cache import RedisSemanticCache
@@ -34,10 +35,11 @@ class TestFallbackIntegration:
         )
 
         # Seed with test documents
-        await store.add_texts(
-            texts=["Test document for fallback integration testing."],
-            metadatas=[{"source": "test.pdf", "page": 1}],
+        test_doc = Document(
+            page_content="Test document for fallback integration testing.",
+            metadata={"source": "test.pdf", "page": 1},
         )
+        await store.add_documents(documents=[test_doc])
 
         yield store
 
