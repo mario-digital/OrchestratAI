@@ -117,6 +117,11 @@ export function AgentPanel(): JSX.Element {
                 return null;
               }
 
+              console.log(
+                `AgentPanel rendering ${id} with status:`,
+                agentState.status
+              );
+
               return (
                 <AgentCard
                   key={id}
