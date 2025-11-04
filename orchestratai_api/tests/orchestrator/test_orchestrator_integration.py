@@ -335,13 +335,13 @@ async def test_streaming_integration(temp_vector_store, mock_cache):
         assert len(events) > 0
 
         # Verify event types
-        import json
-
         event_types = []
         for event in events:
-            if event.startswith("data: "):
-                data = json.loads(event[6:])
-                event_types.append(data.get("type"))
+            # Parse SSE format: "event: type\ndata: {...}\n\n"
+            if event.startswith("event: "):
+                # Extract event type from "event: type\n..."
+                event_type = event.split("\n")[0].replace("event: ", "")
+                event_types.append(event_type)
 
         # Should have agent_status, message_chunk, and done events
         assert "agent_status" in event_types

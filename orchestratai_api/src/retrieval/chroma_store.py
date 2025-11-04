@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Iterable
+from pathlib import Path
 
 import anyio
 from langchain_chroma import Chroma
@@ -47,7 +48,7 @@ class ChromaVectorStore(VectorStore):
     def __init__(
         self,
         *,
-        persist_directory: str = "/app/chroma_db",
+        persist_directory: str | None = None,
         collection_name: str = "knowledge_base_v1",
         embeddings: Embeddings | None = None,
     ):
@@ -67,7 +68,17 @@ class ChromaVectorStore(VectorStore):
             self._embeddings = OpenAIEmbeddings(
                 model="text-embedding-3-large", api_key=SecretStr(api_key)
             )
-        self._persist_directory = persist_directory
+        # Determine persistent storage directory.
+        resolved_dir = (
+            persist_directory
+            or os.getenv("CHROMA_PERSIST_DIRECTORY")
+            or str(Path(__file__).resolve().parent.parent.parent / "data" / "chroma")
+        )
+
+        # Ensure the directory exists when running locally (e.g., outside Docker)
+        Path(resolved_dir).mkdir(parents=True, exist_ok=True)
+
+        self._persist_directory = resolved_dir
         self._collection_name = collection_name
         self._client: Chroma | None = None
 

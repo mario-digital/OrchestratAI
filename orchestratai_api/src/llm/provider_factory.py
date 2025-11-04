@@ -1,6 +1,7 @@
 """Provider factory for mapping agent roles to LLM providers."""
 
 import os
+import urllib.parse
 from enum import Enum
 from functools import cache
 
@@ -55,19 +56,21 @@ class ProviderFactory:
         """
         if role == AgentRole.ORCHESTRATOR_ANALYSIS:
             # High-quality analysis and routing
-            model = os.getenv(
+            raw_model = os.getenv(
                 "ORCHESTRATOR_ANALYSIS_MODEL",
                 "anthropic.claude-3-5-sonnet-20241022-v2:0",
             )
-            return BedrockProvider(model=model, temperature=0.1)
+            model = urllib.parse.unquote(raw_model)
+            return _build_provider_for_model(model, temperature=0.1)
 
         elif role == AgentRole.ORCHESTRATOR_GUIDE:
             # Fast guide mode responses
-            model = os.getenv(
+            raw_model = os.getenv(
                 "ORCHESTRATOR_GUIDE_MODEL",
                 "anthropic.claude-3-haiku-20240307-v1:0",
             )
-            return BedrockProvider(model=model, temperature=0.3)
+            model = urllib.parse.unquote(raw_model)
+            return _build_provider_for_model(model, temperature=0.3)
 
         elif role == AgentRole.RAG:
             # Document Q&A with strong reasoning
@@ -80,7 +83,7 @@ class ProviderFactory:
                 "DEFAULT_CAG_MODEL",
                 "anthropic.claude-3-haiku-20240307-v1:0",
             )
-            return BedrockProvider(model=model, temperature=0.1)
+            return _build_provider_for_model(model, temperature=0.1)
 
         elif role == AgentRole.HYBRID:
             # Complex reasoning combining retrieval + generation
@@ -93,7 +96,7 @@ class ProviderFactory:
                 "DEFAULT_DIRECT_MODEL",
                 "anthropic.claude-3-haiku-20240307-v1:0",
             )
-            return BedrockProvider(model=model, temperature=0.5)
+            return _build_provider_for_model(model, temperature=0.5)
 
         elif role == AgentRole.EMBEDDINGS:
             # Vector embeddings
@@ -111,3 +114,24 @@ class ProviderFactory:
         Useful for testing or when credential rotation requires new clients.
         """
         ProviderFactory.for_role.cache_clear()
+
+
+def _build_provider_for_model(model: str, *, temperature: float) -> BaseLLMProvider:
+    """Create a provider based on the model identifier.
+
+    Bedrock model identifiers always start with ``anthropic.`` or ``bedrock``. If the
+    identifier does not match that pattern we assume it is an OpenAI model so the same
+    configuration can be used locally without AWS credentials.
+    """
+
+    model = urllib.parse.unquote(model)
+    lowered = model.lower()
+    if (
+        "anthropic." in lowered
+        or "amazon." in lowered
+        or lowered.startswith("bedrock")
+        or lowered.startswith("arn:aws:bedrock")
+    ):
+        return BedrockProvider(model=model, temperature=temperature)
+
+    return OpenAIProvider(model=model, temperature=temperature)

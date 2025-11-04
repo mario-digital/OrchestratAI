@@ -45,9 +45,7 @@ class TestBedrockProviderInit:
     def test_init_with_valid_credentials(self, mock_env):
         """Should initialize successfully with valid AWS credentials."""
         with patch("src.llm.bedrock_provider.boto3.client") as mock_boto:
-            provider = BedrockProvider(
-                model="anthropic.claude-3-haiku-20240307-v1:0"
-            )
+            provider = BedrockProvider(model="anthropic.claude-3-haiku-20240307-v1:0")
             assert provider.model == "anthropic.claude-3-haiku-20240307-v1:0"
             assert provider.temperature == 0.1
 
@@ -61,7 +59,7 @@ class TestBedrockProviderInit:
         """Should accept custom temperature."""
         with patch("src.llm.bedrock_provider.boto3.client"):
             provider = BedrockProvider(
-                model="anthropic.claude-3-5-sonnet-20241022-v2:0",
+                model="us.anthropic.claude-3-5-sonnet-20240620-v1:0",
                 temperature=0.5,
             )
             assert provider.temperature == 0.5
@@ -69,6 +67,7 @@ class TestBedrockProviderInit:
     def test_init_missing_credentials(self):
         """Should raise RuntimeError when AWS credentials missing."""
         from src.llm.secrets import resolve_secret
+
         resolve_secret.cache_clear()  # Clear cache to ensure clean test
 
         with patch.dict("os.environ", {"USE_ONEPASSWORD": "false"}, clear=True):
@@ -187,34 +186,38 @@ class TestBedrockProviderStream:
         stream_events = [
             {
                 "chunk": {
-                    "bytes": json.dumps({
-                        "type": "content_block_delta",
-                        "delta": {"type": "text_delta", "text": "Hello"},
-                    }).encode()
+                    "bytes": json.dumps(
+                        {
+                            "type": "content_block_delta",
+                            "delta": {"type": "text_delta", "text": "Hello"},
+                        }
+                    ).encode()
                 }
             },
             {
                 "chunk": {
-                    "bytes": json.dumps({
-                        "type": "content_block_delta",
-                        "delta": {"type": "text_delta", "text": " world"},
-                    }).encode()
+                    "bytes": json.dumps(
+                        {
+                            "type": "content_block_delta",
+                            "delta": {"type": "text_delta", "text": " world"},
+                        }
+                    ).encode()
                 }
             },
             {
                 "chunk": {
-                    "bytes": json.dumps({
-                        "type": "message_delta",
-                        "usage": {"output_tokens": 15},
-                    }).encode()
+                    "bytes": json.dumps(
+                        {
+                            "type": "message_delta",
+                            "usage": {"output_tokens": 15},
+                        }
+                    ).encode()
                 }
             },
         ]
 
         mock_response = {"body": iter(stream_events)}
-        provider._client.invoke_model_with_response_stream = Mock(
-            return_value=mock_response
-        )
+        provider._client.invoke_model_with_response_stream = Mock(return_value=mock_response)
 
         messages = [{"role": "user", "content": "Hi"}]
         chunks = []
@@ -232,18 +235,18 @@ class TestBedrockProviderStream:
         stream_events = [
             {
                 "chunk": {
-                    "bytes": json.dumps({
-                        "type": "content_block_delta",
-                        "delta": {"type": "text_delta", "text": "Test content here"},
-                    }).encode()
+                    "bytes": json.dumps(
+                        {
+                            "type": "content_block_delta",
+                            "delta": {"type": "text_delta", "text": "Test content here"},
+                        }
+                    ).encode()
                 }
             }
         ]
 
         mock_response = {"body": iter(stream_events)}
-        provider._client.invoke_model_with_response_stream = Mock(
-            return_value=mock_response
-        )
+        provider._client.invoke_model_with_response_stream = Mock(return_value=mock_response)
 
         messages = [{"role": "user", "content": "Hi"}]
         chunks = []
@@ -335,9 +338,7 @@ class TestBedrockContentExtraction:
 
     def test_extract_single_text_block(self, provider):
         """Should extract single text block."""
-        response_body = {
-            "content": [{"type": "text", "text": "Hello"}]
-        }
+        response_body = {"content": [{"type": "text", "text": "Hello"}]}
         content = provider._extract_content(response_body)
         assert content == "Hello"
 

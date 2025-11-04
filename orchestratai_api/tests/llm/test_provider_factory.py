@@ -12,7 +12,11 @@ from src.llm.provider_factory import AgentRole, ProviderFactory
 
 @pytest.fixture
 def mock_env():
-    """Mock environment with all required credentials."""
+    """Mock environment with all required credentials.
+
+    Uses clear=True to remove any .env file variables, ensuring tests
+    use code defaults for model selection.
+    """
     with patch.dict(
         "os.environ",
         {
@@ -21,6 +25,7 @@ def mock_env():
             "AWS_ACCESS_KEY_ID": "AKIATEST",
             "AWS_SECRET_ACCESS_KEY": "test-secret",
         },
+        clear=True,
     ):
         yield
 

@@ -94,8 +94,33 @@ export async function GET(
     }
 
     // Stream response back to client
-    // Next.js automatically handles the streaming conversion
-    return new Response(backendResponse.body, {
+    // Create a readable stream that properly handles SSE data
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = backendResponse.body?.getReader();
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              controller.close();
+              break;
+            }
+            // Forward chunks as-is (already SSE formatted from backend)
+            controller.enqueue(value);
+          }
+        } catch (error) {
+          console.error("Stream reading error:", error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache, no-transform",

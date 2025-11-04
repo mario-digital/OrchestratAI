@@ -42,11 +42,28 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Parse request body (secure - not in URL!)
-    const body = (await request.json()) as {
-      message?: string;
-      session_id?: string;
-    };
+    const rawBody = await request.text();
+
+    if (!rawBody) {
+      return NextResponse.json(
+        { error: "Request body is required" },
+        { status: 400 }
+      );
+    }
+
+    let body: { message?: string; session_id?: string };
+    try {
+      body = JSON.parse(rawBody) as {
+        message?: string;
+        session_id?: string;
+      };
+    } catch (parseError) {
+      console.error("Failed to parse initiate payload:", parseError, rawBody);
+      return NextResponse.json(
+        { error: "Invalid JSON payload" },
+        { status: 400 }
+      );
+    }
     const { message, session_id } = body;
 
     // Validate required fields

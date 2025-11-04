@@ -1,5 +1,6 @@
 """OpenAI LLM provider implementation using LangChain."""
 
+import logging
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -12,6 +13,8 @@ from .base_provider import BaseLLMProvider
 from .pricing import dollar_cost
 from .secrets import resolve_secret
 from .types import LLMCallResult, StreamChunk
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(BaseLLMProvider):
@@ -110,11 +113,19 @@ class OpenAIProvider(BaseLLMProvider):
         tokens_output = usage.get("completion_tokens", 0)
 
         # Calculate cost
-        cost = dollar_cost(
-            self.pricing[self.model],
-            tokens_prompt=tokens_input,
-            tokens_completion=tokens_output,
-        )
+        pricing = self.pricing.get(self.model)
+        if pricing is None:
+            logger.warning(
+                "Missing pricing information for OpenAI model %s; defaulting cost to 0",
+                self.model,
+            )
+            cost = 0.0
+        else:
+            cost = dollar_cost(
+                pricing,
+                tokens_prompt=tokens_input,
+                tokens_completion=tokens_output,
+            )
 
         # Extract content (handle both string and list formats)
         content_str = (
