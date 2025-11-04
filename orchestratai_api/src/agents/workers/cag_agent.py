@@ -24,15 +24,15 @@ class _NullVectorStore(VectorStore):
     vector store implementation.
     """
 
-    async def add_documents(self, *, documents: list[Document]) -> None:  # type: ignore[override]
+    async def add_documents(self, *, documents: list[Document]) -> None:
         return None
 
-    async def similarity_search(self, *, query: str, k: int = 5) -> list[Document]:  # type: ignore[override]
+    async def similarity_search(self, *, query: str, k: int = 5) -> list[Document]:
         return []
 
     async def similarity_search_with_scores(
         self, *, query: str, k: int = 5
-    ) -> list[tuple[Document, float]]:  # type: ignore[override]
+    ) -> list[tuple[Document, float]]:
         return []
 
     async def clear(self) -> None:
