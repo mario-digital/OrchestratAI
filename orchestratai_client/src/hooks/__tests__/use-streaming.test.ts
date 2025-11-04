@@ -357,7 +357,11 @@ describe("useStreaming", () => {
         mockEventSource.simulateEvent("done", { metadata: mockMetadata });
       });
 
-      expect(onComplete).toHaveBeenCalledWith(mockMetadata, undefined);
+      expect(onComplete).toHaveBeenCalledWith(
+        mockMetadata,
+        undefined,
+        undefined
+      );
 
       // Wait for state update
       await waitFor(() => {

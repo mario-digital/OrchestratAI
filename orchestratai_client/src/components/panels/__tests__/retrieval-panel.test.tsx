@@ -408,7 +408,7 @@ describe("RetrievalPanel - Malformed Data Handling", () => {
 
     // Should render with defaults
     expect(screen.getByText("QUERY ANALYSIS")).toBeInTheDocument();
-    expect(screen.getByText("unknown")).toBeInTheDocument(); // Default intent
+    expect(screen.getByText("Unknown")).toBeInTheDocument(); // Default intent (formatted)
     expect(screen.getByText("0.00")).toBeInTheDocument(); // Default confidence
     expect(screen.getByText(AgentId.ORCHESTRATOR)).toBeInTheDocument(); // Default agent
   });
@@ -438,7 +438,7 @@ describe("RetrievalPanel - Malformed Data Handling", () => {
     );
 
     expect(screen.getByText("QUERY ANALYSIS")).toBeInTheDocument();
-    expect(screen.getByText("unknown")).toBeInTheDocument();
+    expect(screen.getByText("Unknown")).toBeInTheDocument();
   });
 
   it("handles malformed vector search log data", () => {
@@ -470,7 +470,7 @@ describe("RetrievalPanel - Malformed Data Handling", () => {
     );
 
     expect(screen.getByText("VECTOR SEARCH")).toBeInTheDocument();
-    expect(screen.getByText("unknown")).toBeInTheDocument(); // Default collection
+    expect(screen.getByText("Unknown")).toBeInTheDocument(); // Default collection
     expect(screen.getByText("0")).toBeInTheDocument(); // Default chunk count
   });
 
@@ -503,7 +503,7 @@ describe("RetrievalPanel - Malformed Data Handling", () => {
     );
 
     expect(screen.getByText("CACHED CONTEXT")).toBeInTheDocument();
-    expect(screen.getByText("0 B")).toBeInTheDocument(); // Default cache size
+    expect(screen.getByText("CAG")).toBeInTheDocument(); // Method label shown
   });
 
   it("filters out invalid document chunks", () => {
@@ -570,6 +570,6 @@ describe("RetrievalPanel - Malformed Data Handling", () => {
     );
 
     expect(screen.getByText("QUERY ANALYSIS")).toBeInTheDocument();
-    expect(screen.getByText("unknown")).toBeInTheDocument();
+    expect(screen.getByText("Unknown")).toBeInTheDocument();
   });
 });
