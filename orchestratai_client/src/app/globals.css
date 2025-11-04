@@ -546,8 +546,8 @@
     --space-12
   ); /* aligns chat panel under safe-area */
   --space-mobile-tabs-panel-top: var(
-    --space-4
-  ); /* spacing for agents/logs panels */
+    --space-12
+  ); /* spacing for agents/logs panels - matches chat for consistent alignment under tabs */
   --space-mobile-tabs-panel-x: var(
     --space-4
   ); /* horizontal inset for secondary panels */

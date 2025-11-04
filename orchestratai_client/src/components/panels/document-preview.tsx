@@ -29,6 +29,17 @@ function truncateContent(content: string, maxLength: number = 200): string {
 }
 
 /**
+ * Extract filename from full path
+ * @param path - Full file path or filename
+ * @returns Just the filename, or the original if no path separators found
+ */
+function extractFilename(path: string): string {
+  // Handle both Unix (/) and Windows (\) path separators
+  const parts = path.split(/[/\\]/);
+  return parts[parts.length - 1] || path;
+}
+
+/**
  * DocumentPreview Component
  *
  * Displays a preview of a retrieved document including:
@@ -53,15 +64,16 @@ export function DocumentPreview({
 }: DocumentPreviewProps): JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const truncatedContent = truncateContent(content, 200);
+  const filename = extractFilename(source);
 
   return (
     <div className="space-y-2">
       {/* Source filename - Mockup v2.0: Cyan color, no icon */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-doc-filename truncate">
-          {source}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-doc-filename break-words min-w-0">
+          {filename}
         </span>
-        <span className="text-xs text-doc-similarity-label whitespace-nowrap">
+        <span className="text-xs text-doc-similarity-label whitespace-nowrap flex-shrink-0">
           sim:{" "}
           <span className="text-doc-similarity-value">
             {similarity.toFixed(2)}

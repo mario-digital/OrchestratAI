@@ -8,6 +8,7 @@ import {
   ExecutionStep,
 } from "@/components/panels/execution-graph";
 import { useChatAgents } from "@/hooks/use-chat-agents";
+import { useChatContext } from "@/components/providers/chat-provider";
 import { AgentId, AgentStatus } from "@/lib/enums";
 
 export interface HeaderProps {
@@ -26,13 +27,44 @@ export interface HeaderProps {
  */
 export function Header({ className }: HeaderProps = {}): React.JSX.Element {
   const { agents } = useChatAgents();
+  const { isStreaming, messages } = useChatContext();
+
+  // Check if we're at the beginning of processing (orchestrator not started yet)
+  const isJustStarted =
+    isStreaming && agents[AgentId.ORCHESTRATOR].status === AgentStatus.IDLE;
+
+  // Determine which agent is actively responding (BILLING, TECHNICAL, or POLICY)
+  const activeAgent =
+    agents[AgentId.BILLING].status === AgentStatus.ACTIVE ||
+    agents[AgentId.BILLING].status === AgentStatus.COMPLETE
+      ? AgentId.BILLING
+      : agents[AgentId.TECHNICAL].status === AgentStatus.ACTIVE ||
+          agents[AgentId.TECHNICAL].status === AgentStatus.COMPLETE
+        ? AgentId.TECHNICAL
+        : agents[AgentId.POLICY].status === AgentStatus.ACTIVE ||
+            agents[AgentId.POLICY].status === AgentStatus.COMPLETE
+          ? AgentId.POLICY
+          : AgentId.BILLING; // Default to billing for display
+
+  // Response is complete when:
+  // 1. Not currently streaming AND
+  // 2. We have messages AND
+  // 3. The last message is from the assistant
+  const lastMessage = messages[messages.length - 1];
+  const isResponseComplete = !isStreaming && lastMessage?.role === "assistant";
 
   // Build execution steps from agent states
   const executionSteps: ExecutionStep[] = [
     {
       id: "input",
       label: "Input",
-      status: "complete",
+      // Input is complete once streaming starts, pending if not streaming or just started
+      status:
+        isStreaming && !isJustStarted
+          ? "complete"
+          : isJustStarted
+            ? "active"
+            : "pending",
     },
     {
       id: "orchestrator",
@@ -45,19 +77,19 @@ export function Header({ className }: HeaderProps = {}): React.JSX.Element {
             : "pending",
     },
     {
-      id: "billing",
-      label: agents[AgentId.BILLING].model,
+      id: "worker-agent",
+      label: agents[activeAgent].model,
       status:
-        agents[AgentId.BILLING].status === AgentStatus.ACTIVE
+        agents[activeAgent].status === AgentStatus.ACTIVE
           ? "active"
-          : agents[AgentId.BILLING].status === AgentStatus.COMPLETE
+          : agents[activeAgent].status === AgentStatus.COMPLETE
             ? "complete"
             : "pending",
     },
     {
       id: "response",
       label: "Response",
-      status: "pending",
+      status: isResponseComplete ? "complete" : "pending",
     },
   ];
 

@@ -88,7 +88,7 @@ export function MessageList({
             <p>No messages yet. Start a conversation!</p>
           </div>
         ) : (
-          <AnimatePresence mode="popLayout" initial={false}>
+          <AnimatePresence mode="popLayout">
             {messages.map((message) => (
               <MessageBubble
                 key={message.id}

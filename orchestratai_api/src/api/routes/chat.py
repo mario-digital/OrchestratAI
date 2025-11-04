@@ -47,6 +47,25 @@ def get_agent_service() -> AgentService:
     return _agent_service_instance
 
 
+@router.get("/health/services")
+async def services_health_check(
+    agent_service: AgentService = Depends(get_agent_service),  # noqa: B008
+) -> dict[str, str]:
+    """
+    Check health status of backend services including ChromaDB.
+
+    Returns:
+        Dictionary with service health statuses
+    """
+    # Check ChromaDB health
+    chroma_healthy = await agent_service.vector_store.health_check()
+
+    return {
+        "status": "healthy" if chroma_healthy else "degraded",
+        "chromadb": "connected" if chroma_healthy else "disconnected",
+    }
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,

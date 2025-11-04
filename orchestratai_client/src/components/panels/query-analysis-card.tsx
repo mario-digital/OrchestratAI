@@ -38,6 +38,19 @@ interface QueryAnalysisCardProps {
  * ```
  */
 
+/**
+ * Format intent from SNAKE_CASE to Title Case
+ * @param intent - Intent string in SNAKE_CASE
+ * @returns Formatted intent string
+ */
+function formatIntent(intent: string): string {
+  return intent
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function QueryAnalysisCard({
   intent,
   confidence,
@@ -84,7 +97,7 @@ export function QueryAnalysisCard({
       {/* Intent */}
       <div>
         <span className="text-xs text-text-tertiary">Intent:</span>
-        <p className="text-text-primary">{intent}</p>
+        <p className="text-text-primary">{formatIntent(intent)}</p>
       </div>
 
       {/* Confidence */}

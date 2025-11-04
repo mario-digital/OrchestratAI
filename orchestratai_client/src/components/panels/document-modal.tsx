@@ -31,6 +31,17 @@ interface DocumentModalProps {
 }
 
 /**
+ * Extract filename from full path
+ * @param path - Full file path or filename
+ * @returns Just the filename, or the original if no path separators found
+ */
+function extractFilename(path: string): string {
+  // Handle both Unix (/) and Windows (\) path separators
+  const parts = path.split(/[/\\]/);
+  return parts[parts.length - 1] || path;
+}
+
+/**
  * Get similarity badge color based on score
  * Uses semantic design tokens for success/warning/error states
  * @param similarity - Similarity score (0.0 to 1.0)
@@ -88,24 +99,28 @@ export function DocumentModal({
   }
 
   const { source, content, similarity } = document;
+  const filename = extractFilename(source);
   const similarityPercentage = (similarity * 100).toFixed(1);
   const badgeColor = getSimilarityBadgeColor(similarity);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-modal overflow-y-auto text-text-primary bg-bg-tertiary"
+        className="max-w-5xl overflow-y-auto text-text-primary bg-bg-tertiary"
         style={{ maxHeight: "var(--size-modal-max-height)" }}
       >
         <DialogHeader>
           <div className="flex items-center justify-between gap-4 pr-8">
-            <DialogTitle className="truncate text-text-primary">
-              {source}
+            <DialogTitle className="break-words text-text-primary">
+              {filename}
             </DialogTitle>
-            <Badge className={badgeColor}>{similarityPercentage}%</Badge>
+            <Badge className={`${badgeColor} flex-shrink-0`}>
+              {similarityPercentage}%
+            </Badge>
           </div>
           <DialogDescription className="sr-only">
-            Detailed view of {source}. Similarity score {similarityPercentage}%.
+            Detailed view of {filename}. Similarity score {similarityPercentage}
+            %.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4 p-4 bg-bg-secondary rounded-md">

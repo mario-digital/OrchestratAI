@@ -108,9 +108,31 @@ class OpenAIProvider(BaseLLMProvider):
         response = await self._client.ainvoke(lc_messages, **kwargs)
 
         # Extract token usage from response
-        usage = response.response_metadata.get("token_usage", {})
-        tokens_input = usage.get("prompt_tokens", 0)
-        tokens_output = usage.get("completion_tokens", 0)
+        # LangChain stores usage in response.usage_metadata (newer versions)
+        # or response.response_metadata (older versions)
+        tokens_input = 0
+        tokens_output = 0
+
+        # Try usage_metadata first (LangChain >= 0.2.x)
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            tokens_input = response.usage_metadata.get("input_tokens", 0)
+            tokens_output = response.usage_metadata.get("output_tokens", 0)
+        else:
+            # Fallback to response_metadata for older LangChain versions
+            usage = response.response_metadata.get(
+                "token_usage", {}
+            ) or response.response_metadata.get("usage", {})
+            tokens_input = usage.get("prompt_tokens", 0) or usage.get("input_tokens", 0)
+            tokens_output = usage.get("completion_tokens", 0) or usage.get("output_tokens", 0)
+
+        # Log if we're still getting zero tokens (likely a bug)
+        if tokens_input == 0 and tokens_output == 0:
+            logger.warning(
+                f"Zero tokens reported for OpenAI call. "
+                f"Has usage_metadata: {hasattr(response, 'usage_metadata')}, "
+                f"usage_metadata value: {getattr(response, 'usage_metadata', None)}, "
+                f"response_metadata keys: {list(response.response_metadata.keys())}"
+            )
 
         # Calculate cost
         pricing = self.pricing.get(self.model)

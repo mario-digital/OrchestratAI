@@ -86,6 +86,12 @@ export interface ChatState {
   isStreaming: boolean;
   streamingMessageId: string | null;
   useFallbackMode: boolean;
+  latestMetrics: {
+    latency: number;
+    tokens: number;
+    cost: number;
+  } | null;
+  dbStatus: "connected" | "disconnected" | "checking";
 }
 
 /**
@@ -131,7 +137,15 @@ export type ChatAction =
       };
     }
   | { type: "STREAMING_ERROR"; payload: { messageId: string; error: string } }
-  | { type: "SET_FALLBACK_MODE"; payload: boolean };
+  | { type: "SET_FALLBACK_MODE"; payload: boolean }
+  | {
+      type: "UPDATE_LATEST_METRICS";
+      payload: { latency: number; tokens: number; cost: number };
+    }
+  | {
+      type: "UPDATE_DB_STATUS";
+      payload: "connected" | "disconnected" | "checking";
+    };
 
 /**
  * ChatContextValue - Complete context value with state and methods
@@ -399,6 +413,18 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         useFallbackMode: action.payload,
       };
 
+    case "UPDATE_LATEST_METRICS":
+      return {
+        ...state,
+        latestMetrics: action.payload,
+      };
+
+    case "UPDATE_DB_STATUS":
+      return {
+        ...state,
+        dbStatus: action.payload,
+      };
+
     default:
       return state;
   }
@@ -463,6 +489,8 @@ export function ChatProvider({
     isStreaming: false,
     streamingMessageId: null,
     useFallbackMode: false,
+    latestMetrics: null,
+    dbStatus: "checking",
   });
 
   // Ref to track orchestrator animation timeout for cleanup
@@ -505,6 +533,31 @@ export function ChatProvider({
       dispatch({ type: "SET_SESSION_ID", payload: crypto.randomUUID() });
     }
   }, [initialSessionId]);
+
+  // Poll health check endpoint periodically
+  useEffect(() => {
+    const checkHealth = async (): Promise<void> => {
+      try {
+        const response = await fetch("/api/health/services");
+        const data = (await response.json()) as { chromadb: string };
+        const status: "connected" | "disconnected" =
+          data.chromadb === "connected" ? "connected" : "disconnected";
+        dispatch({ type: "UPDATE_DB_STATUS", payload: status });
+      } catch {
+        dispatch({ type: "UPDATE_DB_STATUS", payload: "disconnected" });
+      }
+    };
+
+    // Check immediately on mount
+    void checkHealth();
+
+    // Then check every 30 seconds
+    const interval = setInterval(() => {
+      void checkHealth();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Persist sessionId to localStorage when it changes
   useEffect(() => {
@@ -635,6 +688,16 @@ export function ChatProvider({
                 latency: response.metrics.latency,
               },
               cacheStatus: response.metrics.cache_status,
+            },
+          });
+
+          // Update latest metrics for footer display
+          dispatch({
+            type: "UPDATE_LATEST_METRICS",
+            payload: {
+              latency: response.metrics.latency,
+              tokens: response.metrics.tokensUsed,
+              cost: response.metrics.cost,
             },
           });
         }
@@ -835,6 +898,17 @@ export function ChatProvider({
       // Ensure we are in streaming mode (disable fallback indicator)
       dispatch({ type: "SET_FALLBACK_MODE", payload: false });
 
+      // Reset all agent statuses to IDLE when starting a new message
+      dispatch({
+        type: "SET_ALL_AGENT_STATUS",
+        payload: {
+          [AgentId.ORCHESTRATOR]: AgentStatus.IDLE,
+          [AgentId.BILLING]: AgentStatus.IDLE,
+          [AgentId.TECHNICAL]: AgentStatus.IDLE,
+          [AgentId.POLICY]: AgentStatus.IDLE,
+        },
+      });
+
       // Start streaming
       dispatch({
         type: "START_STREAMING",
@@ -885,8 +959,14 @@ export function ChatProvider({
           },
 
           // Finalize message on completion
-          onComplete: (metadata, agentStatus) => {
-            console.log("complete", assistantMessageId, metadata, agentStatus);
+          onComplete: (metadata, agentStatus, logs) => {
+            console.log(
+              "complete",
+              assistantMessageId,
+              metadata,
+              agentStatus,
+              logs
+            );
             // Extract agent and confidence from metadata (extended type in backend)
             const metadataAny = metadata as typeof metadata & {
               agent?: AgentId;
@@ -914,6 +994,11 @@ export function ChatProvider({
               dispatch({ type: "SET_ALL_AGENT_STATUS", payload: agentStatus });
             }
 
+            // Add logs from done event if present
+            if (logs && logs.length > 0) {
+              dispatch({ type: "ADD_LOG_ENTRIES", payload: logs });
+            }
+
             // Streaming succeeded; ensure fallback mode stays disabled
             dispatch({ type: "SET_FALLBACK_MODE", payload: false });
 
@@ -929,6 +1014,16 @@ export function ChatProvider({
                     latency: metadata.latency,
                   },
                   cacheStatus: metadata.cache_status,
+                },
+              });
+
+              // Update latest metrics for footer display
+              dispatch({
+                type: "UPDATE_LATEST_METRICS",
+                payload: {
+                  latency: metadata.latency,
+                  tokens: metadata.tokensUsed,
+                  cost: metadata.cost,
                 },
               });
             }
