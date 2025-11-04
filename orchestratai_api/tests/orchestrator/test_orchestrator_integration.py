@@ -520,4 +520,4 @@ async def test_delegate_mode_cag_pricing_question_end_to_end(temp_vector_store, 
         assert cache_logs[0].data["operation"] in ["hit", "miss"]
 
         # Verify agent status
-        assert result.agent_status[AgentId.POLICY] == AgentStatus.COMPLETE
+        assert result.agent_status[AgentId.BILLING] == AgentStatus.COMPLETE
