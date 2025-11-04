@@ -6,6 +6,7 @@ from pathlib import Path
 
 import anyio
 import chromadb
+from chromadb.config import Settings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -70,25 +71,15 @@ class ChromaVectorStore(VectorStore):
                 model="text-embedding-3-large", api_key=SecretStr(api_key)
             )
 
-        # Check if we should use ChromaDB server or local files
+        # Storage configuration
         self._chroma_host = os.getenv("CHROMADB_HOST")
         self._chroma_port = os.getenv("CHROMADB_PORT", "8000")
-
-        # Store configuration but don't create client yet (lazy init)
-        if self._chroma_host:
-            self._persist_directory = None
-            self._chroma_client = None  # Will be created lazily
-        else:
-            # Fallback to local file storage
-            self._chroma_client = None
-            resolved_dir = (
-                persist_directory
-                or os.getenv("CHROMA_PERSIST_DIRECTORY")
-                or str(Path(__file__).resolve().parent.parent.parent / "data" / "chroma")
-            )
-            # Ensure the directory exists when running locally (e.g., outside Docker)
-            Path(resolved_dir).mkdir(parents=True, exist_ok=True)
-            self._persist_directory = resolved_dir
+        self._persist_directory = (
+            persist_directory
+            or os.getenv("CHROMA_PERSIST_DIRECTORY")
+            or str(Path(__file__).resolve().parent.parent.parent / "data" / "chroma")
+        )
+        Path(self._persist_directory).mkdir(parents=True, exist_ok=True)
 
         self._collection_name = collection_name
         self._client: Chroma | None = None
@@ -96,20 +87,36 @@ class ChromaVectorStore(VectorStore):
     def _get_client(self) -> Chroma:
         """Lazy initialization of Chroma client."""
         if self._client is None:
+            telemetry_settings = Settings(anonymized_telemetry=False)
             if self._chroma_host:
-                # Server mode: create HttpClient and Chroma wrapper
-                http_client = chromadb.HttpClient(
-                    host=self._chroma_host, port=int(self._chroma_port)
+                try:
+                    # Server mode: create HttpClient and Chroma wrapper
+                    http_client = chromadb.HttpClient(
+                        host=self._chroma_host,
+                        port=int(self._chroma_port),
+                        settings=telemetry_settings,
+                    )
+                    self._client = Chroma(
+                        client=http_client,
+                        embedding_function=self._embeddings,
+                        collection_name=self._collection_name,
+                    )
+                except Exception:
+                    # Fallback to local store when server is unavailable
+                    self._chroma_host = None
+                    os.environ.pop("CHROMADB_HOST", None)
+                    os.environ.pop("CHROMADB_PORT", None)
+                    telemetry_settings = None
+
+            if self._client is None:
+                # Local file storage mode using the new PersistentClient API
+                persistent_settings = telemetry_settings or Settings(anonymized_telemetry=False)
+                persistent_client = chromadb.PersistentClient(
+                    path=self._persist_directory,
+                    settings=persistent_settings,
                 )
                 self._client = Chroma(
-                    client=http_client,
-                    embedding_function=self._embeddings,
-                    collection_name=self._collection_name,
-                )
-            else:
-                # Local file storage mode
-                self._client = Chroma(
-                    persist_directory=self._persist_directory,
+                    client=persistent_client,
                     embedding_function=self._embeddings,
                     collection_name=self._collection_name,
                 )

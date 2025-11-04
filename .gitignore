@@ -66,6 +66,9 @@ my_flow_api/*.env
 # uv cache
 .uv-cache/
 
+# Local Python user installs
+.pyuser/
+
 # uvicorn
 my_flow_api/*.pid
 

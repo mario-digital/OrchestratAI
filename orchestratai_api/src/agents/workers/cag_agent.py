@@ -5,6 +5,8 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
+from langchain_core.documents import Document
+
 from src.agents.base import BaseAgent
 from src.cache.redis_cache import RedisSemanticCache
 from src.llm.base_provider import BaseLLMProvider
@@ -12,6 +14,32 @@ from src.llm.provider_factory import AgentRole
 from src.models.enums import AgentId, AgentStatus, LogStatus, LogType
 from src.models.schemas import ChatMetrics, ChatRequest, ChatResponse, DocumentChunk, RetrievalLog
 from src.retrieval.vector_store import VectorStore
+
+
+class _NullVectorStore(VectorStore):
+    """Fallback vector store used when none is provided.
+
+    This implementation returns empty results and performs no persistence. It
+    allows the agent to be instantiated in tests without requiring a concrete
+    vector store implementation.
+    """
+
+    async def add_documents(self, *, documents: list[Document]) -> None:  # type: ignore[override]
+        return None
+
+    async def similarity_search(self, *, query: str, k: int = 5) -> list[Document]:  # type: ignore[override]
+        return []
+
+    async def similarity_search_with_scores(
+        self, *, query: str, k: int = 5
+    ) -> list[tuple[Document, float]]:  # type: ignore[override]
+        return []
+
+    async def clear(self) -> None:
+        return None
+
+    async def health_check(self) -> bool:
+        return True
 
 
 class CAGAgent(BaseAgent):
@@ -39,7 +67,7 @@ class CAGAgent(BaseAgent):
         provider: BaseLLMProvider,
         cache: RedisSemanticCache,
         embeddings: BaseLLMProvider,
-        vector_store: VectorStore,
+        vector_store: VectorStore | None = None,
     ):
         """Initialize CAG agent.
 
@@ -52,7 +80,17 @@ class CAGAgent(BaseAgent):
         super().__init__(role=AgentRole.CAG, provider=provider)
         self._cache = cache
         self._embeddings = embeddings
-        self.vector_store = vector_store
+        self._vector_store = vector_store or _NullVectorStore()
+
+    @property
+    def vector_store(self) -> VectorStore:
+        """Vector store accessor (primarily for testing)."""
+
+        return self._vector_store
+
+    @vector_store.setter
+    def vector_store(self, value: VectorStore) -> None:
+        self._vector_store = value
 
     async def close(self) -> None:
         """Clean up resources.
@@ -100,7 +138,7 @@ class CAGAgent(BaseAgent):
 
         # Step 4: Cache miss - retrieve from ChromaDB
         retrieval_start = time.perf_counter()
-        results = await self.vector_store.similarity_search_with_scores(
+        results = await self._vector_store.similarity_search_with_scores(
             query=query,
             k=5,  # Top 5 most relevant documents
         )
