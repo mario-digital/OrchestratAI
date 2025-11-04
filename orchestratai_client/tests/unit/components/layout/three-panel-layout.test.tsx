@@ -51,4 +51,26 @@ describe('ThreePanelLayout', () => {
     expect(screen.getByText('Chat Interface (Epic 2)')).toBeInTheDocument();
     expect(screen.getByText('Retrieval Log (Epic 3)')).toBeInTheDocument();
   });
+
+  it('renders custom left panel content when provided', () => {
+    render(
+      <ThreePanelLayout leftPanel={<div>Custom Left Panel</div>}>
+        Chat Content
+      </ThreePanelLayout>
+    );
+
+    expect(screen.getByText('Custom Left Panel')).toBeInTheDocument();
+    expect(screen.queryByText('Agent Pipeline (Epic 3)')).not.toBeInTheDocument();
+  });
+
+  it('renders custom right panel content when provided', () => {
+    render(
+      <ThreePanelLayout rightPanel={<div>Custom Right Panel</div>}>
+        Chat Content
+      </ThreePanelLayout>
+    );
+
+    expect(screen.getByText('Custom Right Panel')).toBeInTheDocument();
+    expect(screen.queryByText('Retrieval Log (Epic 3)')).not.toBeInTheDocument();
+  });
 });

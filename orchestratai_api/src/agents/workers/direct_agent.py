@@ -17,7 +17,7 @@ class DirectAgent(BaseAgent):
 
     This agent:
     1. Handles simple queries without retrieval or caching
-    2. Uses Bedrock Claude 3 Haiku for low cost and latency
+    2. Uses Gpt4o for low cost and latency
     3. Provides conversational responses for greetings, small talk
     4. Serves as final fallback when other agents fail
     5. Returns minimal response with no retrieval logs
@@ -32,7 +32,7 @@ class DirectAgent(BaseAgent):
         """Initialize Direct agent.
 
         Args:
-            provider: LLM provider (Bedrock Claude 3 Haiku)
+            provider: LLM provider (Gpt4o)
         """
         super().__init__(role=AgentRole.DIRECT, provider=provider)
 
@@ -59,7 +59,7 @@ If asked about complex topics, acknowledge that specialized assistance may be ne
             {"role": "user", "content": query},
         ]
 
-        # Step 2: Call LLM provider (Bedrock Haiku)
+        # Step 2: Call LLM provider (Gpt4o)
         llm_start = time.perf_counter()
         result = await self.provider.complete(messages=messages)
         llm_latency = int((time.perf_counter() - llm_start) * 1000)

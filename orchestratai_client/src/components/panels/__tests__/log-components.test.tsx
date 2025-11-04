@@ -315,6 +315,14 @@ describe("CacheOperationCard Component", () => {
     expect(screen.getByText("1 B")).toBeInTheDocument();
   });
 
+  it("displays cache size in KB when >= 1024 bytes", () => {
+    render(
+      <CacheOperationCard _isHit={true} hitRate={0.75} cacheSize={2048} />
+    );
+
+    expect(screen.getByText("2.0 KB")).toBeInTheDocument();
+  });
+
   it("displays Method: CAG label", () => {
     render(
       <CacheOperationCard
