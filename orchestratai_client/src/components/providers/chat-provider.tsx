@@ -31,6 +31,7 @@ import {
   getUserFriendlyMessage,
   getStreamErrorMessage,
 } from "@/lib/utils/error-messages";
+import { getAgentModelLabel } from "@/lib/agent-models";
 import type { RetrievalLog } from "@/lib/types";
 import { useStreaming } from "@/hooks/use-streaming";
 import { StreamError } from "@/lib/errors";
@@ -181,41 +182,24 @@ const FALLBACK_MODE_KEY = "orch_use_fallback";
  */
 const ORCHESTRATOR_ROUTING_ANIMATION_MS = 500;
 
-/**
- * INITIAL_AGENTS - Default agent state initialization
- *
- * All agents start in IDLE status with zero metrics
- */
-const INITIAL_AGENTS: Record<AgentId, AgentState> = {
-  [AgentId.ORCHESTRATOR]: {
+function createEmptyAgentState(agentId: AgentId): AgentState {
+  return {
     status: AgentStatus.IDLE,
-    model: "OpenAI GPT-4o",
+    model: getAgentModelLabel(agentId),
     strategy: null,
     metrics: { tokens: 0, cost: 0, latency: 0 },
     cacheStatus: "none",
-  },
-  [AgentId.BILLING]: {
-    status: AgentStatus.IDLE,
-    model: "OpenAI GPT-4o",
-    strategy: null,
-    metrics: { tokens: 0, cost: 0, latency: 0 },
-    cacheStatus: "none",
-  },
-  [AgentId.TECHNICAL]: {
-    status: AgentStatus.IDLE,
-    model: "OpenAI GPT-4o",
-    strategy: null,
-    metrics: { tokens: 0, cost: 0, latency: 0 },
-    cacheStatus: "none",
-  },
-  [AgentId.POLICY]: {
-    status: AgentStatus.IDLE,
-    model: "OpenAI GPT-4o",
-    strategy: null,
-    metrics: { tokens: 0, cost: 0, latency: 0 },
-    cacheStatus: "none",
-  },
-};
+  };
+}
+
+function createInitialAgents(): Record<AgentId, AgentState> {
+  return {
+    [AgentId.ORCHESTRATOR]: createEmptyAgentState(AgentId.ORCHESTRATOR),
+    [AgentId.BILLING]: createEmptyAgentState(AgentId.BILLING),
+    [AgentId.TECHNICAL]: createEmptyAgentState(AgentId.TECHNICAL),
+    [AgentId.POLICY]: createEmptyAgentState(AgentId.POLICY),
+  };
+}
 
 // =============================================================================
 // Reducer
@@ -469,7 +453,7 @@ export function ChatProvider({
     error: null,
     typingAgent: null,
     failedMessage: null,
-    agents: INITIAL_AGENTS,
+    agents: createInitialAgents(),
     retrievalLogs: [],
     isStreaming: false,
     streamingMessageId: null,

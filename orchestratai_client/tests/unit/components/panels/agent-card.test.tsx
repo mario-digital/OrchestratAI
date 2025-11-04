@@ -1,24 +1,72 @@
 // @vitest-environment jsdom
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AgentCard } from "@/components/panels/agent-card";
 import { AgentId, AgentStatus, RetrievalStrategy } from "@/lib/enums";
+import { getAgentModelLabel } from "@/lib/agent-models";
 
 describe("AgentCard", () => {
-  const defaultProps = {
-    agentId: AgentId.ORCHESTRATOR,
-    name: "Orchestrator Agent",
-    status: AgentStatus.IDLE,
-    model: "OpenAI GPT-4o",
-    strategy: null,
+  const MODEL_ENV_KEYS = [
+    "NEXT_PUBLIC_ORCHESTRATOR_MODEL",
+    "NEXT_PUBLIC_BILLING_MODEL",
+    "NEXT_PUBLIC_TECHNICAL_MODEL",
+    "NEXT_PUBLIC_POLICY_MODEL",
+  ];
+
+  const originalEnv: Record<string, string | undefined> = {};
+
+  let defaultProps: {
+    agentId: AgentId;
+    name: string;
+    status: AgentStatus;
+    model: string;
+    strategy: RetrievalStrategy | null;
     metrics: {
-      tokens: 450,
-      cost: 0.0023,
-      latency: 1200,
-    },
-    cacheStatus: "hit" as const,
+      tokens: number;
+      cost: number;
+      latency: number;
+    };
+    cacheStatus: "hit" | "miss" | "none";
   };
+
+  beforeAll(() => {
+    for (const key of MODEL_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+    }
+  });
+
+  beforeEach(() => {
+    process.env["NEXT_PUBLIC_ORCHESTRATOR_MODEL"] = "gpt-4o";
+    process.env["NEXT_PUBLIC_BILLING_MODEL"] = "gpt-4o";
+    process.env["NEXT_PUBLIC_TECHNICAL_MODEL"] = "gpt-4o";
+    process.env["NEXT_PUBLIC_POLICY_MODEL"] = "gpt-4o";
+
+    defaultProps = {
+      agentId: AgentId.ORCHESTRATOR,
+      name: "Orchestrator Agent",
+      status: AgentStatus.IDLE,
+      model: getAgentModelLabel(AgentId.ORCHESTRATOR),
+      strategy: null,
+      metrics: {
+        tokens: 450,
+        cost: 0.0023,
+        latency: 1200,
+      },
+      cacheStatus: "hit",
+    };
+  });
+
+  afterAll(() => {
+    for (const key of MODEL_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (typeof value === "undefined") {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  });
 
   it("renders agent name correctly", () => {
     render(<AgentCard {...defaultProps} />);
@@ -29,7 +77,7 @@ describe("AgentCard", () => {
   it("displays correct model name", () => {
     render(<AgentCard {...defaultProps} />);
 
-    expect(screen.getByText("OpenAI GPT-4o")).toBeInTheDocument();
+    expect(screen.getByText(defaultProps.model)).toBeInTheDocument();
   });
 
   it("shows strategy badge when strategy is provided", () => {
@@ -244,7 +292,7 @@ describe("AgentCard", () => {
       expect(screen.getByText("Orchestrator Agent")).toBeInTheDocument(); // Name
       expect(container.querySelector('svg')).toBeInTheDocument(); // Icon
       expect(screen.getByText("ACTIVE")).toBeInTheDocument(); // Status
-      expect(screen.getByText("OpenAI GPT-4o")).toBeInTheDocument(); // Model
+      expect(screen.getByText(defaultProps.model)).toBeInTheDocument(); // Model
       expect(screen.getByText("Hybrid RAG/CAG")).toBeInTheDocument(); // Strategy
       expect(screen.getByText("450")).toBeInTheDocument(); // Metrics
       expect(screen.getByText("$0.0023")).toBeInTheDocument();

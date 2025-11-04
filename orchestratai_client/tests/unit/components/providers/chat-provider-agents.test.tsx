@@ -6,6 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { getAgentModelLabel } from "@/lib/agent-models";
 import { ChatProvider, useChatContext } from "@/components/providers/chat-provider";
 import { AgentId, AgentStatus } from "@/lib/enums";
 import type { ReactNode } from "react";
@@ -16,49 +17,52 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe("ChatProvider agent state management", () => {
+  const MODEL_ENV_KEYS = [
+    "NEXT_PUBLIC_ORCHESTRATOR_MODEL",
+    "NEXT_PUBLIC_BILLING_MODEL",
+    "NEXT_PUBLIC_TECHNICAL_MODEL",
+    "NEXT_PUBLIC_POLICY_MODEL",
+  ];
+
+  const originalEnv: Record<string, string | undefined> = {};
+
+  beforeAll(() => {
+    for (const key of MODEL_ENV_KEYS) {
+      originalEnv[key] = process.env[key];
+    }
+  });
+
+  beforeEach(() => {
+    process.env["NEXT_PUBLIC_ORCHESTRATOR_MODEL"] = "gpt-4o";
+    process.env["NEXT_PUBLIC_BILLING_MODEL"] = "gpt-4o-mini";
+    process.env["NEXT_PUBLIC_TECHNICAL_MODEL"] = "gpt-4o";
+    process.env["NEXT_PUBLIC_POLICY_MODEL"] = "gpt-4o-mini";
+  });
+
+  afterAll(() => {
+    for (const key of MODEL_ENV_KEYS) {
+      const value = originalEnv[key];
+      if (typeof value === "undefined") {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  });
+
+
   describe("Initial agent state", () => {
     it("initializes all agents with IDLE status and zero metrics", () => {
       const { result } = renderHook(() => useChatContext(), { wrapper });
 
-      // Check all 4 agents are initialized
-      expect(result.current.agents).toBeDefined();
-      expect(Object.keys(result.current.agents)).toHaveLength(4);
+      const expectedAgents = {
+        [AgentId.ORCHESTRATOR]: expectedAgentState(AgentId.ORCHESTRATOR),
+        [AgentId.BILLING]: expectedAgentState(AgentId.BILLING),
+        [AgentId.TECHNICAL]: expectedAgentState(AgentId.TECHNICAL),
+        [AgentId.POLICY]: expectedAgentState(AgentId.POLICY),
+      };
 
-      // Check Orchestrator
-      expect(result.current.agents[AgentId.ORCHESTRATOR]).toEqual({
-        status: AgentStatus.IDLE,
-        model: "OpenAI GPT-4o",
-        strategy: null,
-        metrics: { tokens: 0, cost: 0, latency: 0 },
-        cacheStatus: "none",
-      });
-
-      // Check Billing
-      expect(result.current.agents[AgentId.BILLING]).toEqual({
-        status: AgentStatus.IDLE,
-        model: "OpenAI GPT-4o",
-        strategy: null,
-        metrics: { tokens: 0, cost: 0, latency: 0 },
-        cacheStatus: "none",
-      });
-
-      // Check Technical
-      expect(result.current.agents[AgentId.TECHNICAL]).toEqual({
-        status: AgentStatus.IDLE,
-        model: "OpenAI GPT-4o",
-        strategy: null,
-        metrics: { tokens: 0, cost: 0, latency: 0 },
-        cacheStatus: "none",
-      });
-
-      // Check Policy
-      expect(result.current.agents[AgentId.POLICY]).toEqual({
-        status: AgentStatus.IDLE,
-        model: "OpenAI GPT-4o",
-        strategy: null,
-        metrics: { tokens: 0, cost: 0, latency: 0 },
-        cacheStatus: "none",
-      });
+      expect(result.current.agents).toEqual(expectedAgents);
     });
   });
 
@@ -361,3 +365,16 @@ describe("ChatProvider agent state management", () => {
     });
   });
 });
+function expectedAgentState(agentId: AgentId) {
+  return {
+    status: AgentStatus.IDLE,
+    model: getAgentModelLabel(agentId),
+    strategy: null,
+    metrics: {
+      tokens: 0,
+      cost: 0,
+      latency: 0,
+    },
+    cacheStatus: "none" as const,
+  };
+}
