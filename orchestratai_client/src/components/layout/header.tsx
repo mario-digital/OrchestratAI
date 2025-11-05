@@ -1,7 +1,7 @@
 "use client";
 
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ExecutionGraph,
@@ -104,8 +104,15 @@ export function Header({ className }: HeaderProps = {}): React.JSX.Element {
         {/* Logo & Branding */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {/* Logo Icon */}
-          <div className="w-10 h-10 rounded-md bg-agent-card-border-cyan/20 flex items-center justify-center">
-            <Bot className="w-6 h-6 text-agent-card-text-cyan" />
+          <div className="w-10 h-10 rounded-md overflow-hidden bg-agent-card-border-cyan/20 flex items-center justify-center">
+            <Image
+              src="/OrchestratAI.png"
+              alt="OrchestratAI logo"
+              width={40}
+              height={40}
+              className="h-full w-full object-contain"
+              priority
+            />
           </div>
 
           {/* Title & Subtitle */}
