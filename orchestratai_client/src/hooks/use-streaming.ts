@@ -473,11 +473,6 @@ export function useStreaming(): UseStreamingReturn {
               agent_status?: Record<AgentId, AgentStatus>;
               logs?: RetrievalLog[];
             };
-            console.log("[use-streaming] Done event received:", {
-              hasLogs: !!data.logs,
-              logsCount: data.logs?.length || 0,
-              logs: data.logs,
-            });
             callbacks.onComplete(data.metadata, data.agent_status, data.logs);
             retryCountRef.current = 0; // Reset retry count on success
           } catch (error) {
@@ -499,7 +494,6 @@ export function useStreaming(): UseStreamingReturn {
           // Check connection state to distinguish error types
           if (eventSource.readyState === EventSource.CONNECTING) {
             // Connection is reconnecting (browser auto-retry)
-            console.log("SSE reconnecting... (browser automatic retry)");
             return; // Let browser handle reconnection
           }
 
@@ -534,7 +528,6 @@ export function useStreaming(): UseStreamingReturn {
 
         // Reset retry count on successful connection
         eventSource.onopen = () => {
-          console.log("SSE connection established");
           retryCountRef.current = 0;
         };
       } catch (error) {
@@ -579,9 +572,6 @@ export function useStreaming(): UseStreamingReturn {
     }
 
     const delay = Math.min(BASE_DELAY_MS * 2 ** attemptNumber, 4000);
-    console.log(
-      `Retry attempt ${attemptNumber + 1} of ${MAX_RETRIES} after ${delay}ms`
-    );
 
     await new Promise((resolve) => setTimeout(resolve, delay));
 

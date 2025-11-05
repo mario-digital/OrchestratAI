@@ -278,10 +278,6 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
           },
         },
       };
-      console.log(
-        `UPDATE_AGENT_STATUS reducer: ${agent} -> ${action.payload.status}`,
-        newState.agents
-      );
       return newState;
     }
 
@@ -847,7 +843,6 @@ export function ChatProvider({
 
       // Check if fallback mode is active (SSE previously failed)
       if (state.useFallbackMode) {
-        console.log("Using fallback mode (non-streaming)");
         return sendMessage(message);
       }
 
@@ -925,7 +920,6 @@ export function ChatProvider({
         await sendStream(message, state.sessionId, {
           // Update message content progressively
           onChunk: (accumulatedText) => {
-            console.log("chunk", assistantMessageId, accumulatedText);
             latestContent = accumulatedText;
             dispatch({
               type: "UPDATE_STREAMING_MESSAGE",
@@ -938,8 +932,6 @@ export function ChatProvider({
 
           // Update agent status in real-time
           onAgentUpdate: (agent, status) => {
-            console.log("agent update", agent, status);
-
             // Clear the orchestrator timeout when we receive real status updates
             // This prevents the timeout from overriding real backend status
             if (orchestratorTimeoutRef.current) {
@@ -960,13 +952,6 @@ export function ChatProvider({
 
           // Finalize message on completion
           onComplete: (metadata, agentStatus, logs) => {
-            console.log(
-              "complete",
-              assistantMessageId,
-              metadata,
-              agentStatus,
-              logs
-            );
             // Extract agent and confidence from metadata (extended type in backend)
             const metadataAny = metadata as typeof metadata & {
               agent?: AgentId;
