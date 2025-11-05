@@ -3,10 +3,26 @@
 A production-ready **fullstack monorepo** built with **Next.js 15**, **React 19 Server Components**, **FastAPI**, and **ChromaDB**. Features an **intelligent multi-agent architecture** with specialized AI agents for routing, technical support, billing, and complex query handling using RAG (Retrieval Augmented Generation).
 
 [![Full Stack CI](https://github.com/mario-digital/orchestratai/actions/workflows/ci.yml/badge.svg)](https://github.com/mario-digital/orchestratai/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Bun](https://img.shields.io/badge/Bun-1.1+-f9f1e1?logo=bun)](https://bun.sh)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)](https://openai.com/)
+[![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?logo=langchain&logoColor=white)](https://www.langchain.com/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-Claude-191919?logo=anthropic&logoColor=white)](https://www.anthropic.com/)
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 
 - [Executive Summary](#executive-summary)
 - [Screenshots & Demo](#screenshots--demo)
@@ -15,7 +31,7 @@ A production-ready **fullstack monorepo** built with **Next.js 15**, **React 19 
 - [Quick Start](#quick-start)
 - [Monorepo Structure](#monorepo-structure)
 - [Detailed Documentation](#detailed-documentation)
-- [CI/CD & Quality Automation](#cicd--quality-automation)
+- [Contributing](#contributing)
 
 ---
 
@@ -41,53 +57,76 @@ Experience the complete OrchestratAI journey from customer inquiry to multi-agen
 ### Landing Page & Hero
 
 <div align="center">
-  <img src="orchestratai_client/public/screenshots/landing_hero.png" alt="Landing Page Hero" width="800"/>
+  <img src="orchestratai_client/public/screenshots/landing_hero.png" alt="Landing Page Hero" width="900"/>
   <p><em>Modern landing page with clear value proposition</em></p>
 </div>
+
+---
 
 ### Agent Routing in Action
 
 <div align="center">
-  <img src="orchestratai_client/public/screenshots/agent_routing.png" alt="Intelligent Agent Routing" width="800"/>
+  <img src="orchestratai_client/public/screenshots/agent_routing.png" alt="Intelligent Agent Routing" width="900"/>
   <p><em>Router agent analyzing query and selecting appropriate specialized agent</em></p>
 </div>
+
+---
 
 ### RAG Agent - Technical Documentation
 
 <div align="center">
-  <img src="orchestratai_client/public/screenshots/cag_agent_response.png" alt="CAG Agent with Semantic Caching" width="600" height="490"/>
-  <img src="orchestratai_client/public/screenshots/cag_agent_response_2.png" alt="CAG Agent with Semantic Caching Output" width="200"/>
+  <table>
+    <tr>
+      <td align="center">
+        <img src="orchestratai_client/public/screenshots/cag_agent_response.png" alt="RAG Agent Query" width="650"/>
+      </td>
+      <td align="center">
+        <img src="orchestratai_client/public/screenshots/cag_agent_response_2.png" alt="RAG Agent Response" width="220"/>
+      </td>
+    </tr>
+  </table>
   <p><em>RAG agent retrieving and synthesizing information from documentation</em></p>
 </div>
+
+---
 
 ### CAG Agent - Billing & Policy
 
 <div align="center">
-  <img src="orchestratai_client/public/screenshots/rag_agent_response.png" alt="RAG Agent with Knowledge Base" width="600"/> 
-    <br/>
-   <img src="orchestratai_client/public/screenshots/cag_document.png" alt="CAG Agent with Semantic Caching Output" width="300"/>
-    <br/>
-  <img src="orchestratai_client/public/screenshots/rag_example.png" alt="CAG Agent with Semantic Caching Output" width="300"/>
+  <img src="orchestratai_client/public/screenshots/rag_agent_response.png" alt="CAG Agent Main Response" width="900"/>
   <p><em>CAG agent handling billing questions with semantic caching for efficiency</em></p>
+
+  <table>
+    <tr>
+      <td align="center" width="50%">
+        <img src="orchestratai_client/public/screenshots/cag_document.png" alt="Document Retrieval" width="420"/>
+      </td>
+      <td align="center" width="50%">
+        <img src="orchestratai_client/public/screenshots/rag_example.png" alt="Cache Performance" width="420"/>
+      </td>
+    </tr>
+  </table>
 </div>
+
+---
 
 ### Hybrid Agent - Complex Queries
 
 <div align="center">
-  <img src="orchestratai_client/public/screenshots/complex.png" alt="Hybrid Agent Multi-Part Query" width="800"/>
+  <img src="orchestratai_client/public/screenshots/complex.png" alt="Hybrid Agent Multi-Part Query" width="900"/>
   <p><em>Hybrid agent tackling complex, multi-faceted questions</em></p>
 </div>
 
 ---
 
 **Key Features Visible:**
-- 🤖 Intelligent multi-agent routing system
-- 📚 RAG-powered knowledge retrieval from documentation
-- 💾 Semantic caching for cost optimization
-- 💬 Streaming conversational interface
-- 🎯 Specialized agents for different query types
-- 🔍 Vector search with ChromaDB
-- ⚡ Real-time response generation
+- Intelligent multi-agent routing system
+- RAG-powered knowledge retrieval from documentation
+- Semantic caching for cost optimization
+- Streaming conversational interface
+- Specialized agents for different query types
+- Vector search with ChromaDB
+- Real-time response generation
 
 ---
 
@@ -148,30 +187,31 @@ OrchestratAI features an **intelligent multi-agent system** that routes queries 
 </div>
 
 ### Architecture Highlights
-#### 🔄 Two-Step Secure Streaming
+
+#### Two-Step Secure Streaming
 - **Step 1**: POST message securely (never in URL)
 - **Step 2**: EventSource SSE stream with stream_id
 - **Fallback**: Non-streaming POST on connection failure
 
-#### 🤖 LangGraph State Machine
+#### LangGraph State Machine
 - **Orchestrator**: Claude 3.5 Sonnet for intent classification
 - **Conditional Routing**: 5 delegation paths based on query type
 - **Fallback Chains**: Automatic degradation (Hybrid→RAG→CAG→Direct)
 
-#### 🔍 Intelligent Retrieval
+#### Intelligent Retrieval
 - **RAG Agent**: ChromaDB vector search ONLY + GPT-4 Turbo
-- **CAG Agent**: Redis cache (primary) + **ChromaDB fallback on miss** + Claude Haiku
+- **CAG Agent**: Redis cache (primary) + ChromaDB fallback on miss + Claude Haiku
 - **Hybrid Agent**: Parallel RAG + Cache + GPT-4o reasoning
 
-**🔥 Key Insight:** CAG Agent uses BOTH caching AND retrieval! On cache miss, it retrieves from ChromaDB like RAG agent, ensuring accurate responses while building cache.
+**Key Insight:** CAG Agent uses BOTH caching AND retrieval. On cache miss, it retrieves from ChromaDB like RAG agent, ensuring accurate responses while building cache.
 
-#### 💾 Dual Storage Strategy
+#### Dual Storage Strategy
 - **ChromaDB**: Used by RAG (primary), CAG (on cache miss), Hybrid (via RAG composition)
   - 130 doc chunks, 3072-dim embeddings, cosine similarity, top-k=5 retrieval
 - **Redis**: Used by CAG (primary), Hybrid (parallel lookup)
   - 1000-entry LRU cache, 60-80% hit rate, 0.85 similarity threshold, cost optimization
 
-#### 🎯 Multi-LLM Strategy
+#### Multi-LLM Strategy
 - **Claude 3.5 Sonnet**: Orchestrator routing (reasoning)
 - **GPT-4 Turbo**: RAG technical queries (accuracy)
 - **GPT-4o**: Hybrid complex reasoning (power)
@@ -253,17 +293,10 @@ cd orchestratai_api && uv sync && cd ..
 ### Running with Docker (Recommended)
 
 ```bash
-# Start all services (frontend, backend, ChromaDB, Redis)
-docker compose up
-
-# Run in background
-docker compose up -d
-
-# View logs
-docker compose logs -f
-
-# Stop containers
-docker compose down
+docker compose up        # Start all services
+docker compose up -d     # Run in background
+docker compose logs -f   # View logs
+docker compose down      # Stop containers
 ```
 
 This starts:
@@ -271,6 +304,21 @@ This starts:
 - **Backend:** http://localhost:8000 (FastAPI with auto-reload)
 - **ChromaDB:** http://localhost:8001 (Vector database)
 - **Redis:** localhost:6379 (Caching layer)
+
+**Common Issues:**
+
+| Issue | Solution |
+|-------|----------|
+| `command not found: docker` | Install Docker Desktop and ensure it's running |
+| `Port already in use` | Stop other services on ports 3000, 8000, 8001, 6379 |
+| `failed to read dockerfile` | Ensure you're in repository root, not a subdirectory |
+| `ChromaDB connection failed` | Wait 10-15 seconds for ChromaDB to initialize, then run ingestion script |
+
+**Health Checks:**
+- Backend: http://localhost:8000/api/health
+- Frontend: http://localhost:3000/api/health
+- ChromaDB: http://localhost:8001/api/v1/heartbeat
+- Redis: `docker compose exec redis redis-cli ping`
 
 ### Data Ingestion - Populating ChromaDB
 
@@ -332,81 +380,12 @@ cd orchestratai_api && uv run pytest
 cd orchestratai_client && bun test:e2e
 ```
 
----
+### Cache Management
 
-## Docker Setup
-
-### Prerequisites
-- **Docker Desktop** (includes Docker Compose) - [Download here](https://www.docker.com/products/docker-desktop/)
-- **OpenAI API Key** - Required for embeddings and LLM calls
-
-### Setup Steps
-
-1. **Verify Docker is running:**
-   ```bash
-   docker --version
-   docker ps  # Should not error
-   ```
-
-2. **Configure environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your OPENAI_API_KEY
-   ```
-
-3. **Start all services:**
-   ```bash
-   docker compose up
-   ```
-
-### Local Development with Docker
-
-**Start all services (recommended):**
+Clear Redis cache (useful after updating documents):
 ```bash
-# From repository root - starts all containers with hot reload
-docker compose up
-```
-
-This command:
-- ✅ Builds Docker images (if not already built)
-- ✅ Starts backend (port 8000), frontend (port 3000), ChromaDB (port 8001), Redis (port 6379)
-- ✅ Enables hot reload for development
-- ✅ Shows logs from all services
-
-**Common Issues:**
-
-| Error | Solution |
-|-------|----------|
-| `command not found: docker` | Install Docker Desktop and ensure it's running |
-| `Port already in use` | Stop other services on ports 3000, 8000, 8001, 6379 |
-| `failed to read dockerfile` | Ensure you're in repository root, not a subdirectory |
-| `ChromaDB connection failed` | Wait 10-15 seconds for ChromaDB to initialize, then run ingestion script |
-
-**View logs:**
-```bash
-# All services
-docker compose logs -f
-
-# Specific service
-docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f chromadb
-docker compose logs -f redis
-```
-
-**Stop services:**
-```bash
-docker compose down
-
-# Stop and remove volumes (clean slate)
-docker compose down -v
-```
-
-### Production Testing with Docker
-
-```bash
-# Build and run production images
-docker compose -f docker-compose.prod.yml up --build
+docker exec orchestratai-redis-1 redis-cli FLUSHALL      # Clear all
+docker exec orchestratai-redis-1 redis-cli DBSIZE        # Check size
 ```
 
 ### Docker Commands Reference
@@ -414,33 +393,12 @@ docker compose -f docker-compose.prod.yml up --build
 | Command | Description |
 |---------|-------------|
 | `docker compose up` | Start all services |
-| `docker compose up -d` | Start in background (detached) |
+| `docker compose up -d` | Start in background |
 | `docker compose down` | Stop all services |
+| `docker compose down -v` | Stop and remove volumes |
 | `docker compose logs -f <service>` | View logs for service |
 | `docker compose build` | Rebuild images |
 | `docker compose ps` | List running services |
-| `docker compose exec <service> sh` | Shell into service |
-
-### Health Checks
-
-- **Backend**: http://localhost:8000/api/health
-- **Frontend**: http://localhost:3000/api/health
-- **ChromaDB**: http://localhost:8001/api/v1/heartbeat
-- **Redis**: `docker compose exec redis redis-cli ping`
-
-### Cache Management
-
-**Clear Redis cache (useful after updating documents):**
-```bash
-# Clear all cache
-docker exec orchestratai-redis-1 redis-cli FLUSHALL
-
-# Clear specific pattern
-docker exec orchestratai-redis-1 redis-cli --scan --pattern "cache:*" | xargs docker exec -i orchestratai-redis-1 redis-cli DEL
-
-# Check cache size
-docker exec orchestratai-redis-1 redis-cli DBSIZE
-```
 
 ---
 
@@ -459,7 +417,7 @@ orchestratai/
 │   │   └── screenshots/         # README screenshots
 │   ├── __tests__/               # Integration tests
 │   ├── e2e/                     # Playwright E2E tests
-│   └── README.md                # 📖 Frontend documentation
+│   └── README.md                # Frontend documentation
 │
 ├── orchestratai_api/            # FastAPI backend (Python uv project)
 │   ├── src/
@@ -477,16 +435,17 @@ orchestratai/
 │   │   ├── guides/              # User guides
 │   │   └── policies/            # Terms, privacy, SLA
 │   ├── tests/                   # pytest tests
-│   └── README.md                # 📖 Backend + ChromaDB documentation
+│   └── README.md                # Backend + ChromaDB documentation
 │
-├── docs/                        # 📚 Comprehensive documentation
-│   ├── architecture/            # Architecture documents (sharded)
+├── docs/                        # Comprehensive documentation
+│   ├── architecture/            # Architecture documents
 │   │   ├── index.md             # Architecture overview
 │   │   ├── 3-tech-stack.md      # Technology decisions
 │   │   ├── source-tree.md       # Folder structure
 │   │   ├── 16-coding-standards.md
 │   │   └── ... (more docs)
-│   └── prd/                     # Product requirements (sharded)
+│   ├── prd/                     # Product requirements
+│   └── CI_CD_GUIDE.md           # CI/CD & quality automation guide
 │
 ├── .github/                     # CI/CD workflows
 │   ├── workflows/               # GitHub Actions
@@ -505,7 +464,7 @@ orchestratai/
 ├── docker-compose.prod.yml      # Production services
 ├── CONTRIBUTING.md              # Contributing guide
 ├── package.json                 # Root workspace config
-└── README.md                    # 👈 You are here
+└── README.md                    # This file
 ```
 
 **Workspace Management:**
@@ -517,133 +476,29 @@ orchestratai/
 
 ## Detailed Documentation
 
-### 📖 Deep Dive Documentation
+### Deep Dive Documentation
 
-- **[Backend README](orchestratai_api/README.md)**
-  - FastAPI Clean Architecture
-  - Multi-Agent System (LangGraph)
-  - ChromaDB setup & ingestion
-  - Vector search & RAG implementation
-  - Semantic caching strategy
-  - API endpoint documentation
-  - Testing strategy
+- **[Backend README](orchestratai_api/README.md)** - FastAPI architecture, multi-agent system, ChromaDB setup, vector search, RAG implementation, semantic caching, API endpoints, testing strategy
 
-- **[Frontend README](orchestratai_client/README.md)**
-  - Next.js 15 + React 19 architecture
-  - Server Components vs Client Components
-  - shadcn/ui + Tailwind CSS v4
-  - State management (TanStack Query)
-  - Component structure
-  - Testing strategy
+- **[Frontend README](orchestratai_client/README.md)** - Next.js 15 + React 19 architecture, Server vs Client Components, shadcn/ui + Tailwind CSS v4, state management, component structure, testing strategy
 
-- **[Architecture Documentation](docs/architecture/)**
-  - Comprehensive technical specs
-  - API specifications (OpenAPI)
-  - Data models & schemas
-  - Multi-agent workflow diagrams
-  - Security architecture
-  - Coding standards
+- **[Architecture Documentation](docs/architecture/)** - Comprehensive technical specs, API specifications, data models, multi-agent workflows, security architecture, coding standards
 
-- **[Contributing Guide](CONTRIBUTING.md)**
-  - Development workflow
-  - Code standards
-  - Testing requirements
-  - PR process
+- **[CI/CD Guide](docs/CI_CD_GUIDE.md)** - Quality gates, GitHub Actions workflows, coverage metrics, automation details, troubleshooting
 
----
-
-## CI/CD & Quality Automation
-
-**Status:** ✅ **Production-ready quality gates and automation**
-
-### 🔒 Local Quality Gates (Git Hooks)
-
-**Pre-Commit Hook** - Runs on every commit:
-- ✨ `lint-staged` - Auto-formats changed files
-- 🧹 ESLint (frontend) + Ruff (backend) - Lints only changed files
-- 📝 TypeScript + mypy type checking
-- ⚡ Smart detection - Only checks relevant code (frontend/backend)
-
-**Pre-Push Hook** - Runs before push:
-- 🧪 Full test suite with coverage (80%+ required)
-- 🏗️ Production build verification
-- 🔒 Secret detection (prevents committing `.env` files)
-- 🔍 Full linting and type checking
-- ⚡ Only runs checks for changed code paths
-
-### 🤖 GitHub Actions Workflows
-
-**Full Stack CI** (`.github/workflows/ci.yml`)
-- Triggers: Every push and PR to `main`
-- Backend job: Ruff → mypy → pytest with coverage
-- Frontend job: ESLint → tsc → Vitest with coverage → build
-- Parallel execution for speed
-- Dependency caching (2-3x faster)
-- Coverage uploaded to Codecov
-- Status check that fails if any job fails
-
-**CodeQL Security Scanning** (`.github/workflows/codeql.yml`)
-- Triggers: Every push, PR, and weekly (Mondays)
-- Analyzes JavaScript/TypeScript and Python code
-- Detects security vulnerabilities automatically
-- Reports to GitHub Security tab
-
-**Auto-Labeling** (`.github/workflows/auto-label.yml`)
-- Triggers: Every PR opened/updated
-- Automatically adds labels based on changed files:
-  - `frontend`, `backend`, `documentation`, `tests`
-  - `ci`, `dependencies`, `configuration`
-
-**Dependabot** (`.github/dependabot.yml`)
-- Schedule: Weekly (Mondays)
-- Monitors frontend (npm), backend (pip), and GitHub Actions
-- Creates PRs for dependency updates
-
-### 📊 Coverage & Quality Metrics
-
-- **Frontend:** 80%+ line coverage (enforced)
-- **Backend:** 80%+ line coverage (enforced)
-- **E2E:** Critical user flows covered
-- **Codecov:** Real-time coverage tracking
-- **CodeQL:** Continuous security monitoring
-
-### ✅ What's Fully Automated
-
-- ✅ Code formatting (Prettier + Ruff)
-- ✅ Linting (ESLint + Ruff)
-- ✅ Type checking (TypeScript + mypy)
-- ✅ Unit tests (Vitest + pytest)
-- ✅ Integration tests (both frontend and backend)
-- ✅ Build verification (Next.js production builds)
-- ✅ Security scanning (CodeQL)
-- ✅ Dependency updates (Dependabot)
-- ✅ PR labeling (auto-labeler)
-- ✅ Coverage tracking (Codecov)
-
-### 🎯 Quality Gate Requirements
-
-**For any code to be merged to `main`:**
-
-1. ✅ All pre-commit checks pass (local)
-2. ✅ All pre-push checks pass (local)
-3. ✅ GitHub Actions CI passes (all jobs green)
-4. ✅ No CodeQL security alerts introduced
-5. ✅ Test coverage ≥ 80%
-6. ✅ No TypeScript/mypy type errors
-7. ✅ No linting errors
-8. ✅ Production build succeeds
+- **[Contributing Guide](CONTRIBUTING.md)** - Development workflow, code standards, testing requirements, PR process
 
 ---
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) and [CI/CD Guide](docs/CI_CD_GUIDE.md) for details on:
 
 - Development workflow
 - Code standards (TypeScript strict, Python type hints, ESLint, Ruff)
 - Testing requirements (80%+ coverage)
 - Pull request process
-- Quality gates
+- Quality gates and CI/CD pipeline
 
 ### Key Development Commands
 
@@ -673,10 +528,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-- **📖 Documentation:** [docs/architecture/](docs/architecture/)
-- **🐛 Issues:** [GitHub Issues](https://github.com/mario-digital/orchestratai/issues)
-- **💬 Discussions:** [GitHub Discussions](https://github.com/mario-digital/orchestratai/discussions)
+- **Documentation:** [docs/architecture/](docs/architecture/)
+- **Issues:** [GitHub Issues](https://github.com/mario-digital/orchestratai/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/mario-digital/orchestratai/discussions)
 
 ---
 
-**Built with ❤️ using Next.js 15, React 19, FastAPI, ChromaDB, and LangGraph**
+**Built using Next.js 15, React 19, FastAPI, ChromaDB, and LangGraph**

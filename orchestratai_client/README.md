@@ -4,7 +4,7 @@ Next.js 15 + React 19 frontend with **Server Components**, **Tailwind CSS v4**, 
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
 - [Tech Stack](#tech-stack)
@@ -15,6 +15,10 @@ Next.js 15 + React 19 frontend with **Server Components**, **Tailwind CSS v4**, 
 - [Styling & Design System](#styling--design-system)
 - [State Management](#state-management)
 - [Testing](#testing)
+- [Performance Optimization](#performance-optimization)
+- [Accessibility](#accessibility)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -110,19 +114,19 @@ src/components/
 
 ### Server vs Client Components
 
-**Server Components (default):**
+Server Components (default):
 - Render on server, no JavaScript sent to client
 - Can directly access backend APIs, databases
 - Better performance, smaller bundle size
 - Examples: `ChatMessage.tsx`, `SourceList.tsx`, `Header.tsx`
 
-**Client Components (explicit "use client"):**
+Client Components (explicit "use client"):
 - Render on client, include interactivity
 - Use React hooks (useState, useEffect, etc.)
 - Required for: forms, event handlers, streaming UI updates
 - Examples: `ChatInterface.tsx`, `ChatInput.tsx`, `AgentIndicator.tsx`
 
-**Rule of thumb:** Start with Server Component, only add `"use client"` when needed for interactivity.
+Rule of thumb: Start with Server Component, only add `"use client"` when needed for interactivity.
 
 ---
 
@@ -130,43 +134,33 @@ src/components/
 
 ### Prerequisites
 
-- **Bun 1.x** (JavaScript runtime)
-- **Node.js 18+** (fallback if not using Bun)
+- **Bun 1.x** (JavaScript runtime) or **Node.js 18+**
 
 ### Installation Steps
 
-**1. Install Bun (if not already installed):**
+1. **Install Bun:**
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
 
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
+2. **Install dependencies:**
+   ```bash
+   cd orchestratai_client
+   bun install
+   ```
 
-**2. Install dependencies:**
+3. **Configure environment:**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local and set NEXT_PUBLIC_API_URL=http://localhost:8000
+   ```
 
-```bash
-cd orchestratai_client
-bun install
-```
+4. **Start development server:**
+   ```bash
+   bun dev
+   ```
 
-**3. Configure environment variables:**
-
-```bash
-cp .env.example .env.local
-# Edit .env.local and set:
-# - NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-**4. Start development server:**
-
-```bash
-bun dev
-```
-
-**5. Open in browser:**
-
-```
-http://localhost:3000
-```
+5. **Open browser:** http://localhost:3000
 
 ---
 
@@ -179,13 +173,7 @@ http://localhost:3000
 bun dev
 ```
 
-**Production build:**
-```bash
-bun run build
-bun start
-```
-
-**Production build (test locally):**
+**Build and test production locally:**
 ```bash
 bun run build
 bun run start
@@ -194,28 +182,19 @@ bun run start
 
 ### Environment Variables
 
-| Variable | Description | Example |
+| Variable | Description | Default |
 |----------|-------------|---------|
 | `NEXT_PUBLIC_API_URL` | Backend API base URL | `http://localhost:8000` |
 | `NEXT_PUBLIC_APP_NAME` | Application name | `OrchestratAI` |
 
-**Note:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
+Note: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 
-### Development Tools
+### Development Commands
 
-**TypeScript type checking:**
 ```bash
-bun run typecheck
-```
-
-**ESLint:**
-```bash
-bun run lint
-```
-
-**Format code:**
-```bash
-bun run format
+bun run typecheck  # TypeScript type checking
+bun run lint       # ESLint code linting
+bun run format     # Code formatting
 ```
 
 ---
@@ -230,7 +209,7 @@ bun run format
 
 ### Example: ChatInterface Component
 
-**File:** `src/components/chat/ChatInterface.tsx`
+File: `src/components/chat/ChatInterface.tsx`
 
 ```tsx
 "use client";
@@ -263,7 +242,7 @@ export function ChatInterface() {
 
 #### useChat Hook
 
-**File:** `src/hooks/useChat.ts`
+File: `src/hooks/useChat.ts`
 
 ```typescript
 import { useState, useCallback } from "react";
@@ -309,7 +288,7 @@ export function useChat() {
 
 ### Tailwind CSS v4
 
-**Configuration:** `tailwind.config.ts`
+Configuration in `tailwind.config.ts`:
 
 ```typescript
 import type { Config } from "tailwindcss";
@@ -319,70 +298,38 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: "#f0f9ff",
-          100: "#e0f2fe",
-          // ... color scale
-        },
+        primary: { 50: "#f0f9ff", 100: "#e0f2fe", /* ... */ },
       },
     },
   },
-  plugins: [],
 };
-
 export default config;
 ```
 
 ### shadcn/ui Components
 
-**Installation:**
+Installation and usage:
+
 ```bash
 bunx shadcn@latest init
 bunx shadcn@latest add button input card
 ```
 
-**Usage:**
 ```tsx
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function MyComponent() {
   return (
-    <div>
+    <>
       <Input placeholder="Type a message..." />
       <Button>Send</Button>
-    </div>
+    </>
   );
 }
 ```
 
-**Benefits:**
-- Accessible by default (Radix UI primitives)
-- Customizable (copy into your codebase)
-- Type-safe
-- Tailwind-styled
-
-### Design Tokens
-
-**3-Layer Token System:**
-
-1. **Primitives** (base colors, sizes)
-   ```css
-   --color-blue-500: #3b82f6;
-   --spacing-4: 1rem;
-   ```
-
-2. **Semantic tokens** (meaning)
-   ```css
-   --color-primary: var(--color-blue-500);
-   --space-card-padding: var(--spacing-4);
-   ```
-
-3. **Component tokens** (specific usage)
-   ```css
-   --button-bg: var(--color-primary);
-   --button-padding: var(--space-card-padding);
-   ```
+Benefits: Accessible (Radix UI), customizable, type-safe, Tailwind-styled
 
 ---
 
@@ -390,20 +337,16 @@ export function MyComponent() {
 
 ### Client State (React Context)
 
-**Minimal client state:**
+Minimal client state for:
 - Current theme (light/dark)
 - UI preferences
 - Temporary form state
 
-### Server State (TanStack Query - Future)
+### Server State
 
-**Planned for Phase 5:**
-- Chat history caching
-- User preferences
-- API response caching
-- Optimistic updates
+Current approach: Direct API calls with React hooks
 
-**Current approach:** Direct API calls with React hooks
+Future: TanStack Query for chat history caching, user preferences, API response caching, and optimistic updates
 
 ---
 
@@ -411,24 +354,11 @@ export function MyComponent() {
 
 ### Running Tests
 
-**Unit/integration tests:**
 ```bash
-bun test
-```
-
-**Watch mode:**
-```bash
-bun test --watch
-```
-
-**Coverage:**
-```bash
-bun test --coverage
-```
-
-**E2E tests:**
-```bash
-bun test:e2e
+bun test              # Unit/integration tests
+bun test --watch      # Watch mode
+bun test --coverage   # Coverage report
+bun test:e2e          # E2E tests with Playwright
 ```
 
 ### Test Structure
@@ -451,7 +381,7 @@ e2e/
 
 ### Example Test
 
-**File:** `__tests__/components/ChatMessage.test.tsx`
+File: `__tests__/components/ChatMessage.test.tsx`
 
 ```tsx
 import { render, screen } from "@testing-library/react";
@@ -485,7 +415,7 @@ describe("ChatMessage", () => {
 });
 ```
 
-**Test coverage target:** 80%+ (enforced in CI)
+Test coverage target: 80%+ (enforced in CI)
 
 ---
 
@@ -493,9 +423,9 @@ describe("ChatMessage", () => {
 
 ### Bundle Size
 
-**Current target:** < 350MB Docker image (frontend production build)
+Target: < 350MB Docker image (frontend production build)
 
-**Optimization strategies:**
+Optimization strategies:
 - Tree shaking (automatic with Next.js)
 - Code splitting per route
 - Dynamic imports for heavy components
@@ -504,20 +434,20 @@ describe("ChatMessage", () => {
 
 ### Rendering Performance
 
-**Server Components benefits:**
+Server Components benefits:
 - 90% reduction in JavaScript bundle
 - Faster initial page load
 - Better SEO (server-rendered HTML)
 
-**Client Component optimization:**
+Client Component optimization:
 - Lazy load with `React.lazy()` and `Suspense`
 - Memoization with `React.memo()` for expensive renders
 - `useCallback` and `useMemo` for expensive computations
 
 ### Network Performance
 
-**Streaming responses:**
-- Server-Sent Events (SSE) for real-time updates
+Streaming responses with Server-Sent Events (SSE):
+- Real-time updates
 - Incremental UI updates as data arrives
 - Better perceived performance
 
@@ -527,44 +457,32 @@ describe("ChatMessage", () => {
 
 ### Standards
 
-- **WCAG 2.1 Level AA** compliance
+- WCAG 2.1 Level AA compliance
 - Keyboard navigation for all interactive elements
 - Screen reader support (ARIA labels)
 - Color contrast requirements met
 - Focus management
 
-### Best Practices
+### Implementation Examples
 
-**Keyboard navigation:**
+Keyboard navigation:
 ```tsx
-<button
-  onClick={handleClick}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      handleClick();
-    }
-  }}
->
+<button onClick={handleClick} onKeyDown={(e) => {
+  if (e.key === "Enter" || e.key === " ") handleClick();
+}}>
   Send
 </button>
 ```
 
-**ARIA labels:**
+ARIA labels:
 ```tsx
-<input
-  type="text"
-  aria-label="Chat message input"
-  placeholder="Type a message..."
-/>
+<input type="text" aria-label="Chat message input" placeholder="Type a message..." />
 ```
 
-**Focus management:**
+Focus management:
 ```tsx
 const inputRef = useRef<HTMLInputElement>(null);
-
-useEffect(() => {
-  inputRef.current?.focus();
-}, []);
+useEffect(() => { inputRef.current?.focus(); }, []);
 ```
 
 ---
@@ -573,32 +491,26 @@ useEffect(() => {
 
 ### Production Build
 
-**Build for production:**
 ```bash
-bun run build
+bun run build  # Build for production
+bun run start  # Test production build locally
 ```
 
-**Test production build locally:**
-```bash
-bun run start
-```
+### Docker Deployment
 
-### Docker Build
-
-**Build Docker image:**
+Build Docker image from repository root:
 ```bash
-# From repository root
 docker build -t orchestratai-frontend:latest -f orchestratai_client/Dockerfile .
 ```
 
-**Run container:**
+Run container:
 ```bash
 docker run -p 3000:3000 \
   -e NEXT_PUBLIC_API_URL=http://localhost:8000 \
   orchestratai-frontend:latest
 ```
 
-### Environment Variables (Production)
+### Production Environment Variables
 
 ```env
 NEXT_PUBLIC_API_URL=https://api.orchestratai.com
@@ -612,54 +524,42 @@ NODE_ENV=production
 
 ### Common Issues
 
-**Issue: "Module not found" error**
-```
-Solution:
+**"Module not found" error:**
 1. Check import path is correct (use @/ alias)
 2. Verify file exists at path
-3. Run: bun install (re-install dependencies)
+3. Run `bun install` to re-install dependencies
 4. Restart dev server
-```
 
-**Issue: Hydration mismatch error**
-```
-Solution:
+**Hydration mismatch error:**
 1. Check for client-only code in Server Components
 2. Ensure consistent rendering between server and client
 3. Use suppressHydrationWarning sparingly if needed
 4. Check for time-based or random content
-```
 
-**Issue: Tailwind styles not applying**
-```
-Solution:
+**Tailwind styles not applying:**
 1. Verify file is in content config (tailwind.config.ts)
 2. Restart dev server after config changes
 3. Check class names are correct (no typos)
 4. Ensure Tailwind directives in globals.css
-```
 
-**Issue: API calls failing**
-```
-Solution:
+**API calls failing:**
 1. Check NEXT_PUBLIC_API_URL is set correctly
 2. Verify backend is running (http://localhost:8000)
 3. Check CORS settings in backend
 4. Inspect network tab for error details
-```
 
 ---
 
 ## Additional Resources
 
-- **[Root README](../README.md)** - Project overview and quick start
-- **[Backend README](../orchestratai_api/README.md)** - Backend architecture
-- **[Architecture Docs](../docs/architecture/)** - Detailed technical specs
-- **[Next.js Documentation](https://nextjs.org/docs)** - Framework reference
-- **[React Documentation](https://react.dev/)** - React 19 features
-- **[shadcn/ui](https://ui.shadcn.com/)** - Component library
-- **[Tailwind CSS](https://tailwindcss.com/)** - Styling framework
+- [Root README](../README.md) - Project overview and quick start
+- [Backend README](../orchestratai_api/README.md) - Backend architecture
+- [Architecture Docs](../docs/architecture/) - Detailed technical specs
+- [Next.js Documentation](https://nextjs.org/docs) - Framework reference
+- [React Documentation](https://react.dev/) - React 19 features
+- [shadcn/ui](https://ui.shadcn.com/) - Component library
+- [Tailwind CSS](https://tailwindcss.com/) - Styling framework
 
 ---
 
-**Questions or Issues?** Open an issue on [GitHub](https://github.com/mario-digital/orchestratai/issues)
+Questions or Issues? Open an issue on [GitHub](https://github.com/mario-digital/orchestratai/issues)
